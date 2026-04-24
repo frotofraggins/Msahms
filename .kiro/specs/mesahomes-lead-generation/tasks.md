@@ -294,24 +294,24 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
   - Ensure all tests pass, ask the user if questions arise.
 
 - [-] 10. Frontend foundation — Next.js setup, design system, shared components
-  - [-] 10.1 Initialize Next.js project with TypeScript, Tailwind CSS, and shadcn/ui
+  - [x] 10.1 Initialize Next.js project with TypeScript, Tailwind CSS, and shadcn/ui
     - Create Next.js app with App Router, TypeScript strict mode
     - Install and configure Tailwind CSS with MesaHomes design tokens
     - Install shadcn/ui (Radix UI + Tailwind) for component library
     - Configure responsive breakpoints: mobile (320-767px), tablet (768-1023px), desktop (1024px+)
     - _Requirements: 1.1 — Frontend Design: Design System section_
-  - [ ] 10.2 Implement design system tokens and global styles
+  - [x] 10.2 Implement design system tokens and global styles
     - Define color palette: primary #1B4D3E, secondary #F5A623, background #FFFFFF, surface #F8F9FA, text #1A1A1A, text-light #6B7280, success #10B981, warning #F59E0B, error #EF4444
     - Configure typography: Inter/DM Sans for headings, Inter/system-ui for body, tabular figures for numbers
     - Set up Tailwind theme extension with all design tokens
     - _Requirements: 1.1 — Frontend Design: Colors, Typography sections_
-  - [ ] 10.3 Create shared layout components — Header, Footer, StickyContactBar
+  - [x] 10.3 Create shared layout components — Header, Footer, StickyContactBar
     - `<Header />`: Logo, nav (Sell | Buy | Rent | Invest | Areas | Reviews), phone number link, "Talk to Agent" CTA button
     - `<Footer />`: About, Contact, Privacy, Terms, Sitemap, area links, tool links, license info
     - `<StickyContactBar />`: Mobile bottom bar with Call, Book Consult, Chat, Full Service buttons
     - Responsive: header collapses to hamburger on mobile, sticky contact bar only on mobile
     - _Requirements: 1.1, 1.7, 12.1 — Frontend Design: Homepage Layout header/footer_
-  - [ ] 10.4 Create `<FullServiceUpgradeBanner />` component
+  - [x] 10.4 Create `<FullServiceUpgradeBanner />` component
     - Green banner displayed on every page: "Want a licensed agent to handle everything?" with [Switch to Full Service] CTA
     - On click: open lead capture modal with name, contactMethod, currentIntent fields
     - Submit to POST `/api/v1/leads` with tag="full-service-request"
