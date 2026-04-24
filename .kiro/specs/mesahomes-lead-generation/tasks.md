@@ -1,0 +1,642 @@
+# Implementation Plan: MesaHomes Lead Generation Platform (MVP — Phase 1A)
+
+## Overview
+
+This plan implements the MesaHomes MVP: a serverless lead-generation real estate platform for the Mesa, AZ metro area. The build order is: infrastructure → data pipeline → backend APIs → frontend foundation → frontend pages → agent dashboard → flat-fee listing service → guided decision engine → testing → deployment. All code uses Node.js 20 (Lambda backend) and React/Next.js with TypeScript (frontend), with fast-check for property-based tests.
+
+**MVP Requirements covered:** 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 15, 16, 17, 18, 19, 20, 45, 46, 48, 49
+
+## Tasks
+
+- [-] 1. Infrastructure setup — DynamoDB, Cognito, S3, Secrets Manager, API Gateway
+  - [x] 1.1 Create DynamoDB single-table `mesahomes-main` with PK/SK, GSI1, GSI2, TTL, and DynamoDB Streams
+    - Define table with PAY_PER_REQUEST billing, PK (String), SK (String)
+    - Create GSI1 (GSI1PK/GSI1SK, ALL projection) and GSI2 (GSI2PK/GSI2SK, ALL projection)
+    - Enable TTL on `ttl` attribute
+    - Enable DynamoDB Streams with NEW_AND_OLD_IMAGES
+    - Create shared DynamoDB client module (`lib/dynamodb.ts`) with table name constant and helper functions for PK/SK patterns
+    - _Requirements: 11.3, 19.4 — Design: DynamoDB Single-Table Design section_
+  - [ ] 1.2 Create Cognito User Pool for agent/admin authentication
+    - Configure custom attributes: `custom:role` (Agent | Team_Admin), `custom:teamId`
+    - Set password policy: min 8 chars, require uppercase, lowercase, number, special
+    - Set token validity: access 24h, refresh 30 days
+    - Create app client for the dashboard frontend
+    - _Requirements: 18.1, 18.2 — Design: Authentication Flow section_
+  - [ ] 1.3 Create S3 buckets for static assets, data, and property photos
+    - `mesahomes-data` bucket for Zillow CSV archives and PDF exports
+    - `mesahomes-property-photos` bucket for Street View photo cache with key pattern `streetview/{zip}/{normalized-address}.jpg`
+    - Configure CORS for frontend uploads on the photos bucket
+    - _Requirements: 3.1, 17.2 — Data Sources: §8 Google Street View_
+  - [ ] 1.4 Create AWS Secrets Manager entries for all API keys
+    - Create secrets: `mesahomes/google-maps-api-key`, `mesahomes/stripe-secret-key`, `mesahomes/stripe-webhook-secret`, `mesahomes/rentcast-api-key`, `mesahomes/cognito-client-secret`, `mesahomes/ses-smtp-credentials`
+    - Create shared `lib/secrets.ts` module with `getSecret()` helper using `@aws-sdk/client-secrets-manager`
+    - _Requirements: 45.5 — Data Sources: §9 API Key & Secret Management_
+  - [ ] 1.5 Create API Gateway REST API with route definitions and Cognito authorizer
+    - Create REST API in us-west-2 with `/api/v1` base path
+    - Define all 17 public routes (POST /leads, POST /tools/*, POST /property/*, GET /market/*, GET /content/*, POST /ai/*, POST /valuation-request, POST /booking, POST /listing/*)
+    - Define all 13 authenticated routes under /dashboard/* and /auth/* with Cognito JWT authorizer
+    - Configure CloudFront origin for API Gateway
+    - _Requirements: 1.1, 18.5 — Design: API Gateway Routes section_
+
+- [ ] 2. Shared backend modules — error handling, validation, data models
+  - [ ] 2.1 Create shared error handling module with structured error responses
+    - Implement error response format: `{ error: { code, message, correlationId, details } }`
+    - Define error categories: VALIDATION_ERROR, MISSING_FIELD, INVALID_FORMAT, UNAUTHORIZED, FORBIDDEN, ACCOUNT_LOCKED, NOT_FOUND, UPSTREAM_TIMEOUT, UPSTREAM_ERROR, STORAGE_ERROR, PAYMENT_FAILED, NOTIFICATION_ERROR, AI_TIMEOUT, AI_ERROR, RATE_LIMITED
+    - Map each error code to correct HTTP status (400, 401, 403, 404, 429, 500, 502, 504)
+    - Generate UUID correlation ID per request from API Gateway `$context.requestId`
+    - _Requirements: 45.4, 45.5 — Design: Error Handling section_
+  - [ ] 2.2 Write property test for structured error response format
+    - **Property 22: Structured Error Response Format**
+    - **Validates: Requirements 45.4**
+  - [ ] 2.3 Create retry utility with exponential backoff and circuit breaker
+    - Implement retry logic: DynamoDB (3 retries, exponential 100/200/400ms), County GIS (2 retries, linear 1s/2s), SES (3 retries, exponential 1/2/4s), Street View (1 retry), AI proxy (1 retry, 2s delay)
+    - Implement circuit breaker: County GIS (5 failures → 60s open), Street View (10 failures → 300s open), AI proxy (3 failures → 30s open)
+    - _Requirements: 11.5, 20.4 — Design: Retry Strategy table_
+  - [ ] 2.4 Create lead data model with schema definition and validation
+    - Define Lead TypeScript interface with all required fields (leadId, name, email, phone, city, zip, timeframe, leadType, leadStatus, toolSource) and optional fields (tags, assignedAgentId, toolData, pathHistory, readinessScore, utm*, notes, statusHistory)
+    - Implement field validation: email regex, US phone format, enum checks for leadType/leadStatus/timeframe/toolSource
+    - Implement DynamoDB key generation: PK=`LEAD#{leadId}`, SK=`LEAD#{leadId}`, GSI1PK=`AGENT#{agentId}`, GSI1SK=`LEAD#{createdAt}`
+    - _Requirements: 11.2, 11.3, 45.1, 45.2, 45.3, 46.1, 46.4 — Design: Lead Records entity key patterns_
+  - [ ] 2.5 Write property tests for lead validation (required fields and field formats)
+    - **Property 4: Lead Capture Validation — Required Fields**
+    - **Property 5: Lead Capture Validation — Field Formats**
+    - **Validates: Requirements 11.2, 11.4, 45.1, 45.2, 45.3**
+  - [ ] 2.6 Create lead JSON serializer/deserializer with round-trip guarantee
+    - Implement `serializeLead()` and `deserializeLead()` functions
+    - Handle all field types including nested objects (toolData, notes, statusHistory, pathHistory)
+    - _Requirements: 46.1, 46.2, 46.3_
+  - [ ] 2.7 Write property test for lead JSON round-trip
+    - **Property 7: Lead Data JSON Round-Trip**
+    - **Validates: Requirements 46.1, 46.2, 46.3**
+  - [ ] 2.8 Create agent, market data, property cache, content, listing, and scenario data models
+    - Define TypeScript interfaces and DynamoDB key patterns for: Agent, MarketDataZip, MarketDataMetro, PropertyCache, BlogPost, CityPage, FlatFeeListing, SavedScenario, NotificationPrefs
+    - Implement DynamoDB key generation for each entity type per design document patterns
+    - _Requirements: 15.4, 16.1, 17.3, 18.4, 19.6, 48.3 — Design: Entity Key Patterns section_
+
+- [ ] 3. Checkpoint — Ensure all shared modules compile and tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 4. Data pipeline — Zillow CSV ingest and county GIS integration
+  - [ ] 4.1 Implement ZIP-to-county routing module
+    - Create `lib/county-router.ts` with `getCounty(zip)` function using PINAL_COUNTY_ZIPS set
+    - Create `getAssessorEndpoint(county)` returning correct base URL and field mappings for Pinal (layer 3) and Maricopa (layer 0)
+    - _Requirements: 3.1 — Data Sources: §5 ZIP Code → County Routing_
+  - [ ] 4.2 Write property test for ZIP county routing
+    - **Property 8: Service Area ZIP Routing**
+    - **Validates: Requirements 3.1**
+  - [ ] 4.3 Implement property data normalization module
+    - Create `lib/property-normalizer.ts` that maps Pinal fields (SITEADDRESS, SALEPRICE, RESFLRAREA, etc.) and Maricopa fields (PHYSICAL_ADDRESS, SALE_PRICE, LIVING_SPACE, etc.) to unified response model
+    - Handle county-specific fields: floors/landValue (Pinal only), lat/lon/zoning (Maricopa only) — set null when unavailable
+    - Convert lot size units: Pinal=acres, Maricopa=sqft
+    - _Requirements: 2.1, 3.1 — Design: County Field Normalization table_
+  - [ ] 4.4 Write property test for property data normalization
+    - **Property 9: Property Data Normalization**
+    - **Validates: Requirements 2.1, 3.1**
+  - [ ] 4.5 Implement Zillow CSV data pipeline Lambda (`data-pipeline`)
+    - Create EventBridge rule: cron `0 6 17 * ? *` (17th of each month, 6am UTC)
+    - Download all 13 Zillow Research CSVs from `files.zillowstatic.com/research/public_csvs/`
+    - Archive raw CSVs to `s3://mesahomes-data/zillow-raw/{YYYY-MM}/`
+    - Parse ZIP-level ZHVI CSV: filter service area ZIPs (85120-85215, etc.)
+    - Parse Metro-level CSVs: filter `RegionName` = "Phoenix-Mesa-Chandler, AZ"
+    - Extract latest month column + previous months for trend calculation
+    - BatchWrite to DynamoDB: ZIP records (`MARKET#ZIP#{zip}` / `ZHVI#{month}`) and Metro records (`MARKET#METRO#phoenix-mesa` / `{metric}#{month}`)
+    - Write LATEST pointers for each ZIP and metric
+    - Log record counts and parsing errors to CloudWatch
+    - _Requirements: 15.1, 8.1 — Design: Zillow Research CSV Monthly Ingest, Data Sources: §3 Zillow Research CSVs_
+  - [ ] 4.6 Implement property lookup Lambda (`property-lookup`)
+    - Parse incoming address → streetNum, streetName, zip
+    - Route by ZIP to correct county GIS endpoint
+    - Query 1: Address lookup (SITEADDRESS/PHYSICAL_ADDRESS LIKE pattern)
+    - Query 2: Subdivision comps (top 20 by sale date)
+    - Query 3: ZIP comps (top 50 by sale date, SALEPRICE > threshold)
+    - Read ZIP market data from DynamoDB (MARKET#ZIP#{zip} → ZHVI#LATEST)
+    - Read metro market data from DynamoDB (MARKET#METRO#phoenix-mesa → multiple metrics)
+    - Normalize response using property normalizer module
+    - Cache assembled response in DynamoDB with 24h TTL (PROPERTY#{normalizedAddress} / LOOKUP)
+    - Check DynamoDB cache first before external queries
+    - _Requirements: 2.1, 3.1 — Design: Property Lookup Flow, Data Sources: §1 Pinal County, §2 Maricopa County, §6 Complete Address Lookup Flow_
+  - [ ] 4.7 Implement Google Street View photo caching in property lookup
+    - Check S3 cache first: `streetview/{zip}/{normalized-address}.jpg`
+    - If cache miss: call Street View Metadata API (free, unlimited) to check availability
+    - If photo exists: fetch image at 600x400, store in S3, return URL
+    - If no photo: return placeholder map image URL
+    - Log every Google API call to CloudWatch with address and timestamp
+    - Set CloudWatch alarm at 8,000 Street View requests/month
+    - _Requirements: 2.1 — Data Sources: §8 Google Street View, Photo Caching Strategy_
+
+- [ ] 5. Backend APIs — tool calculators
+  - [ ] 5.1 Implement Seller Net Sheet Calculator (`tools-calculator` Lambda, `/api/v1/tools/net-sheet`)
+    - Accept: salePrice, outstandingMortgage, serviceType (flat-fee | traditional)
+    - Compute deductions: agent commission (flat fee or 5-6%), broker fee ($400), title/escrow, transfer taxes, prorated property taxes, mortgage payoff, repair credits
+    - Return: itemized deductions, net proceeds, side-by-side flat-fee vs traditional comparison
+    - Respond within 2 seconds (client-side math, no external API calls)
+    - _Requirements: 2.1, 2.2, 2.3 — Design: Property 1_
+  - [ ] 5.2 Write property test for net sheet calculation integrity
+    - **Property 1: Net Sheet Calculation Integrity**
+    - **Validates: Requirements 2.1, 2.2, 2.3**
+  - [ ] 5.3 Implement Buyer Affordability Calculator (`tools-calculator` Lambda, `/api/v1/tools/affordability`)
+    - Accept: annualIncome, monthlyDebts, downPayment, interestRate, loanTerm
+    - Compute: maximum purchase price (28% front-end DTI), estimated monthly payment, DTI ratio
+    - Generate 3 mortgage scenarios with varying parameters
+    - Include links to Arizona down payment assistance programs
+    - _Requirements: 7.1, 7.3, 7.5 — Design: Property 2_
+  - [ ] 5.4 Write property test for affordability calculator consistency
+    - **Property 2: Affordability Calculator Mathematical Consistency**
+    - **Validates: Requirements 7.1, 7.3**
+  - [ ] 5.5 Implement Flat-Fee vs Traditional Comparison (`tools-calculator` Lambda, `/api/v1/tools/comparison`)
+    - Accept: estimatedSalePrice
+    - Compute: flat-fee total (flat fee + $400 broker + buyer agent commission), traditional total (5-6% commission), dollar savings
+    - Include service tier descriptions (what's included in each)
+    - _Requirements: 4.1, 4.2, 4.3 — Design: Property 3_
+  - [ ] 5.6 Write property test for flat-fee vs traditional savings
+    - **Property 3: Flat-Fee vs Traditional Comparison Savings**
+    - **Validates: Requirements 4.1, 4.2**
+  - [ ] 5.7 Implement Sell Now or Wait Analysis (`tools-calculator` Lambda, `/api/v1/tools/sell-now-or-wait`)
+    - Accept: zip, estimatedHomeValue
+    - Read ZIP-level data from DynamoDB: ZHVI, trend direction, 6-month change
+    - Read metro-level data: median sale price, days on market, inventory, price cuts %, sale-to-list ratio, seasonal patterns
+    - Generate analysis incorporating all market indicators
+    - _Requirements: 8.1 — Design: Property 19_
+  - [ ] 5.8 Write property test for sell-now-or-wait market data correctness
+    - **Property 19: Sell Now or Wait Analysis Uses Correct Market Data**
+    - **Validates: Requirements 8.1**
+
+- [ ] 6. Backend APIs — lead capture, AI proxy, content, market data
+  - [ ] 6.1 Implement Lead Capture Lambda (`leads-capture`, `/api/v1/leads`)
+    - Validate all required fields (name, email, phone, city, timeframe, leadType) using shared validation module
+    - Return field-level validation errors for invalid/missing fields (400 VALIDATION_ERROR)
+    - Create Lead record in DynamoDB with status=New, timestamp, toolSource, all metadata
+    - Implement progressive disclosure: accept partial tool results without contact info, require contact info for full results
+    - Retry DynamoDB write up to 3 times with exponential backoff on failure
+    - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6 — Design: leads-capture Lambda_
+  - [ ] 6.2 Write property test for lead creation metadata correctness
+    - **Property 6: Lead Creation Metadata Correctness**
+    - **Validates: Requirements 2.5, 3.3, 5.5, 6.3, 7.4, 11.3**
+  - [ ] 6.3 Implement Home Value Request endpoint (`leads-capture`, `/api/v1/valuation-request`)
+    - Accept: name, email, phone, propertyAddress
+    - Validate address is within Mesa metro service area
+    - Create Lead with leadType=Seller, toolSource="home-value"
+    - Send confirmation email via SES within 60 seconds
+    - Return teaser range from ZIP-level ZHVI data ("Homes in your ZIP typically sell for $X–$Y")
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+  - [ ] 6.4 Implement consultation booking endpoint (`leads-capture`, `/api/v1/booking`)
+    - Accept: name, phone, email, intent (buying/selling/renting/investing)
+    - Create Lead with toolSource="direct-consult", tag="hot-direct-consult"
+    - Trigger immediate agent notification via SES
+    - _Requirements: 1.9_
+  - [ ] 6.5 Implement full-service upgrade lead capture
+    - Accept: name, contactMethod, currentIntent
+    - Create Lead with tag="full-service-request"
+    - Route to CRM system
+    - _Requirements: 1.8_
+  - [ ] 6.6 Implement AI Proxy Lambda (`ai-proxy`) for listing description generation
+    - Accept: bedrooms, bathrooms, sqft, lotSize, yearBuilt, upgrades, neighborhood
+    - Proxy request to local RTX 4090 via MCP server
+    - Validate output: non-empty, 100-2000 chars, references bedroom/bathroom count
+    - Run compliance filter on generated text before returning
+    - Allow regeneration and editing
+    - Create Lead (toolSource="listing-generator") if visitor not already captured
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5 — Design: ai-proxy Lambda_
+  - [ ] 6.7 Implement AI Proxy for offer draft generation (`/api/v1/ai/offer-draft`)
+    - Accept: propertyAddress, offeredPrice, earnestMoney, financingType, contingencies, closingDate
+    - Proxy to RTX 4090 MCP server
+    - Return preview (key terms) without contact info, full draft after lead capture
+    - Include legal disclaimer on every response
+    - Include Full_Service_Upgrade CTA
+    - Create Lead (toolSource="offer-writer") on contact info submission
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+  - [ ] 6.8 Implement compliance filter module for AI-generated content
+    - Scan text for Fair Housing Act prohibited terms (race, color, religion, sex, national origin, familial status, disability)
+    - Detect steering language
+    - Return flagged terms with locations, or empty flags for clean text
+    - _Requirements: 5.2, 5.3 — Design: Property 10_
+  - [ ] 6.9 Write property test for compliance filter
+    - **Property 10: AI-Generated Content Compliance Filter**
+    - **Validates: Requirements 5.2, 5.3**
+  - [ ] 6.10 Write property test for AI output structural validity
+    - **Property 11: AI Output Structural Validity**
+    - **Validates: Requirements 5.1, 6.1, 6.4**
+  - [ ] 6.11 Implement Market Data Lambda (`market-data`)
+    - GET `/api/v1/market/zip/{zip}`: Read ZHVI, trend, previous month from DynamoDB (MARKET#ZIP#{zip} → ZHVI#LATEST)
+    - GET `/api/v1/market/metro`: Read all metro metrics from DynamoDB (MARKET#METRO#phoenix-mesa → multiple LATEST records)
+    - _Requirements: 15.1 — Design: market-data Lambda_
+  - [ ] 6.12 Implement Content API Lambda (`content-api`)
+    - GET `/api/v1/content/city/{slug}`: Read city page data from DynamoDB (CONTENT#CITY#{slug})
+    - GET `/api/v1/content/blog`: List published blog posts sorted by date (GSI1: CONTENT#BLOG / #{publishDate})
+    - GET `/api/v1/content/blog/{slug}`: Read single blog post (CONTENT#BLOG#{slug})
+    - Support CRUD for blog posts: title, body (Markdown), author, publishDate, category, city, zips, metaDescription, tags, status
+    - _Requirements: 15.4, 16.1 — Design: Content Records entity key patterns_
+
+- [ ] 7. Checkpoint — Ensure all backend APIs compile and tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 8. Backend APIs — authentication, dashboard, notifications, listing service
+  - [ ] 8.1 Implement Auth API Lambda (`auth-api`)
+    - POST `/api/v1/auth/login`: Cognito AdminInitiateAuth (USER_PASSWORD_AUTH), return JWT tokens
+    - POST `/api/v1/auth/refresh`: Cognito REFRESH_TOKEN_AUTH, return new access/id tokens
+    - POST `/api/v1/auth/register`: Validate invite token from DynamoDB, create Cognito user, update agent record to active
+    - Implement account lockout: track failed attempts in DynamoDB, lock after 3 consecutive failures for 15 minutes, reset counter on success
+    - _Requirements: 18.1, 18.2, 18.3 — Design: Authentication Flow section_
+  - [ ] 8.2 Write property test for auth lockout behavior
+    - **Property 14: Auth Lockout Behavior**
+    - **Validates: Requirements 18.3**
+  - [ ] 8.3 Implement API Gateway Cognito authorizer with role-based permissions
+    - Validate JWT, extract claims (sub, email, custom:role, custom:teamId)
+    - Enforce permission matrix: Agent sees own leads, Team_Admin sees all team leads
+    - Return 401 for unauthenticated, 403 for insufficient permissions
+    - _Requirements: 18.4, 18.5 — Design: Permission Matrix_
+  - [ ] 8.4 Write property test for permission enforcement
+    - **Property 15: Permission Enforcement**
+    - **Validates: Requirements 18.4, 18.5**
+  - [ ] 8.5 Implement Dashboard API Lambda (`dashboard-api`) — lead management
+    - GET `/api/v1/dashboard/leads`: List leads with filters (status, type, source, city/ZIP, timeframe, date range, financing) and sort (createdAt, updatedAt, status, timeframe urgency)
+    - GET `/api/v1/dashboard/leads/{id}`: Full lead detail with tool data, status history, notes
+    - PATCH `/api/v1/dashboard/leads/{id}`: Update lead status, add notes — persist to DynamoDB, return updated record within 1 second
+    - Agent: filter by assignedAgentId; Team_Admin: see all team leads
+    - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.6 — Design: dashboard-api Lambda_
+  - [ ] 8.6 Write property test for dashboard lead query correctness
+    - **Property 12: Dashboard Lead Query Correctness**
+    - **Validates: Requirements 19.1, 19.2, 19.3, 19.5**
+  - [ ] 8.7 Implement Dashboard API — team management endpoints
+    - GET `/api/v1/dashboard/team`: List team agents (admin only)
+    - POST `/api/v1/dashboard/team/invite`: Create pending agent record, send invite email via SES
+    - PATCH `/api/v1/dashboard/team/{agentId}`: Deactivate agent, reassign open leads to Team_Admin
+    - _Requirements: 18.4 (Team_Admin permissions) — Design: Invite-Only Agent Registration flow_
+  - [ ] 8.8 Implement Dashboard API — notification preferences
+    - GET `/api/v1/dashboard/notifications/settings`: Read agent notification prefs from DynamoDB (AGENT#{agentId} / NOTIF_PREFS)
+    - PUT `/api/v1/dashboard/notifications/settings`: Update prefs (newLead: email|email-sms|none, statusChange: email|email-sms|none)
+    - _Requirements: 20.5_
+  - [ ] 8.9 Implement Dashboard API — performance metrics (basic)
+    - GET `/api/v1/dashboard/performance`: Calculate per-agent metrics (response time, conversion rate, active lead count, leads by source)
+    - Team summary: total leads by status/type, team conversion rate, average response time
+    - Filter by date range, city, leadType
+    - _Requirements: 19.5 (Team_Admin view)_
+  - [ ] 8.10 Implement Notification Worker Lambda (DynamoDB Streams trigger)
+    - Trigger on lead assignment events (new lead or status change)
+    - Format notification with: leadType, visitor name, contact method, city, timeframe, toolSource, inquiry summary
+    - Send email via SES within 60 seconds of assignment
+    - Send SMS if agent has SMS enabled
+    - Retry delivery up to 3 times with exponential backoff
+    - Send status update notifications to Team_Admin on status changes
+    - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.6 — Design: notification-worker Lambda_
+  - [ ] 8.11 Write property test for notification content completeness
+    - **Property 13: Notification Content Completeness**
+    - **Validates: Requirements 20.3**
+  - [ ] 8.12 Implement Listing Service Lambda (`listing-service`)
+    - POST `/api/v1/listing/start`: Create flat-fee listing record (status=draft), collect property details, trigger AI listing description
+    - POST `/api/v1/listing/payment`: Process Stripe payment, update listing status to paid, notify Team_Admin for MLS submission
+    - GET `/api/v1/dashboard/listings`: List flat-fee listings (admin)
+    - PATCH `/api/v1/dashboard/listings/{id}`: Update listing status (admin)
+    - Handle Stripe webhook for payment confirmation
+    - _Requirements: 17.2, 17.3, 17.4 — Design: listing-service Lambda_
+
+- [ ] 9. Checkpoint — Ensure all backend APIs compile and tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 10. Frontend foundation — Next.js setup, design system, shared components
+  - [ ] 10.1 Initialize Next.js project with TypeScript, Tailwind CSS, and shadcn/ui
+    - Create Next.js app with App Router, TypeScript strict mode
+    - Install and configure Tailwind CSS with MesaHomes design tokens
+    - Install shadcn/ui (Radix UI + Tailwind) for component library
+    - Configure responsive breakpoints: mobile (320-767px), tablet (768-1023px), desktop (1024px+)
+    - _Requirements: 1.1 — Frontend Design: Design System section_
+  - [ ] 10.2 Implement design system tokens and global styles
+    - Define color palette: primary #1B4D3E, secondary #F5A623, background #FFFFFF, surface #F8F9FA, text #1A1A1A, text-light #6B7280, success #10B981, warning #F59E0B, error #EF4444
+    - Configure typography: Inter/DM Sans for headings, Inter/system-ui for body, tabular figures for numbers
+    - Set up Tailwind theme extension with all design tokens
+    - _Requirements: 1.1 — Frontend Design: Colors, Typography sections_
+  - [ ] 10.3 Create shared layout components — Header, Footer, StickyContactBar
+    - `<Header />`: Logo, nav (Sell | Buy | Rent | Invest | Areas | Reviews), phone number link, "Talk to Agent" CTA button
+    - `<Footer />`: About, Contact, Privacy, Terms, Sitemap, area links, tool links, license info
+    - `<StickyContactBar />`: Mobile bottom bar with Call, Book Consult, Chat, Full Service buttons
+    - Responsive: header collapses to hamburger on mobile, sticky contact bar only on mobile
+    - _Requirements: 1.1, 1.7, 12.1 — Frontend Design: Homepage Layout header/footer_
+  - [ ] 10.4 Create `<FullServiceUpgradeBanner />` component
+    - Green banner displayed on every page: "Want a licensed agent to handle everything?" with [Switch to Full Service] CTA
+    - On click: open lead capture modal with name, contactMethod, currentIntent fields
+    - Submit to POST `/api/v1/leads` with tag="full-service-request"
+    - _Requirements: 1.7, 1.8 — Frontend Design: Full Service Upgrade pattern_
+  - [ ] 10.5 Create `<LeadCaptureModal />` reusable progressive disclosure component
+    - Configurable fields: name, email, phone, timeframe dropdown (Now, 30 days, 3 months, 6+ months), leadType
+    - Pre-fill leadType and toolSource based on calling context
+    - Client-side validation with field-level error messages
+    - Submit to POST `/api/v1/leads`
+    - Show success confirmation with "What's Next" recommendation
+    - _Requirements: 11.2, 11.6, 12.1, 12.2 — Frontend Design: Progressive Disclosure pattern_
+  - [ ] 10.6 Create `<ProgressIndicator />` and `<WhatsNextCard />` for guided decision engine
+    - `<ProgressIndicator />`: Shows completed steps (●), current step (●), remaining steps (○) in the guided path
+    - `<WhatsNextCard />`: Displays next recommended tool with explanation of why it matters
+    - Accept path definition and current progress as props
+    - _Requirements: 48.2, 48.7 — Frontend Design: Tool Page "WHAT'S NEXT" section_
+  - [ ] 10.7 Create `<SavingsCalculator />` inline component for homepage
+    - Accept sale price input, compute flat-fee vs traditional savings in real-time (client-side)
+    - Display: Traditional Agent cost, MesaHomes Flat Fee cost, YOU SAVE amount
+    - CTA buttons: "Start Your Flat-Fee Listing", "Learn More"
+    - _Requirements: 4.1, 4.2 — Frontend Design: Homepage SAVINGS CALCULATOR section_
+  - [ ] 10.8 Create `<MarketSnapshot />` component for homepage and city pages
+    - Display: Median Home Value, Days on Market, Sale-to-List ratio, Active Inventory
+    - Fetch data from GET `/api/v1/market/metro` and `/api/v1/market/zip/{zip}`
+    - City tab selector: Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley
+    - _Requirements: 15.1 — Frontend Design: Homepage LOCAL MARKET SNAPSHOT section_
+  - [ ] 10.9 Create `<PropertyDataCard />` component for tool pages
+    - Display Street View photo + property details (address, sqft, floors, year built, lot size, assessed value, last sale, subdivision, ZIP typical value)
+    - Fetch from POST `/api/v1/property/lookup`
+    - Show skeleton loading state while GIS API responds (~1-2s)
+    - _Requirements: 2.1, 3.1 — Frontend Design: Tool Page STREET VIEW PHOTO + PROPERTY DATA section_
+  - [ ] 10.10 Create `<NearbyComps />` component for tool pages
+    - Display recent sales in subdivision: address, price, date, sqft
+    - "View More Comps" link
+    - Data from property lookup response comps field
+    - _Requirements: 2.1 — Frontend Design: Tool Page NEARBY COMPS section_
+  - [ ] 10.11 Create `<FAQSection />` component with Schema.org FAQ markup
+    - Accept array of question/answer pairs
+    - Render as expandable accordion
+    - Output JSON-LD FAQ structured data for SEO
+    - _Requirements: 15.5, 16.2 — Frontend Design: City Page FAQ section_
+  - [ ] 10.12 Set up API client module for frontend-to-backend communication
+    - Create typed API client with fetch wrapper for all `/api/v1/*` endpoints
+    - Handle auth token storage (localStorage), auto-refresh on 401
+    - Include correlation ID forwarding for error tracing
+    - _Requirements: 45.4_
+
+- [ ] 11. Frontend pages — Homepage, tool pages, comparison page
+  - [ ] 11.1 Implement Homepage (`/`)
+    - Hero section: "What do you need?" with 4 intent cards (Sell, Buy, Rent, Invest) routing to /sell, /buy, /rent, /invest
+    - Quick tool links: "What's My Home Worth?", "How Much Can I Afford?", "Compare Flat Fee vs Agent", "Talk to Agent Now"
+    - Inline `<SavingsCalculator />` component
+    - "How It Works" 3-step section with icons
+    - Tool cards row: Seller Net Sheet, Buyer Affordability, Market Data
+    - `<MarketSnapshot />` component
+    - Social proof section with review cards
+    - Full Service Upgrade banner
+    - _Requirements: 1.1, 12.1, 12.2 — Frontend Design: Homepage Layout_
+  - [ ] 11.2 Implement Seller Net Sheet tool page (`/tools/net-sheet`)
+    - Calculator form above the fold: property address, estimated sale price, outstanding mortgage, service type radio (flat-fee/traditional)
+    - Teaser results: side-by-side flat-fee vs traditional with itemized deductions (shown immediately, no contact needed)
+    - Progressive disclosure gate: name, email, phone, timeframe → unlock full report + downloadable PDF
+    - `<PropertyDataCard />` and `<NearbyComps />` when address entered
+    - `<ProgressIndicator />` and `<WhatsNextCard />` for seller guided path
+    - FAQ section with net sheet questions
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 11.6 — Frontend Design: Tool Page Layout_
+  - [ ] 11.3 Implement Home Value Request page (`/tools/home-value`)
+    - Address input with service area validation
+    - Teaser: ZIP typical value range before contact info
+    - Lead capture form: name, email, phone, address
+    - Confirmation with estimated delivery timeframe
+    - `<PropertyDataCard />` when address entered
+    - _Requirements: 3.1, 3.2, 3.5_
+  - [ ] 11.4 Implement Buyer Affordability Calculator page (`/tools/affordability`)
+    - Calculator form: annual income, monthly debts, down payment, interest rate, loan term
+    - Teaser: estimated price range shown immediately
+    - Progressive disclosure: contact info → full report with 3 mortgage scenario comparisons
+    - Arizona down payment assistance program links
+    - `<ProgressIndicator />` for buyer guided path
+    - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
+  - [ ] 11.5 Implement AI Listing Generator page (`/tools/listing-generator`)
+    - Input form: bedrooms, bathrooms, sqft, lot size, year built, upgrades, neighborhood
+    - "Generating your listing description..." progress animation
+    - Display generated description with edit/regenerate buttons
+    - Lead capture on first generation if not already captured
+    - _Requirements: 5.1, 5.4, 5.5_
+  - [ ] 11.6 Implement AI Offer Writer page (`/tools/offer-writer`)
+    - Input form: property address, offered price, earnest money, financing type, contingencies, closing date
+    - Preview: key terms and conditions shown without contact info
+    - Progressive disclosure: contact info → full offer draft
+    - Legal disclaimer on every view
+    - Full Service Upgrade CTA for agent representation
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+  - [ ] 11.7 Implement Sell Now or Wait page (`/tools/sell-now-or-wait`)
+    - Input: ZIP code, estimated home value
+    - Analysis display: market indicators, trend charts, seasonal patterns
+    - CTA: request personalized consultation → lead capture with leadType=Seller
+    - _Requirements: 8.1, 8.3_
+  - [ ] 11.8 Implement Flat-Fee vs Traditional Comparison page (`/compare/flat-fee-vs-traditional-agent`)
+    - Sale price input → real-time cost comparison
+    - Side-by-side service tier breakdown (what's included in each)
+    - Dollar savings highlight
+    - CTAs: start flat-fee listing, request full-service consultation (both capture leads)
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 1.5_
+
+- [ ] 12. Frontend pages — intent landing pages, city pages, blog, content
+  - [ ] 12.1 Implement Seller landing page (`/sell`)
+    - Flat-fee listing CTA, full-service option, cash offer path, home value request
+    - Links to: net sheet, home value, listing generator, sell-now-or-wait, flat-fee comparison
+    - Lead capture form above the fold
+    - _Requirements: 1.2_
+  - [ ] 12.2 Implement Buyer landing page (`/buy`)
+    - Affordability calculator CTA, first-time buyer path, schedule consult
+    - Links to: affordability, offer writer, first-time buyer guide, offer guidance
+    - Lead capture form above the fold
+    - _Requirements: 1.2_
+  - [ ] 12.3 Implement Rent and Invest landing pages (`/rent`, `/invest`)
+    - Rent: for owners and renters, links to relevant tools
+    - Invest: for landlords and investors, links to relevant tools
+    - Lead capture forms on both
+    - _Requirements: 1.2_
+  - [ ] 12.4 Implement City Pages (`/areas/{slug}`) for all 6 cities
+    - Hero with city name, median home value, typical rent
+    - `<MarketSnapshot />` dashboard with 4 stat cards (median value, days on market, sale-to-list, inventory)
+    - ZIP code breakdown table with values and trends
+    - Neighborhood guide links
+    - Seller CTA and Buyer CTA sections
+    - `<FAQSection />` with city-specific questions and Schema.org markup
+    - Recent blog posts about the city
+    - Cities: Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, Apache Junction
+    - _Requirements: 1.3, 15.1, 15.2, 15.3, 15.5 — Frontend Design: City Page Layout_
+  - [ ] 12.5 Implement Blog listing page (`/blog`) and blog post page (`/blog/[slug]`)
+    - Blog listing: paginated list of published posts sorted by date
+    - Blog post: rendered Markdown body, SEO metadata (title tag, meta description, OG tags, canonical URL, JSON-LD Article)
+    - Contextual lead capture prompts based on post topic
+    - _Requirements: 16.1, 16.2, 16.4_
+  - [ ] 12.6 Write property test for blog post SEO metadata completeness
+    - **Property 20: Blog Post SEO Metadata Completeness**
+    - **Validates: Requirements 16.2**
+  - [ ] 12.7 Implement First-Time Buyer Guide page (`/buy/first-time-buyer`)
+    - Step-by-step Arizona home buying process walkthrough
+    - NAR policy changes explanation (August 17, 2024)
+    - Arizona down payment assistance programs and first-time buyer incentives
+    - Contextual CTAs: affordability calculator, buyer consultation, offer writer
+    - Lead capture with tag="first-time-buyer"
+    - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
+  - [ ] 12.8 Implement Offer Guidance and Contract Education section (`/buy/offer-guidance`)
+    - Section-by-section educational guides for: Purchase Contract, SPDS, BINSR, buyer-broker agreement, listing agreement
+    - Each section: what it covers, decisions needed, common mistakes, questions to ask
+    - Interactive input preparation worksheets (closing date, earnest money, contingencies, etc.)
+    - Legal disclaimer on EVERY page: "educational only, not legal advice"
+    - CTA on every page: connect with licensed agent/attorney
+    - Lead capture on worksheet completion with prepared inputs attached
+    - _Requirements: 49.1, 49.2, 49.3, 49.4, 49.5, 49.6_
+  - [ ] 12.9 Write property test for offer guidance disclaimer presence
+    - **Property 23: Offer Guidance Disclaimer Presence**
+    - **Validates: Requirements 49.4**
+  - [ ] 12.10 Implement Seller Decision Tools pages
+    - Listing prep checklist tool: customized by property type and price range (staging, repairs, photography, documentation)
+    - Showing feedback dashboard concept page with CTA to start flat-fee listing
+    - Offer comparison tool concept page with CTA to start flat-fee listing
+    - _Requirements: 8.2, 8.4, 8.5_
+  - [ ] 12.11 Implement Reviews page (`/reviews`)
+    - Display verified client testimonials and ratings
+    - Star ratings, savings totals, customer quotes
+    - _Requirements: 1.6_
+  - [ ] 12.12 Generate sitemap.xml including all published content
+    - Include: all blog posts, city pages, neighborhood guides, tool pages, market data pages
+    - Exclude: draft and archived content
+    - Auto-regenerate on content publish/unpublish
+    - _Requirements: 16.3_
+  - [ ] 12.13 Write property test for sitemap completeness
+    - **Property 21: Sitemap Completeness**
+    - **Validates: Requirements 16.3**
+  - [ ] 12.14 Implement server-side rendering and static generation for all public pages
+    - Use Next.js SSR/SSG for search engine crawlability
+    - Implement JSON-LD structured data on all pages (LocalBusiness, FAQ, Article, RealEstateListing)
+    - _Requirements: 16.5, 16.2_
+
+- [ ] 13. Checkpoint — Ensure all frontend pages render correctly and tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 14. Agent Dashboard — auth UI, lead management, team, notifications
+  - [ ] 14.1 Implement auth pages (`/auth/login`, `/auth/register`)
+    - Login form: email, password → POST `/api/v1/auth/login` → store tokens
+    - Register form: invite token validation, name, email, password → POST `/api/v1/auth/register`
+    - Handle account lockout display (429 response)
+    - Auto-redirect to dashboard on successful auth
+    - _Requirements: 18.1, 18.2, 18.3_
+  - [ ] 14.2 Implement Dashboard layout with sidebar navigation
+    - Sidebar: Leads, Team (admin only), Performance, Listings, Settings
+    - Header: agent name, notification bell with count, logout
+    - Responsive: sidebar collapses on mobile
+    - Auth guard: redirect to login if no valid token
+    - _Requirements: 19.1 — Frontend Design: Agent Dashboard Layout_
+  - [ ] 14.3 Implement Lead Overview and Lead Table (`/dashboard/leads`)
+    - Overview cards: count by status (New, Contacted, Showing, Under Contract, Closed)
+    - Lead table with columns: Name, Type, Source, Timeframe, Status
+    - Filters: Status, Type, Source, City/ZIP, Timeframe, Date range, Financing status
+    - Sort: Newest, Last updated, Status, Timeframe urgency
+    - Search by name/email
+    - Pagination
+    - _Requirements: 19.1, 19.2, 19.3, 19.5 — Frontend Design: Agent Dashboard LEAD TABLE_
+  - [ ] 14.4 Implement Lead Detail view (`/dashboard/leads/[id]`)
+    - Full lead info: contact details, city/ZIP, timeframe, price range, financing status
+    - Tool source and tool data display
+    - Path history visualization (guided decision engine steps)
+    - Status dropdown with update → PATCH `/api/v1/dashboard/leads/{id}`
+    - Notes section: add notes with agent attribution
+    - Action buttons: Call, Email, Schedule, Reassign
+    - Status history timeline
+    - _Requirements: 19.4, 19.6 — Frontend Design: Agent Dashboard LEAD DETAIL_
+  - [ ] 14.5 Implement Team Management page (`/dashboard/team`, admin only)
+    - Team roster: agent name, email, status, assigned lead count, specialties
+    - Invite agent form: email → POST `/api/v1/dashboard/team/invite`
+    - Deactivate agent action with confirmation
+    - _Requirements: 18.4_
+  - [ ] 14.6 Implement Notification Settings page (`/dashboard/settings`)
+    - Per-notification-type preferences: newLead, statusChange
+    - Options: email only, email + SMS, none
+    - Save → PUT `/api/v1/dashboard/notifications/settings`
+    - _Requirements: 20.5_
+  - [ ] 14.7 Implement Performance Metrics page (`/dashboard/performance`, admin only)
+    - Per-agent metrics: response time, conversion rate, active leads, leads by source
+    - Team summary: total leads by status/type, team conversion rate, avg response time
+    - Date range filter (default: last 30 days)
+    - _Requirements: 19.5_
+  - [ ] 14.8 Implement Flat-Fee Listings management page (`/dashboard/listings`, admin only)
+    - List all flat-fee listings with status (draft, payment-pending, paid, mls-pending, active, sold, cancelled)
+    - Update listing status
+    - _Requirements: 17.3, 17.4_
+
+- [ ] 15. Flat-Fee Listing Service — onboarding flow and Stripe integration
+  - [ ] 15.1 Implement flat-fee listing onboarding flow (`/listing/start`)
+    - Step 1: Property details entry (address, bedrooms, bathrooms, sqft, lot size, year built, upgrades)
+    - Step 2: AI listing description generation (using `/api/v1/ai/listing-description`)
+    - Step 3: Photo upload guidance
+    - Step 4: Pricing recommendation (based on comps from property lookup)
+    - Step 5: Payment via Stripe checkout
+    - Clear pricing display: flat fee + $400 broker transaction fee
+    - Comparison with Full_Service_Upgrade tier at every step
+    - _Requirements: 17.1, 17.2, 17.4_
+  - [ ] 15.2 Implement Stripe payment integration
+    - Create Stripe checkout session from listing-service Lambda
+    - Handle payment success → update listing status to "paid"
+    - Handle payment failure → display error, allow retry
+    - Stripe webhook handler for async payment confirmation
+    - Notify Team_Admin on successful payment for MLS submission
+    - _Requirements: 17.3 — Data Sources: §9 Stripe secrets_
+
+- [ ] 16. Guided Decision Engine — path logic, save/resume, risk detection
+  - [ ] 16.1 Implement guided decision path definitions and engine
+    - Define path sequences: Seller (Home Value → Net Sheet → Sell Now or Wait → Listing Prep → Flat-Fee or Full-Service), Buyer (Affordability → First-Time Guide → Offer Guidance → Offer Writer → Consult or Full-Service), Landlord (Rent Estimate → PM Pain Points → PM Overview → PM Sub or Consult), Investor (Cash-Flow Check → Market Comparison → Investment Consult)
+    - Engine: given current path and completed steps, determine next step
+    - "What This Means For You" plain-English summary generation for each tool result
+    - _Requirements: 48.1, 48.2, 48.4_
+  - [ ] 16.2 Write property test for guided path progression
+    - **Property 16: Guided Decision Path Progression**
+    - **Validates: Requirements 48.2, 48.7**
+  - [ ] 16.3 Implement path save/resume with email return link
+    - Save path state to DynamoDB: SCENARIO#{token} with tool inputs, results, path progress
+    - Generate unique return link, send via SES
+    - Resume: load saved state, restore all tool inputs and results
+    - TTL: 12 months
+    - Pass complete path history to lead record when lead is created
+    - _Requirements: 48.3, 48.6_
+  - [ ] 16.4 Write property test for guided path save/resume round-trip
+    - **Property 17: Guided Path Save/Resume Round-Trip**
+    - **Validates: Requirements 48.3**
+  - [ ] 16.5 Implement risk detection and Full Service Upgrade triggers
+    - Detect risk indicators: short sale, estate sale, investment property with tenants, first-time buyer with < 5% down payment
+    - Trigger Full_Service_Upgrade prompt with explanation of why professional help is recommended
+    - No false triggers for scenarios without risk indicators
+    - _Requirements: 48.5_
+  - [ ] 16.6 Write property test for risk detection
+    - **Property 18: Risk Detection in Guided Paths**
+    - **Validates: Requirements 48.5**
+
+- [ ] 17. Checkpoint — Ensure all features compile and tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 18. Event tracking, analytics, and lead capture UX polish
+  - [ ] 18.1 Implement event tracking on all lead capture touchpoints
+    - Track: form submissions, call clicks, chat initiations, valuation requests
+    - Log: page source, timestamp, visitor session ID
+    - UTM parameter capture and persistence in lead records
+    - _Requirements: 12.3, 12.4_
+  - [ ] 18.2 Implement calendar booking integration
+    - Booking form: name, email, phone, consultation type
+    - Create lead on booking submission
+    - _Requirements: 12.5_
+
+- [ ] 19. Deployment — S3, CloudFront, and production configuration
+  - [ ] 19.1 Configure Next.js build output for S3 + CloudFront deployment
+    - Build Next.js SSR output for S3 static hosting
+    - Configure CloudFront distribution E3TBTUT3LJLAAT with origins: S3 static + API Gateway
+    - HTTPS via existing ACM certificate
+    - Domain: mesahomes.com via Route 53
+    - _Requirements: 1.1 — Design: Deployment Architecture_
+  - [ ] 19.2 Deploy all Lambda functions with correct memory, timeout, and environment configuration
+    - Deploy 11 Lambda functions with configurations per design: leads-capture (256MB/10s), tools-calculator (256MB/10s), property-lookup (512MB/30s), market-data (256MB/5s), content-api (256MB/5s), ai-proxy (512MB/30s), listing-service (256MB/15s), auth-api (256MB/10s), dashboard-api (256MB/10s), data-pipeline (1024MB/300s), notification-worker (256MB/10s)
+    - Configure DynamoDB Streams trigger for notification-worker
+    - Configure EventBridge cron for data-pipeline
+    - _Requirements: 45.5 — Design: Lambda Function Organization table_
+  - [ ] 19.3 Run initial Zillow CSV data pipeline to populate market data
+    - Trigger data-pipeline Lambda manually to load initial market data
+    - Verify ZIP-level and metro-level records in DynamoDB
+    - _Requirements: 15.1, 8.1_
+  - [ ] 19.4 Seed initial content — city pages and blog posts
+    - Create city page records in DynamoDB for all 6 cities with current market data
+    - Create initial blog posts for SEO foundation
+    - Verify sitemap.xml generation
+    - _Requirements: 15.1, 16.1, 16.3_
+
+- [ ] 20. Final checkpoint — Full integration verification
+  - Ensure all tests pass, ask the user if questions arise.
+
+## Notes
+
+- All property-based test tasks are REQUIRED and must pass before proceeding to the next checkpoint
+- Each task references specific requirements for traceability
+- Checkpoints ensure incremental validation at logical breakpoints
+- Property tests validate the 23 correctness properties defined in the design document
+- Unit tests validate specific examples and edge cases
+- The design uses Node.js 20 for all Lambda functions and React/Next.js with TypeScript for the frontend
+- All API keys are stored in AWS Secrets Manager — never hardcoded
+- External data sources: Pinal County GIS (layer 3), Maricopa County GIS (layer 0), Zillow Research CSVs, Google Street View Static API
+- AI tasks (listing generation, offer writing, compliance filtering) proxy to local RTX 4090 via MCP server
