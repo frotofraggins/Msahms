@@ -73,23 +73,23 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Implement DynamoDB key generation for each entity type per design document patterns
     - _Requirements: 15.4, 16.1, 17.3, 18.4, 19.6, 48.3 — Design: Entity Key Patterns section_
 
-- [ ] 3. Checkpoint — Ensure all shared modules compile and tests pass
+- [x] 3. Checkpoint — Ensure all shared modules compile and tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 4. Data pipeline — Zillow CSV ingest and county GIS integration
-  - [ ] 4.1 Implement ZIP-to-county routing module
+- [-] 4. Data pipeline — Zillow CSV ingest and county GIS integration
+  - [x] 4.1 Implement ZIP-to-county routing module
     - Create `lib/county-router.ts` with `getCounty(zip)` function using PINAL_COUNTY_ZIPS set
     - Create `getAssessorEndpoint(county)` returning correct base URL and field mappings for Pinal (layer 3) and Maricopa (layer 0)
     - _Requirements: 3.1 — Data Sources: §5 ZIP Code → County Routing_
-  - [ ] 4.2 Write property test for ZIP county routing
+  - [x] 4.2 Write property test for ZIP county routing
     - **Property 8: Service Area ZIP Routing**
     - **Validates: Requirements 3.1**
-  - [ ] 4.3 Implement property data normalization module
+  - [x] 4.3 Implement property data normalization module
     - Create `lib/property-normalizer.ts` that maps Pinal fields (SITEADDRESS, SALEPRICE, RESFLRAREA, etc.) and Maricopa fields (PHYSICAL_ADDRESS, SALE_PRICE, LIVING_SPACE, etc.) to unified response model
     - Handle county-specific fields: floors/landValue (Pinal only), lat/lon/zoning (Maricopa only) — set null when unavailable
     - Convert lot size units: Pinal=acres, Maricopa=sqft
     - _Requirements: 2.1, 3.1 — Design: County Field Normalization table_
-  - [ ] 4.4 Write property test for property data normalization
+  - [x] 4.4 Write property test for property data normalization
     - **Property 9: Property Data Normalization**
     - **Validates: Requirements 2.1, 3.1**
   - [ ] 4.5 Implement Zillow CSV data pipeline Lambda (`data-pipeline`)
