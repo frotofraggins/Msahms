@@ -92,7 +92,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
   - [x] 4.4 Write property test for property data normalization
     - **Property 9: Property Data Normalization**
     - **Validates: Requirements 2.1, 3.1**
-  - [ ] 4.5 Implement Zillow CSV data pipeline Lambda (`data-pipeline`)
+  - [x] 4.5 Implement Zillow CSV data pipeline Lambda (`data-pipeline`)
     - Create EventBridge rule: cron `0 6 17 * ? *` (17th of each month, 6am UTC)
     - Download all 13 Zillow Research CSVs from `files.zillowstatic.com/research/public_csvs/`
     - Archive raw CSVs to `s3://mesahomes-data/zillow-raw/{YYYY-MM}/`

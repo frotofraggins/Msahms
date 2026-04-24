@@ -19,6 +19,6 @@
     "noFallthroughCasesInSwitch": true,
     "isolatedModules": true
   },
-  "include": ["lib/**/*", "infrastructure/**/*"],
+  "include": ["lib/**/*", "infrastructure/**/*", "lambdas/**/*"],
   "exclude": ["node_modules", "dist"]
 }
