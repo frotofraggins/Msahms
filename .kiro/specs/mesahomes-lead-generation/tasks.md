@@ -76,7 +76,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
 - [x] 3. Checkpoint — Ensure all shared modules compile and tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 4. Data pipeline — Zillow CSV ingest and county GIS integration
+- [x] 4. Data pipeline — Zillow CSV ingest and county GIS integration
   - [x] 4.1 Implement ZIP-to-county routing module
     - Create `lib/county-router.ts` with `getCounty(zip)` function using PINAL_COUNTY_ZIPS set
     - Create `getAssessorEndpoint(county)` returning correct base URL and field mappings for Pinal (layer 3) and Maricopa (layer 0)
@@ -103,7 +103,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Write LATEST pointers for each ZIP and metric
     - Log record counts and parsing errors to CloudWatch
     - _Requirements: 15.1, 8.1 — Design: Zillow Research CSV Monthly Ingest, Data Sources: §3 Zillow Research CSVs_
-  - [ ] 4.6 Implement property lookup Lambda (`property-lookup`)
+  - [x] 4.6 Implement property lookup Lambda (`property-lookup`)
     - Parse incoming address → streetNum, streetName, zip
     - Route by ZIP to correct county GIS endpoint
     - Query 1: Address lookup (SITEADDRESS/PHYSICAL_ADDRESS LIKE pattern)
@@ -115,7 +115,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Cache assembled response in DynamoDB with 24h TTL (PROPERTY#{normalizedAddress} / LOOKUP)
     - Check DynamoDB cache first before external queries
     - _Requirements: 2.1, 3.1 — Design: Property Lookup Flow, Data Sources: §1 Pinal County, §2 Maricopa County, §6 Complete Address Lookup Flow_
-  - [ ] 4.7 Implement Google Street View photo caching in property lookup
+  - [x] 4.7 Implement Google Street View photo caching in property lookup
     - Check S3 cache first: `streetview/{zip}/{normalized-address}.jpg`
     - If cache miss: call Street View Metadata API (free, unlimited) to check availability
     - If photo exists: fetch image at 600x400, store in S3, return URL
