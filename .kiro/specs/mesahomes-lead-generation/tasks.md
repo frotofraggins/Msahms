@@ -161,35 +161,35 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - **Property 19: Sell Now or Wait Analysis Uses Correct Market Data**
     - **Validates: Requirements 8.1**
 
-- [-] 6. Backend APIs — lead capture, AI proxy, content, market data
-  - [-] 6.1 Implement Lead Capture Lambda (`leads-capture`, `/api/v1/leads`)
+- [x] 6. Backend APIs — lead capture, AI proxy, content, market data
+  - [x] 6.1 Implement Lead Capture Lambda (`leads-capture`, `/api/v1/leads`)
     - Validate all required fields (name, email, phone, city, timeframe, leadType) using shared validation module
     - Return field-level validation errors for invalid/missing fields (400 VALIDATION_ERROR)
     - Create Lead record in DynamoDB with status=New, timestamp, toolSource, all metadata
     - Implement progressive disclosure: accept partial tool results without contact info, require contact info for full results
     - Retry DynamoDB write up to 3 times with exponential backoff on failure
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6 — Design: leads-capture Lambda_
-  - [ ] 6.2 Write property test for lead creation metadata correctness
+  - [x] 6.2 Write property test for lead creation metadata correctness
     - **Property 6: Lead Creation Metadata Correctness**
     - **Validates: Requirements 2.5, 3.3, 5.5, 6.3, 7.4, 11.3**
-  - [ ] 6.3 Implement Home Value Request endpoint (`leads-capture`, `/api/v1/valuation-request`)
+  - [x] 6.3 Implement Home Value Request endpoint (`leads-capture`, `/api/v1/valuation-request`)
     - Accept: name, email, phone, propertyAddress
     - Validate address is within Mesa metro service area
     - Create Lead with leadType=Seller, toolSource="home-value"
     - Send confirmation email via SES within 60 seconds
     - Return teaser range from ZIP-level ZHVI data ("Homes in your ZIP typically sell for $X–$Y")
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
-  - [ ] 6.4 Implement consultation booking endpoint (`leads-capture`, `/api/v1/booking`)
+  - [x] 6.4 Implement consultation booking endpoint (`leads-capture`, `/api/v1/booking`)
     - Accept: name, phone, email, intent (buying/selling/renting/investing)
     - Create Lead with toolSource="direct-consult", tag="hot-direct-consult"
     - Trigger immediate agent notification via SES
     - _Requirements: 1.9_
-  - [ ] 6.5 Implement full-service upgrade lead capture
+  - [x] 6.5 Implement full-service upgrade lead capture
     - Accept: name, contactMethod, currentIntent
     - Create Lead with tag="full-service-request"
     - Route to CRM system
     - _Requirements: 1.8_
-  - [ ] 6.6 Implement AI Proxy Lambda (`ai-proxy`) for listing description generation
+  - [x] 6.6 Implement AI Proxy Lambda (`ai-proxy`) for listing description generation
     - Accept: bedrooms, bathrooms, sqft, lotSize, yearBuilt, upgrades, neighborhood
     - Proxy request to local RTX 4090 via MCP server
     - Validate output: non-empty, 100-2000 chars, references bedroom/bathroom count
@@ -197,7 +197,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Allow regeneration and editing
     - Create Lead (toolSource="listing-generator") if visitor not already captured
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5 — Design: ai-proxy Lambda_
-  - [ ] 6.7 Implement AI Proxy for offer draft generation (`/api/v1/ai/offer-draft`)
+  - [x] 6.7 Implement AI Proxy for offer draft generation (`/api/v1/ai/offer-draft`)
     - Accept: propertyAddress, offeredPrice, earnestMoney, financingType, contingencies, closingDate
     - Proxy to RTX 4090 MCP server
     - Return preview (key terms) without contact info, full draft after lead capture
@@ -205,50 +205,50 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Include Full_Service_Upgrade CTA
     - Create Lead (toolSource="offer-writer") on contact info submission
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
-  - [ ] 6.8 Implement compliance filter module for AI-generated content
+  - [x] 6.8 Implement compliance filter module for AI-generated content
     - Scan text for Fair Housing Act prohibited terms (race, color, religion, sex, national origin, familial status, disability)
     - Detect steering language
     - Return flagged terms with locations, or empty flags for clean text
     - _Requirements: 5.2, 5.3 — Design: Property 10_
-  - [ ] 6.9 Write property test for compliance filter
+  - [x] 6.9 Write property test for compliance filter
     - **Property 10: AI-Generated Content Compliance Filter**
     - **Validates: Requirements 5.2, 5.3**
-  - [ ] 6.10 Write property test for AI output structural validity
+  - [x] 6.10 Write property test for AI output structural validity
     - **Property 11: AI Output Structural Validity**
     - **Validates: Requirements 5.1, 6.1, 6.4**
-  - [ ] 6.11 Implement Market Data Lambda (`market-data`)
+  - [x] 6.11 Implement Market Data Lambda (`market-data`)
     - GET `/api/v1/market/zip/{zip}`: Read ZHVI, trend, previous month from DynamoDB (MARKET#ZIP#{zip} → ZHVI#LATEST)
     - GET `/api/v1/market/metro`: Read all metro metrics from DynamoDB (MARKET#METRO#phoenix-mesa → multiple LATEST records)
     - _Requirements: 15.1 — Design: market-data Lambda_
-  - [ ] 6.12 Implement Content API Lambda (`content-api`)
+  - [x] 6.12 Implement Content API Lambda (`content-api`)
     - GET `/api/v1/content/city/{slug}`: Read city page data from DynamoDB (CONTENT#CITY#{slug})
     - GET `/api/v1/content/blog`: List published blog posts sorted by date (GSI1: CONTENT#BLOG / #{publishDate})
     - GET `/api/v1/content/blog/{slug}`: Read single blog post (CONTENT#BLOG#{slug})
     - Support CRUD for blog posts: title, body (Markdown), author, publishDate, category, city, zips, metaDescription, tags, status
     - _Requirements: 15.4, 16.1 — Design: Content Records entity key patterns_
 
-- [ ] 7. Checkpoint — Ensure all backend APIs compile and tests pass
+- [x] 7. Checkpoint — Ensure all backend APIs compile and tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 8. Backend APIs — authentication, dashboard, notifications, listing service
-  - [ ] 8.1 Implement Auth API Lambda (`auth-api`)
+- [-] 8. Backend APIs — authentication, dashboard, notifications, listing service
+  - [x] 8.1 Implement Auth API Lambda (`auth-api`)
     - POST `/api/v1/auth/login`: Cognito AdminInitiateAuth (USER_PASSWORD_AUTH), return JWT tokens
     - POST `/api/v1/auth/refresh`: Cognito REFRESH_TOKEN_AUTH, return new access/id tokens
     - POST `/api/v1/auth/register`: Validate invite token from DynamoDB, create Cognito user, update agent record to active
     - Implement account lockout: track failed attempts in DynamoDB, lock after 3 consecutive failures for 15 minutes, reset counter on success
     - _Requirements: 18.1, 18.2, 18.3 — Design: Authentication Flow section_
-  - [ ] 8.2 Write property test for auth lockout behavior
+  - [x] 8.2 Write property test for auth lockout behavior
     - **Property 14: Auth Lockout Behavior**
     - **Validates: Requirements 18.3**
-  - [ ] 8.3 Implement API Gateway Cognito authorizer with role-based permissions
+  - [x] 8.3 Implement API Gateway Cognito authorizer with role-based permissions
     - Validate JWT, extract claims (sub, email, custom:role, custom:teamId)
     - Enforce permission matrix: Agent sees own leads, Team_Admin sees all team leads
     - Return 401 for unauthenticated, 403 for insufficient permissions
     - _Requirements: 18.4, 18.5 — Design: Permission Matrix_
-  - [ ] 8.4 Write property test for permission enforcement
+  - [x] 8.4 Write property test for permission enforcement
     - **Property 15: Permission Enforcement**
     - **Validates: Requirements 18.4, 18.5**
-  - [ ] 8.5 Implement Dashboard API Lambda (`dashboard-api`) — lead management
+  - [x] 8.5 Implement Dashboard API Lambda (`dashboard-api`) — lead management
     - GET `/api/v1/dashboard/leads`: List leads with filters (status, type, source, city/ZIP, timeframe, date range, financing) and sort (createdAt, updatedAt, status, timeframe urgency)
     - GET `/api/v1/dashboard/leads/{id}`: Full lead detail with tool data, status history, notes
     - PATCH `/api/v1/dashboard/leads/{id}`: Update lead status, add notes — persist to DynamoDB, return updated record within 1 second
