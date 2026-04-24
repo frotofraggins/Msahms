@@ -93,7 +93,7 @@ The model is explicitly told NOT to use these. If any slip through,
 
 ## What buyers actually want in a listing description (2026 evidence)
 
-From NAR + Saleswise + Placester + Realtor.com guidance:
+From NAR + Saleswise + Placester + Realtor.com + Zillow research:
 
 - **First two lines decide everything.** Buyer has seen photos + price +
   specs. Description must differentiate in a sentence.
@@ -107,6 +107,53 @@ From NAR + Saleswise + Placester + Realtor.com guidance:
   renovation receipts, mechanicals (HVAC age, water heater age, roof age).
 - **End with a concrete next step.** Not "don't miss" — use "Schedule a
   private showing" or "Tour Saturday 10am-noon."
+
+### Length — what MLS systems and buyers actually allow
+
+- **Zillow and ARMLS hard cap: ~250 words.** Longer gets truncated in
+  portal displays.
+- **Buyer engagement drops sharply past ~200 words.** Skim behavior:
+  most users read the first 3 sentences and the bulleted features.
+- **Our sweet spot: 120-180 words.** Tight enough to stay above the
+  "read more" fold on mobile, long enough to carry 3-5 concrete features
+  plus a lifestyle sentence. If a listing truly needs 200-250, the
+  extra 70 words should be specific mechanical/renovation detail,
+  not adjectives.
+
+### Words that measurably move sale price (Zillow research + 2026 data)
+
+Not "make the buyer happy" — words with statistical correlation to
+higher-than-expected sale prices when present in MLS descriptions
+(after controlling for property value). Safe to use; recommend.
+
+**Feature-driven premiums (from Zillow 2026 Home Features Report — actual
+sale-price lift):**
+
+| Feature mentioned | Price lift vs expected |
+|-------------------|-----------------------|
+| Dock | +5.4% |
+| Outdoor kitchen | +4.4% |
+| Outdoor shower | +4.3% |
+| "Cottage" (style term) | +3.2% |
+| Outdoor fireplace | +2.8% |
+| Pergola | +2.2% (sells 3 days faster too) |
+
+**Descriptive words with price-lift correlation** (Zillow Talk research,
+still holds per 2026 confirmations): "luxurious", "captivating",
+"landscaped", "updated", "upgraded", "renovated", "custom", "granite",
+"quartz", "stainless steel".
+
+**Rule for our prompt:** the model should use feature-premium words
+when they're TRUE (home actually has a dock, pergola, etc.) and never
+invent them. When describing genuinely high-end finishes, prefer
+"renovated" or "updated" over "stunning" or "must see."
+
+Update the listing-description prompt's OUTPUT REQUIREMENTS to add:
+
+> If the property facts include any of: dock, outdoor kitchen, outdoor
+> shower, outdoor fireplace, pergola, or renovated/updated kitchen
+> or bath — mention the feature by name in the first or second sentence.
+> These features carry buyer-engagement premiums when explicitly cited.
 
 ---
 
