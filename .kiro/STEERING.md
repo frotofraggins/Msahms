@@ -116,17 +116,23 @@ Maricopa (everything else).
 
 ## Quality bars (non-negotiable)
 
-1. `npx tsc --noEmit` returns 0 errors before every commit. No `// @ts-nocheck`.
+1. **Research first, then build.** Before implementing any non-trivial
+   algorithm, scoring system, data model, or API pattern, use the available
+   MCP/web-search tools to check how others solve the problem. Adopt the
+   accepted convention unless we have a documented reason to deviate. Only
+   invent something new when nothing out there fits. Cite the source in the
+   code docstring or commit message.
+2. `npx tsc --noEmit` returns 0 errors before every commit. No `// @ts-nocheck`.
    No `as any` in source code. In tests, prefer making mocks satisfy the real
    interface over casting.
-2. `npx vitest run` passes 100%. No skipped tests in main without a linked issue.
-3. No bare `except` / `catch(e)` without at least `console.error(e)` — hot
+3. `npx vitest run` passes 100%. No skipped tests in main without a linked issue.
+4. No bare `except` / `catch(e)` without at least `console.error(e)` — hot
    polling paths (system metrics, WebSocket send to dead client) excluded.
-4. Every Lambda has: a unit test, a property test (if logic is non-trivial),
+5. Every Lambda has: a unit test, a property test (if logic is non-trivial),
    and a co-located index test exercising the handler.
-5. Every shared lib has: unit tests. Property tests encouraged for anything
+6. Every shared lib has: unit tests. Property tests encouraged for anything
    with invariants (validators, serializers).
-6. UTF-8, LF line endings, no BOM. (We've been burned by UTF-16 `.gitignore`.)
+7. UTF-8, LF line endings, no BOM. (We've been burned by UTF-16 `.gitignore`.)
 
 ## Process rules
 
@@ -142,6 +148,45 @@ Maricopa (everything else).
 5. **Property tests validate real properties, not examples**. If it's just
    "with these inputs, expect this output," it's a unit test. Property tests
    use `fc.assert(fc.property(...))`.
+
+## Research workflow (mandatory before non-trivial work)
+
+We have MCP/web-search tools available. Use them. We don't reinvent wheels
+when a well-documented convention exists.
+
+Before you implement:
+
+1. **Does an industry-standard methodology exist?** (ZHVI, Zillow Market Heat
+   Index, HUD definitions, NAR practice, RESO MLS schemas, ArcGIS REST
+   conventions, etc.) If yes — adopt the convention. Cite the source in a
+   docstring.
+2. **Does an open-source reference implementation exist?** (crates, npm
+   packages, GitHub repos.) If yes and the license is compatible — use it.
+   If the license isn't compatible but the approach is public — re-implement
+   with attribution in the commit message.
+3. **Is this genuinely novel?** (Rare — maybe the combination of county data
+   + flat-fee economics + guided decision path.) Then build it, but document
+   what research you did and why nothing existing fit.
+4. **Cite in code, not just in commits.** Future readers see the docstring
+   first. Commit messages are archaeology.
+
+Anti-pattern (do not do this):
+- Implement first, realize something standard exists, retrofit. That's what
+  I did for market-signals.ts (commit 151f42e) and it forced a follow-up
+  alignment commit (119f294) to map my home-grown scale to Zillow's published
+  0-100 convention. If I'd spent 10 minutes researching first, I'd have saved
+  an hour.
+
+Good examples of research-first done right in this repo:
+- `lib/county-router.ts` — checked Pinal + Maricopa ArcGIS schemas before
+  writing field mappings.
+- `lib/errors.ts` — modeled after AWS Lambda proxy integration error shape
+  documented in API Gateway docs.
+- `lib/retry.ts` — exponential backoff + jitter per AWS SDK defaults.
+
+MCP tools available to Kiro agents include web search (`web_search`), web
+fetch (`web_fetch`), internal search for Amazon-specific docs, code search,
+and more. If you don't see the tool you need, ask the human.
 
 ## Structural debt to address before Task 10 (frontend)
 

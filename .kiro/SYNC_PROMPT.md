@@ -111,6 +111,12 @@ push your claim, they can't see it.
 ## Step 8 — Work
 Rules while working:
 - Only edit files listed in your claim.
+- **Research first.** Before implementing any non-trivial algorithm, scoring
+  system, data model, or API integration, use `web_search` / `web_fetch` (or
+  other MCP tools) to check for an industry-standard approach or reference
+  implementation. Adopt the convention unless you have a documented reason to
+  deviate. Cite sources in docstrings, not just commit messages. Building
+  first and retrofitting standards later costs more.
 - Never edit anything in `lib/`, `lib/types/`, `lib/models/`, `infrastructure/`,
   or other shared modules unless that's your claimed task. If you need a change
   there, stop and add a row to `Handoffs Needed` in your AGENTS.md.
