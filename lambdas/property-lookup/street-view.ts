@@ -16,7 +16,6 @@ import {
   uploadFile,
   getSignedUrl,
   PHOTOS_BUCKET,
-  normalizeAddressForKey,
   getStreetViewCacheKey,
 } from '../../lib/s3.js';
 

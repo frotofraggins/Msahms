@@ -124,40 +124,40 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Set CloudWatch alarm at 8,000 Street View requests/month
     - _Requirements: 2.1 — Data Sources: §8 Google Street View, Photo Caching Strategy_
 
-- [ ] 5. Backend APIs — tool calculators
-  - [ ] 5.1 Implement Seller Net Sheet Calculator (`tools-calculator` Lambda, `/api/v1/tools/net-sheet`)
+- [x] 5. Backend APIs — tool calculators
+  - [x] 5.1 Implement Seller Net Sheet Calculator (`tools-calculator` Lambda, `/api/v1/tools/net-sheet`)
     - Accept: salePrice, outstandingMortgage, serviceType (flat-fee | traditional)
     - Compute deductions: agent commission (flat fee or 5-6%), broker fee ($400), title/escrow, transfer taxes, prorated property taxes, mortgage payoff, repair credits
     - Return: itemized deductions, net proceeds, side-by-side flat-fee vs traditional comparison
     - Respond within 2 seconds (client-side math, no external API calls)
     - _Requirements: 2.1, 2.2, 2.3 — Design: Property 1_
-  - [ ] 5.2 Write property test for net sheet calculation integrity
+  - [x] 5.2 Write property test for net sheet calculation integrity
     - **Property 1: Net Sheet Calculation Integrity**
     - **Validates: Requirements 2.1, 2.2, 2.3**
-  - [ ] 5.3 Implement Buyer Affordability Calculator (`tools-calculator` Lambda, `/api/v1/tools/affordability`)
+  - [x] 5.3 Implement Buyer Affordability Calculator (`tools-calculator` Lambda, `/api/v1/tools/affordability`)
     - Accept: annualIncome, monthlyDebts, downPayment, interestRate, loanTerm
     - Compute: maximum purchase price (28% front-end DTI), estimated monthly payment, DTI ratio
     - Generate 3 mortgage scenarios with varying parameters
     - Include links to Arizona down payment assistance programs
     - _Requirements: 7.1, 7.3, 7.5 — Design: Property 2_
-  - [ ] 5.4 Write property test for affordability calculator consistency
+  - [x] 5.4 Write property test for affordability calculator consistency
     - **Property 2: Affordability Calculator Mathematical Consistency**
     - **Validates: Requirements 7.1, 7.3**
-  - [ ] 5.5 Implement Flat-Fee vs Traditional Comparison (`tools-calculator` Lambda, `/api/v1/tools/comparison`)
+  - [x] 5.5 Implement Flat-Fee vs Traditional Comparison (`tools-calculator` Lambda, `/api/v1/tools/comparison`)
     - Accept: estimatedSalePrice
     - Compute: flat-fee total (flat fee + $400 broker + buyer agent commission), traditional total (5-6% commission), dollar savings
     - Include service tier descriptions (what's included in each)
     - _Requirements: 4.1, 4.2, 4.3 — Design: Property 3_
-  - [ ] 5.6 Write property test for flat-fee vs traditional savings
+  - [x] 5.6 Write property test for flat-fee vs traditional savings
     - **Property 3: Flat-Fee vs Traditional Comparison Savings**
     - **Validates: Requirements 4.1, 4.2**
-  - [ ] 5.7 Implement Sell Now or Wait Analysis (`tools-calculator` Lambda, `/api/v1/tools/sell-now-or-wait`)
+  - [x] 5.7 Implement Sell Now or Wait Analysis (`tools-calculator` Lambda, `/api/v1/tools/sell-now-or-wait`)
     - Accept: zip, estimatedHomeValue
     - Read ZIP-level data from DynamoDB: ZHVI, trend direction, 6-month change
     - Read metro-level data: median sale price, days on market, inventory, price cuts %, sale-to-list ratio, seasonal patterns
     - Generate analysis incorporating all market indicators
     - _Requirements: 8.1 — Design: Property 19_
-  - [ ] 5.8 Write property test for sell-now-or-wait market data correctness
+  - [x] 5.8 Write property test for sell-now-or-wait market data correctness
     - **Property 19: Sell Now or Wait Analysis Uses Correct Market Data**
     - **Validates: Requirements 8.1**
 

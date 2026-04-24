@@ -12,7 +12,6 @@ import { getCounty } from '../../lib/county-router.js';
 import {
   normalizePropertyRecord,
   type NormalizedProperty,
-  type RawRecord,
 } from '../../lib/property-normalizer.js';
 import { getItem, putItem } from '../../lib/dynamodb.js';
 import { normalizeAddressForKey } from '../../lib/s3.js';
@@ -26,7 +25,7 @@ import {
 } from '../../lib/errors.js';
 import { generatePropertyCacheKeys } from '../../lib/models/keys.js';
 import type { MarketDataZip } from '../../lib/types/market.js';
-import type { EntityType } from '../../lib/types/dynamodb.js';
+import { EntityType } from '../../lib/types/dynamodb.js';
 import {
   queryPropertyByAddress,
   queryCompsBySubdivision,
@@ -277,7 +276,7 @@ async function handleLookup(body: LookupRequestBody): Promise<PropertyLookupResp
   const ttl = Math.floor(Date.now() / 1000) + CACHE_TTL_SECONDS;
   await putItem({
     ...cacheKeys,
-    entityType: 'PROPERTY_CACHE' as unknown as EntityType,
+    entityType: EntityType.PROPERTY_CACHE,
     data: response as unknown as Record<string, unknown>,
     ttl,
     createdAt: new Date().toISOString(),

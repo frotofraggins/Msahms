@@ -11,7 +11,6 @@ import {
   getCounty,
   getAssessorEndpoint,
   PINAL_COUNTY_ZIPS,
-  type County,
   type AssessorEndpoint,
 } from './county-router.js';
 

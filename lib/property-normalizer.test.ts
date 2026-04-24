@@ -3,7 +3,6 @@ import {
   normalizePropertyRecord,
   toStringOrNull,
   toNumberOrNull,
-  type NormalizedProperty,
 } from './property-normalizer.js';
 
 // ---------------------------------------------------------------------------

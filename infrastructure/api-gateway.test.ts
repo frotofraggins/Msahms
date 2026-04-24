@@ -8,7 +8,6 @@ import {
   BASE_PATH,
   API_REGION,
   cognitoAuthorizer,
-  type RouteDefinition,
 } from './api-gateway.js';
 
 describe('API Gateway configuration', () => {
