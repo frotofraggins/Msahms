@@ -230,7 +230,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
 - [x] 7. Checkpoint — Ensure all backend APIs compile and tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 8. Backend APIs — authentication, dashboard, notifications, listing service
+- [x] 8. Backend APIs — authentication, dashboard, notifications, listing service
   - [x] 8.1 Implement Auth API Lambda (`auth-api`)
     - POST `/api/v1/auth/login`: Cognito AdminInitiateAuth (USER_PASSWORD_AUTH), return JWT tokens
     - POST `/api/v1/auth/refresh`: Cognito REFRESH_TOKEN_AUTH, return new access/id tokens
@@ -254,19 +254,19 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - PATCH `/api/v1/dashboard/leads/{id}`: Update lead status, add notes — persist to DynamoDB, return updated record within 1 second
     - Agent: filter by assignedAgentId; Team_Admin: see all team leads
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.6 — Design: dashboard-api Lambda_
-  - [ ] 8.6 Write property test for dashboard lead query correctness
+  - [x] 8.6 Write property test for dashboard lead query correctness
     - **Property 12: Dashboard Lead Query Correctness**
     - **Validates: Requirements 19.1, 19.2, 19.3, 19.5**
-  - [ ] 8.7 Implement Dashboard API — team management endpoints
+  - [x] 8.7 Implement Dashboard API — team management endpoints
     - GET `/api/v1/dashboard/team`: List team agents (admin only)
     - POST `/api/v1/dashboard/team/invite`: Create pending agent record, send invite email via SES
     - PATCH `/api/v1/dashboard/team/{agentId}`: Deactivate agent, reassign open leads to Team_Admin
     - _Requirements: 18.4 (Team_Admin permissions) — Design: Invite-Only Agent Registration flow_
-  - [ ] 8.8 Implement Dashboard API — notification preferences
+  - [x] 8.8 Implement Dashboard API — notification preferences
     - GET `/api/v1/dashboard/notifications/settings`: Read agent notification prefs from DynamoDB (AGENT#{agentId} / NOTIF_PREFS)
     - PUT `/api/v1/dashboard/notifications/settings`: Update prefs (newLead: email|email-sms|none, statusChange: email|email-sms|none)
     - _Requirements: 20.5_
-  - [ ] 8.9 Implement Dashboard API — performance metrics (basic)
+  - [x] 8.9 Implement Dashboard API — performance metrics (basic)
     - GET `/api/v1/dashboard/performance`: Calculate per-agent metrics (response time, conversion rate, active lead count, leads by source)
     - Team summary: total leads by status/type, team conversion rate, average response time
     - Filter by date range, city, leadType
@@ -282,7 +282,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
   - [x] 8.11 Write property test for notification content completeness
     - **Property 13: Notification Content Completeness**
     - **Validates: Requirements 20.3**
-  - [-] 8.12 Implement Listing Service Lambda (`listing-service`)
+  - [x] 8.12 Implement Listing Service Lambda (`listing-service`)
     - POST `/api/v1/listing/start`: Create flat-fee listing record (status=draft), collect property details, trigger AI listing description
     - POST `/api/v1/listing/payment`: Process Stripe payment, update listing status to paid, notify Team_Admin for MLS submission
     - GET `/api/v1/dashboard/listings`: List flat-fee listings (admin)
