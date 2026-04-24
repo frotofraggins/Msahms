@@ -359,8 +359,8 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Include correlation ID forwarding for error tracing
     - _Requirements: 45.4_
 
-- [-] 11. Frontend pages — Homepage, tool pages, comparison page
-  - [ ] 11.1 Implement Homepage (`/`)
+- [x] 11. Frontend pages — Homepage, tool pages, comparison page
+  - [x] 11.1 Implement Homepage (`/`)
     - Hero section: "What do you need?" with 4 intent cards (Sell, Buy, Rent, Invest) routing to /sell, /buy, /rent, /invest
     - Quick tool links: "What's My Home Worth?", "How Much Can I Afford?", "Compare Flat Fee vs Agent", "Talk to Agent Now"
     - Inline `<SavingsCalculator />` component
@@ -370,7 +370,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Social proof section with review cards
     - Full Service Upgrade banner
     - _Requirements: 1.1, 12.1, 12.2 — Frontend Design: Homepage Layout_
-  - [ ] 11.2 Implement Seller Net Sheet tool page (`/tools/net-sheet`)
+  - [x] 11.2 Implement Seller Net Sheet tool page (`/tools/net-sheet`)
     - Calculator form above the fold: property address, estimated sale price, outstanding mortgage, service type radio (flat-fee/traditional)
     - Teaser results: side-by-side flat-fee vs traditional with itemized deductions (shown immediately, no contact needed)
     - Progressive disclosure gate: name, email, phone, timeframe → unlock full report + downloadable PDF
@@ -378,62 +378,62 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - `<ProgressIndicator />` and `<WhatsNextCard />` for seller guided path
     - FAQ section with net sheet questions
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 11.6 — Frontend Design: Tool Page Layout_
-  - [ ] 11.3 Implement Home Value Request page (`/tools/home-value`)
+  - [x] 11.3 Implement Home Value Request page (`/tools/home-value`)
     - Address input with service area validation
     - Teaser: ZIP typical value range before contact info
     - Lead capture form: name, email, phone, address
     - Confirmation with estimated delivery timeframe
     - `<PropertyDataCard />` when address entered
     - _Requirements: 3.1, 3.2, 3.5_
-  - [ ] 11.4 Implement Buyer Affordability Calculator page (`/tools/affordability`)
+  - [x] 11.4 Implement Buyer Affordability Calculator page (`/tools/affordability`)
     - Calculator form: annual income, monthly debts, down payment, interest rate, loan term
     - Teaser: estimated price range shown immediately
     - Progressive disclosure: contact info → full report with 3 mortgage scenario comparisons
     - Arizona down payment assistance program links
     - `<ProgressIndicator />` for buyer guided path
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
-  - [ ] 11.5 Implement AI Listing Generator page (`/tools/listing-generator`)
+  - [x] 11.5 Implement AI Listing Generator page (`/tools/listing-generator`)
     - Input form: bedrooms, bathrooms, sqft, lot size, year built, upgrades, neighborhood
     - "Generating your listing description..." progress animation
     - Display generated description with edit/regenerate buttons
     - Lead capture on first generation if not already captured
     - _Requirements: 5.1, 5.4, 5.5_
-  - [ ] 11.6 Implement AI Offer Writer page (`/tools/offer-writer`)
+  - [x] 11.6 Implement AI Offer Writer page (`/tools/offer-writer`)
     - Input form: property address, offered price, earnest money, financing type, contingencies, closing date
     - Preview: key terms and conditions shown without contact info
     - Progressive disclosure: contact info → full offer draft
     - Legal disclaimer on every view
     - Full Service Upgrade CTA for agent representation
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
-  - [ ] 11.7 Implement Sell Now or Wait page (`/tools/sell-now-or-wait`)
+  - [x] 11.7 Implement Sell Now or Wait page (`/tools/sell-now-or-wait`)
     - Input: ZIP code, estimated home value
     - Analysis display: market indicators, trend charts, seasonal patterns
     - CTA: request personalized consultation → lead capture with leadType=Seller
     - _Requirements: 8.1, 8.3_
-  - [ ] 11.8 Implement Flat-Fee vs Traditional Comparison page (`/compare/flat-fee-vs-traditional-agent`)
+  - [x] 11.8 Implement Flat-Fee vs Traditional Comparison page (`/compare/flat-fee-vs-traditional-agent`)
     - Sale price input → real-time cost comparison
     - Side-by-side service tier breakdown (what's included in each)
     - Dollar savings highlight
     - CTAs: start flat-fee listing, request full-service consultation (both capture leads)
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 1.5_
 
-- [ ] 12. Frontend pages — intent landing pages, city pages, blog, content
-  - [ ] 12.1 Implement Seller landing page (`/sell`)
+- [x] 12. Frontend pages — intent landing pages, city pages, blog, content
+  - [x] 12.1 Implement Seller landing page (`/sell`)
     - Flat-fee listing CTA, full-service option, cash offer path, home value request
     - Links to: net sheet, home value, listing generator, sell-now-or-wait, flat-fee comparison
     - Lead capture form above the fold
     - _Requirements: 1.2_
-  - [ ] 12.2 Implement Buyer landing page (`/buy`)
+  - [x] 12.2 Implement Buyer landing page (`/buy`)
     - Affordability calculator CTA, first-time buyer path, schedule consult
     - Links to: affordability, offer writer, first-time buyer guide, offer guidance
     - Lead capture form above the fold
     - _Requirements: 1.2_
-  - [ ] 12.3 Implement Rent and Invest landing pages (`/rent`, `/invest`)
+  - [x] 12.3 Implement Rent and Invest landing pages (`/rent`, `/invest`)
     - Rent: for owners and renters, links to relevant tools
     - Invest: for landlords and investors, links to relevant tools
     - Lead capture forms on both
     - _Requirements: 1.2_
-  - [ ] 12.4 Implement City Pages (`/areas/{slug}`) for all 6 cities
+  - [x] 12.4 Implement City Pages (`/areas/{slug}`) for all 6 cities
     - Hero with city name, median home value, typical rent
     - `<MarketSnapshot />` dashboard with 4 stat cards (median value, days on market, sale-to-list, inventory)
     - ZIP code breakdown table with values and trends
@@ -443,22 +443,22 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Recent blog posts about the city
     - Cities: Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, Apache Junction
     - _Requirements: 1.3, 15.1, 15.2, 15.3, 15.5 — Frontend Design: City Page Layout_
-  - [ ] 12.5 Implement Blog listing page (`/blog`) and blog post page (`/blog/[slug]`)
+  - [x] 12.5 Implement Blog listing page (`/blog`) and blog post page (`/blog/[slug]`)
     - Blog listing: paginated list of published posts sorted by date
     - Blog post: rendered Markdown body, SEO metadata (title tag, meta description, OG tags, canonical URL, JSON-LD Article)
     - Contextual lead capture prompts based on post topic
     - _Requirements: 16.1, 16.2, 16.4_
-  - [ ] 12.6 Write property test for blog post SEO metadata completeness
+  - [x] 12.6 Write property test for blog post SEO metadata completeness
     - **Property 20: Blog Post SEO Metadata Completeness**
     - **Validates: Requirements 16.2**
-  - [ ] 12.7 Implement First-Time Buyer Guide page (`/buy/first-time-buyer`)
+  - [x] 12.7 Implement First-Time Buyer Guide page (`/buy/first-time-buyer`)
     - Step-by-step Arizona home buying process walkthrough
     - NAR policy changes explanation (August 17, 2024)
     - Arizona down payment assistance programs and first-time buyer incentives
     - Contextual CTAs: affordability calculator, buyer consultation, offer writer
     - Lead capture with tag="first-time-buyer"
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
-  - [ ] 12.8 Implement Offer Guidance and Contract Education section (`/buy/offer-guidance`)
+  - [x] 12.8 Implement Offer Guidance and Contract Education section (`/buy/offer-guidance`)
     - Section-by-section educational guides for: Purchase Contract, SPDS, BINSR, buyer-broker agreement, listing agreement
     - Each section: what it covers, decisions needed, common mistakes, questions to ask
     - Interactive input preparation worksheets (closing date, earnest money, contingencies, etc.)
@@ -466,27 +466,27 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - CTA on every page: connect with licensed agent/attorney
     - Lead capture on worksheet completion with prepared inputs attached
     - _Requirements: 49.1, 49.2, 49.3, 49.4, 49.5, 49.6_
-  - [ ] 12.9 Write property test for offer guidance disclaimer presence
+  - [x] 12.9 Write property test for offer guidance disclaimer presence
     - **Property 23: Offer Guidance Disclaimer Presence**
     - **Validates: Requirements 49.4**
-  - [ ] 12.10 Implement Seller Decision Tools pages
+  - [x] 12.10 Implement Seller Decision Tools pages
     - Listing prep checklist tool: customized by property type and price range (staging, repairs, photography, documentation)
     - Showing feedback dashboard concept page with CTA to start flat-fee listing
     - Offer comparison tool concept page with CTA to start flat-fee listing
     - _Requirements: 8.2, 8.4, 8.5_
-  - [ ] 12.11 Implement Reviews page (`/reviews`)
+  - [x] 12.11 Implement Reviews page (`/reviews`)
     - Display verified client testimonials and ratings
     - Star ratings, savings totals, customer quotes
     - _Requirements: 1.6_
-  - [ ] 12.12 Generate sitemap.xml including all published content
+  - [x] 12.12 Generate sitemap.xml including all published content
     - Include: all blog posts, city pages, neighborhood guides, tool pages, market data pages
     - Exclude: draft and archived content
     - Auto-regenerate on content publish/unpublish
     - _Requirements: 16.3_
-  - [ ] 12.13 Write property test for sitemap completeness
+  - [x] 12.13 Write property test for sitemap completeness
     - **Property 21: Sitemap Completeness**
     - **Validates: Requirements 16.3**
-  - [ ] 12.14 Implement server-side rendering and static generation for all public pages
+  - [x] 12.14 Implement server-side rendering and static generation for all public pages
     - Use Next.js SSR/SSG for search engine crawlability
     - Implement JSON-LD structured data on all pages (LocalBusiness, FAQ, Article, RealEstateListing)
     - _Requirements: 16.5, 16.2_
