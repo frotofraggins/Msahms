@@ -38,7 +38,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Configure CloudFront origin for API Gateway
     - _Requirements: 1.1, 18.5 — Design: API Gateway Routes section_
 
-- [-] 2. Shared backend modules — error handling, validation, data models
+- [x] 2. Shared backend modules — error handling, validation, data models
   - [x] 2.1 Create shared error handling module with structured error responses
     - Implement error response format: `{ error: { code, message, correlationId, details } }`
     - Define error categories: VALIDATION_ERROR, MISSING_FIELD, INVALID_FORMAT, UNAUTHORIZED, FORBIDDEN, ACCOUNT_LOCKED, NOT_FOUND, UPSTREAM_TIMEOUT, UPSTREAM_ERROR, STORAGE_ERROR, PAYMENT_FAILED, NOTIFICATION_ERROR, AI_TIMEOUT, AI_ERROR, RATE_LIMITED
@@ -68,7 +68,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
   - [x] 2.7 Write property test for lead JSON round-trip
     - **Property 7: Lead Data JSON Round-Trip**
     - **Validates: Requirements 46.1, 46.2, 46.3**
-  - [ ] 2.8 Create agent, market data, property cache, content, listing, and scenario data models
+  - [x] 2.8 Create agent, market data, property cache, content, listing, and scenario data models
     - Define TypeScript interfaces and DynamoDB key patterns for: Agent, MarketDataZip, MarketDataMetro, PropertyCache, BlogPost, CityPage, FlatFeeListing, SavedScenario, NotificationPrefs
     - Implement DynamoDB key generation for each entity type per design document patterns
     - _Requirements: 15.4, 16.1, 17.3, 18.4, 19.6, 48.3 — Design: Entity Key Patterns section_
