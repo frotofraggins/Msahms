@@ -161,8 +161,8 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - **Property 19: Sell Now or Wait Analysis Uses Correct Market Data**
     - **Validates: Requirements 8.1**
 
-- [ ] 6. Backend APIs — lead capture, AI proxy, content, market data
-  - [ ] 6.1 Implement Lead Capture Lambda (`leads-capture`, `/api/v1/leads`)
+- [-] 6. Backend APIs — lead capture, AI proxy, content, market data
+  - [-] 6.1 Implement Lead Capture Lambda (`leads-capture`, `/api/v1/leads`)
     - Validate all required fields (name, email, phone, city, timeframe, leadType) using shared validation module
     - Return field-level validation errors for invalid/missing fields (400 VALIDATION_ERROR)
     - Create Lead record in DynamoDB with status=New, timestamp, toolSource, all metadata
