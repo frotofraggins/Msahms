@@ -8,7 +8,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
 
 ## Tasks
 
-- [-] 1. Infrastructure setup — DynamoDB, Cognito, S3, Secrets Manager, API Gateway
+- [x] 1. Infrastructure setup — DynamoDB, Cognito, S3, Secrets Manager, API Gateway
   - [x] 1.1 Create DynamoDB single-table `mesahomes-main` with PK/SK, GSI1, GSI2, TTL, and DynamoDB Streams
     - Define table with PAY_PER_REQUEST billing, PK (String), SK (String)
     - Create GSI1 (GSI1PK/GSI1SK, ALL projection) and GSI2 (GSI2PK/GSI2SK, ALL projection)
@@ -27,11 +27,11 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - `mesahomes-property-photos` bucket for Street View photo cache with key pattern `streetview/{zip}/{normalized-address}.jpg`
     - Configure CORS for frontend uploads on the photos bucket
     - _Requirements: 3.1, 17.2 — Data Sources: §8 Google Street View_
-  - [ ] 1.4 Create AWS Secrets Manager entries for all API keys
+  - [x] 1.4 Create AWS Secrets Manager entries for all API keys
     - Create secrets: `mesahomes/google-maps-api-key`, `mesahomes/stripe-secret-key`, `mesahomes/stripe-webhook-secret`, `mesahomes/rentcast-api-key`, `mesahomes/cognito-client-secret`, `mesahomes/ses-smtp-credentials`
     - Create shared `lib/secrets.ts` module with `getSecret()` helper using `@aws-sdk/client-secrets-manager`
     - _Requirements: 45.5 — Data Sources: §9 API Key & Secret Management_
-  - [ ] 1.5 Create API Gateway REST API with route definitions and Cognito authorizer
+  - [x] 1.5 Create API Gateway REST API with route definitions and Cognito authorizer
     - Create REST API in us-west-2 with `/api/v1` base path
     - Define all 17 public routes (POST /leads, POST /tools/*, POST /property/*, GET /market/*, GET /content/*, POST /ai/*, POST /valuation-request, POST /booking, POST /listing/*)
     - Define all 13 authenticated routes under /dashboard/* and /auth/* with Cognito JWT authorizer
