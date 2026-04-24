@@ -38,17 +38,17 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Configure CloudFront origin for API Gateway
     - _Requirements: 1.1, 18.5 — Design: API Gateway Routes section_
 
-- [ ] 2. Shared backend modules — error handling, validation, data models
-  - [ ] 2.1 Create shared error handling module with structured error responses
+- [-] 2. Shared backend modules — error handling, validation, data models
+  - [x] 2.1 Create shared error handling module with structured error responses
     - Implement error response format: `{ error: { code, message, correlationId, details } }`
     - Define error categories: VALIDATION_ERROR, MISSING_FIELD, INVALID_FORMAT, UNAUTHORIZED, FORBIDDEN, ACCOUNT_LOCKED, NOT_FOUND, UPSTREAM_TIMEOUT, UPSTREAM_ERROR, STORAGE_ERROR, PAYMENT_FAILED, NOTIFICATION_ERROR, AI_TIMEOUT, AI_ERROR, RATE_LIMITED
     - Map each error code to correct HTTP status (400, 401, 403, 404, 429, 500, 502, 504)
     - Generate UUID correlation ID per request from API Gateway `$context.requestId`
     - _Requirements: 45.4, 45.5 — Design: Error Handling section_
-  - [ ] 2.2 Write property test for structured error response format
+  - [x] 2.2 Write property test for structured error response format
     - **Property 22: Structured Error Response Format**
     - **Validates: Requirements 45.4**
-  - [ ] 2.3 Create retry utility with exponential backoff and circuit breaker
+  - [x] 2.3 Create retry utility with exponential backoff and circuit breaker
     - Implement retry logic: DynamoDB (3 retries, exponential 100/200/400ms), County GIS (2 retries, linear 1s/2s), SES (3 retries, exponential 1/2/4s), Street View (1 retry), AI proxy (1 retry, 2s delay)
     - Implement circuit breaker: County GIS (5 failures → 60s open), Street View (10 failures → 300s open), AI proxy (3 failures → 30s open)
     - _Requirements: 11.5, 20.4 — Design: Retry Strategy table_
