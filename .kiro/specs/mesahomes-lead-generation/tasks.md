@@ -22,7 +22,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Set token validity: access 24h, refresh 30 days
     - Create app client for the dashboard frontend
     - _Requirements: 18.1, 18.2 — Design: Authentication Flow section_
-  - [ ] 1.3 Create S3 buckets for static assets, data, and property photos
+  - [x] 1.3 Create S3 buckets for static assets, data, and property photos
     - `mesahomes-data` bucket for Zillow CSV archives and PDF exports
     - `mesahomes-property-photos` bucket for Street View photo cache with key pattern `streetview/{zip}/{normalized-address}.jpg`
     - Configure CORS for frontend uploads on the photos bucket
