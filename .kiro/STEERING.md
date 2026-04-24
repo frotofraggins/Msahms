@@ -153,6 +153,10 @@ forget:
    doesn't use. Cost: ~2 MB per Lambda, ~100-300 ms extra cold start. Fix
    before prod, and before `apps/frontend/` lands — frontend as a workspace
    package from day one is far easier than retrofitting.
+   **Decision (2026-04-24): DEFERRED to pre-deployment (Task 19).** Cold starts
+   don't matter at MVP traffic (~0 users). Restructuring now would touch every
+   import path in 55 test files. Frontend will land at repo root as `frontend/`
+   for now, then move to `apps/frontend/` during the workspace migration.
 2. **Biome for lint/format**. Currently we rely on `tsc --noEmit`. Biome
    replaces ESLint+Prettier, faster, single config.
 3. **Conventional commits via commitlint**. Currently informal. Enforce once
