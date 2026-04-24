@@ -2,7 +2,10 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'MesaHomes — Flat-Fee Real Estate for Mesa, AZ',
+  title: {
+    template: '%s | MesaHomes',
+    default: 'MesaHomes — Flat-Fee Real Estate for Mesa, AZ',
+  },
   description:
     'Save thousands selling your home in Mesa, Gilbert, Chandler, Queen Creek, and San Tan Valley. Free tools, county-verified data, and flat-fee MLS listing for $999.',
   openGraph: {

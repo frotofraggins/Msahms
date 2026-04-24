@@ -293,7 +293,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
 - [x] 9. Checkpoint — Ensure all backend APIs compile and tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 10. Frontend foundation — Next.js setup, design system, shared components
+- [x] 10. Frontend foundation — Next.js setup, design system, shared components
   - [x] 10.1 Initialize Next.js project with TypeScript, Tailwind CSS, and shadcn/ui
     - Create Next.js app with App Router, TypeScript strict mode
     - Install and configure Tailwind CSS with MesaHomes design tokens
@@ -316,50 +316,50 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - On click: open lead capture modal with name, contactMethod, currentIntent fields
     - Submit to POST `/api/v1/leads` with tag="full-service-request"
     - _Requirements: 1.7, 1.8 — Frontend Design: Full Service Upgrade pattern_
-  - [ ] 10.5 Create `<LeadCaptureModal />` reusable progressive disclosure component
+  - [x] 10.5 Create `<LeadCaptureModal />` reusable progressive disclosure component
     - Configurable fields: name, email, phone, timeframe dropdown (Now, 30 days, 3 months, 6+ months), leadType
     - Pre-fill leadType and toolSource based on calling context
     - Client-side validation with field-level error messages
     - Submit to POST `/api/v1/leads`
     - Show success confirmation with "What's Next" recommendation
     - _Requirements: 11.2, 11.6, 12.1, 12.2 — Frontend Design: Progressive Disclosure pattern_
-  - [ ] 10.6 Create `<ProgressIndicator />` and `<WhatsNextCard />` for guided decision engine
+  - [x] 10.6 Create `<ProgressIndicator />` and `<WhatsNextCard />` for guided decision engine
     - `<ProgressIndicator />`: Shows completed steps (●), current step (●), remaining steps (○) in the guided path
     - `<WhatsNextCard />`: Displays next recommended tool with explanation of why it matters
     - Accept path definition and current progress as props
     - _Requirements: 48.2, 48.7 — Frontend Design: Tool Page "WHAT'S NEXT" section_
-  - [ ] 10.7 Create `<SavingsCalculator />` inline component for homepage
+  - [x] 10.7 Create `<SavingsCalculator />` inline component for homepage
     - Accept sale price input, compute flat-fee vs traditional savings in real-time (client-side)
     - Display: Traditional Agent cost, MesaHomes Flat Fee cost, YOU SAVE amount
     - CTA buttons: "Start Your Flat-Fee Listing", "Learn More"
     - _Requirements: 4.1, 4.2 — Frontend Design: Homepage SAVINGS CALCULATOR section_
-  - [ ] 10.8 Create `<MarketSnapshot />` component for homepage and city pages
+  - [x] 10.8 Create `<MarketSnapshot />` component for homepage and city pages
     - Display: Median Home Value, Days on Market, Sale-to-List ratio, Active Inventory
     - Fetch data from GET `/api/v1/market/metro` and `/api/v1/market/zip/{zip}`
     - City tab selector: Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley
     - _Requirements: 15.1 — Frontend Design: Homepage LOCAL MARKET SNAPSHOT section_
-  - [ ] 10.9 Create `<PropertyDataCard />` component for tool pages
+  - [x] 10.9 Create `<PropertyDataCard />` component for tool pages
     - Display Street View photo + property details (address, sqft, floors, year built, lot size, assessed value, last sale, subdivision, ZIP typical value)
     - Fetch from POST `/api/v1/property/lookup`
     - Show skeleton loading state while GIS API responds (~1-2s)
     - _Requirements: 2.1, 3.1 — Frontend Design: Tool Page STREET VIEW PHOTO + PROPERTY DATA section_
-  - [ ] 10.10 Create `<NearbyComps />` component for tool pages
+  - [x] 10.10 Create `<NearbyComps />` component for tool pages
     - Display recent sales in subdivision: address, price, date, sqft
     - "View More Comps" link
     - Data from property lookup response comps field
     - _Requirements: 2.1 — Frontend Design: Tool Page NEARBY COMPS section_
-  - [ ] 10.11 Create `<FAQSection />` component with Schema.org FAQ markup
+  - [x] 10.11 Create `<FAQSection />` component with Schema.org FAQ markup
     - Accept array of question/answer pairs
     - Render as expandable accordion
     - Output JSON-LD FAQ structured data for SEO
     - _Requirements: 15.5, 16.2 — Frontend Design: City Page FAQ section_
-  - [ ] 10.12 Set up API client module for frontend-to-backend communication
+  - [x] 10.12 Set up API client module for frontend-to-backend communication
     - Create typed API client with fetch wrapper for all `/api/v1/*` endpoints
     - Handle auth token storage (localStorage), auto-refresh on 401
     - Include correlation ID forwarding for error tracing
     - _Requirements: 45.4_
 
-- [ ] 11. Frontend pages — Homepage, tool pages, comparison page
+- [-] 11. Frontend pages — Homepage, tool pages, comparison page
   - [ ] 11.1 Implement Homepage (`/`)
     - Hero section: "What do you need?" with 4 intent cards (Sell, Buy, Rent, Invest) routing to /sell, /buy, /rent, /invest
     - Quick tool links: "What's My Home Worth?", "How Much Can I Afford?", "Compare Flat Fee vs Agent", "Talk to Agent Now"
