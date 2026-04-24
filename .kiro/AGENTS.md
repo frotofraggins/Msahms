@@ -2,6 +2,10 @@
 
 Two AI agents work this repo. Read this file before starting any task.
 
+> **Before writing any code, also read `.kiro/STEERING.md`** — product north
+> star, architecture rules, naming conventions, quality bars. That's the
+> single source of truth for how this repo is built.
+
 ## Workspace isolation (new 2026-04-24)
 
 Each agent has its own git worktree — independent working directory, shared `.git/`.

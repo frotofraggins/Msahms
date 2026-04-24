@@ -93,6 +93,11 @@ Identify the next unchecked task that:
 - No other agent claims in their AGENTS.md Active Work table
 - Has no unresolved handoff blocking it
 
+**Also read `.kiro/STEERING.md` if you haven't in the past hour.** It's the
+project's north star — product goals, architecture rules, naming conventions,
+quality bars. Any change you make must be consistent with it. If you believe
+STEERING.md is wrong, stop and raise it with the human — don't just deviate.
+
 ## Step 7 — Claim your task
 On your own branch (never on main, never on the other agent's branch):
 1. Update `.kiro/AGENTS.md` Active Work table with your agent name, task ID,
