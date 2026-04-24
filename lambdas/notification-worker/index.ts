@@ -58,11 +58,6 @@ export interface ProcessResult {
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Minimum required fields for a valid notification. */
-const REQUIRED_NOTIFICATION_FIELDS = [
-  'leadType', 'name', 'city', 'timeframe', 'toolSource',
-] as const;
-
 // ---------------------------------------------------------------------------
 // Stream record processing
 // ---------------------------------------------------------------------------

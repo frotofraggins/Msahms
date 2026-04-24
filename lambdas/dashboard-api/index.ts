@@ -39,14 +39,12 @@ import {
 } from '../../lib/authorizer.js';
 import {
   getItem,
-  queryByPK,
   queryGSI1,
   updateItem,
   putItem,
 } from '../../lib/dynamodb.js';
 import { generateAgentKeys } from '../../lib/models/keys.js';
 import { EntityType } from '../../lib/types/dynamodb.js';
-import type { LeadStatus } from '../../lib/types/lead.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -78,13 +76,13 @@ const VALID_LEAD_STATUSES: Set<string> = new Set([
 async function handleListLeads(
   event: AuthorizedEvent,
   claims: AuthClaims,
-  correlationId: string,
+  _correlationId: string,
 ): Promise<LambdaProxyResponse> {
   const params = parseQueryParams(event);
   const limit = Math.min(parseInt(params.limit || '50', 10), 100);
   const scanForward = params.sort !== 'oldest';
 
-  let items: Record<string, unknown>[];
+  let items: unknown[];
   let lastKey: Record<string, unknown> | undefined;
 
   if (claims.role === 'Team_Admin') {
@@ -104,7 +102,7 @@ async function handleListLeads(
         .map((a) => (a.data as Record<string, unknown>)?.agentId as string)
         .filter(Boolean);
 
-      const allLeads: Record<string, unknown>[] = [];
+      const allLeads: unknown[] = [];
       for (const agentId of agentIds) {
         const agentLeads = await queryGSI1(`AGENT#${agentId}`, {
           skCondition: { operator: 'begins_with', value: 'LEAD#' },
@@ -138,7 +136,7 @@ async function handleListLeads(
   }
 
   // Apply client-side filters
-  let filtered = items.map((item) => item.data as Record<string, unknown>).filter(Boolean);
+  let filtered = items.map((item) => (item as Record<string, unknown>).data as Record<string, unknown>).filter(Boolean);
 
   if (params.type) {
     filtered = filtered.filter((l) => l.leadType === params.type);
@@ -564,8 +562,8 @@ async function handlePerformance(
  * GET /api/v1/dashboard/listings — List flat-fee listings.
  */
 async function handleListListings(
-  claims: AuthClaims,
-  correlationId: string,
+  _claims: AuthClaims,
+  _correlationId: string,
 ): Promise<LambdaProxyResponse> {
   // Both agents and admins can view listings
   const statuses = ['draft', 'payment-pending', 'paid', 'mls-pending', 'active', 'sold', 'cancelled'];
@@ -641,7 +639,7 @@ async function handleUpdateListing(
 
 /** Parse query string parameters from the event. */
 function parseQueryParams(event: AuthorizedEvent): Record<string, string> {
-  const raw = (event as Record<string, unknown>).queryStringParameters as
+  const raw = (event as unknown as Record<string, unknown>).queryStringParameters as
     | Record<string, string | undefined>
     | null;
   if (!raw) return {};

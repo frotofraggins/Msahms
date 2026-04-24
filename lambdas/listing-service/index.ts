@@ -75,11 +75,6 @@ export const FLAT_FEE_AMOUNT = 999;
 /** Broker transaction fee in dollars. */
 export const BROKER_FEE_AMOUNT = 400;
 
-/** Valid listing statuses. */
-const VALID_STATUSES = new Set<ListingStatus>([
-  'draft', 'payment-pending', 'paid', 'mls-pending', 'active', 'sold', 'cancelled',
-]);
-
 // ---------------------------------------------------------------------------
 // Route handlers
 // ---------------------------------------------------------------------------

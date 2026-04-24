@@ -321,8 +321,8 @@ async function handleRegister(
   }
 
   // Check if token is expired
-  const createdAt = inviteItem.createdAt as string;
-  if (Date.now() - new Date(createdAt).getTime() > INVITE_TOKEN_TTL_MS) {
+  const createdAt = inviteItem.createdAt; // always present — putItem guarantees it
+  if (createdAt && Date.now() - new Date(createdAt).getTime() > INVITE_TOKEN_TTL_MS) {
     throw new AppError(
       ErrorCode.VALIDATION_ERROR,
       'Invite token has expired',

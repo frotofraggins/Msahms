@@ -119,7 +119,7 @@ describe('Property 13: Notification Content Completeness', () => {
 
   it('status change notifications always include old and new status', () => {
     const cases = fc.sample(
-      fc.tuple(statusArb, statusArb.filter((s) => true), nameArb, leadTypeArb),
+      fc.tuple(statusArb, statusArb.filter((_s) => true), nameArb, leadTypeArb),
       50,
     );
 
