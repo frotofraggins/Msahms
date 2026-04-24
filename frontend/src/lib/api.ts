@@ -75,7 +75,8 @@ async function refreshAccessToken(): Promise<boolean> {
     const data = await res.json();
     setTokens(data.accessToken, refreshToken, data.idToken);
     return true;
-  } catch {
+  } catch (err) {
+    console.warn('[api] Token refresh failed:', err);
     return false;
   }
 }

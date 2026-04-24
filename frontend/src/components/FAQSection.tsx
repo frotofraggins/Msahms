@@ -47,12 +47,17 @@ export function FAQSection({ items, title = 'Frequently Asked Questions' }: FAQS
         <h2 className="mb-6 text-center text-2xl font-bold text-text">{title}</h2>
 
         <div className="space-y-2">
-          {items.map((item, i) => (
+          {items.map((item, i) => {
+            const panelId = `faq-panel-${i}`;
+            const buttonId = `faq-button-${i}`;
+            return (
             <div key={i} className="rounded-lg border border-gray-200 bg-white">
               <button
+                id={buttonId}
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
                 className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-text"
                 aria-expanded={openIndex === i}
+                aria-controls={panelId}
               >
                 {item.question}
                 <ChevronDown
@@ -63,12 +68,18 @@ export function FAQSection({ items, title = 'Frequently Asked Questions' }: FAQS
                 />
               </button>
               {openIndex === i && (
-                <div className="border-t border-gray-100 px-4 py-3 text-sm text-text-light">
+                <div
+                  id={panelId}
+                  role="region"
+                  aria-labelledby={buttonId}
+                  className="border-t border-gray-100 px-4 py-3 text-sm text-text-light"
+                >
                   {item.answer}
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

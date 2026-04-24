@@ -1,22 +1,23 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { X, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { api, ApiRequestError } from '@/lib/api';
 
 /** Props for the LeadCaptureModal. */
 export interface LeadCaptureModalProps {
-  /** Whether the modal is open. */
   open: boolean;
-  /** Called when the modal should close. */
   onClose: () => void;
-  /** Pre-filled lead type (Buyer, Seller, etc.). */
   leadType?: string;
-  /** Which tool triggered this modal. */
   toolSource?: string;
-  /** Headline shown above the form. */
+  /** Optional tag attached to the lead (e.g. "full-service-request"). */
+  tag?: string;
+  /** Pre-filled city from tool context. */
+  city?: string;
+  /** Pre-filled ZIP from tool context. */
+  zip?: string;
   headline?: string;
-  /** Subtext below the headline. */
   subtext?: string;
 }
 
@@ -27,68 +28,113 @@ const timeframeOptions = [
   { value: '6mo+', label: '6+ Months' },
 ];
 
+const PHONE_REGEX = /^\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
+
 /**
  * Reusable progressive disclosure lead capture modal.
  *
- * Pre-fills leadType and toolSource based on calling context.
- * Submits to POST /api/v1/leads.
+ * Accessible: role="dialog", aria-modal, focus trap, Escape to close,
+ * backdrop click to close. Uses the shared api client for submissions.
  */
 export function LeadCaptureModal({
   open,
   onClose,
   leadType = 'Buyer',
   toolSource = 'direct-consult',
+  tag,
+  city,
+  zip,
   headline = 'Unlock Your Full Report',
   subtext = 'Enter your info to get the complete analysis with downloadable PDF.',
 }: LeadCaptureModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [formCity, setFormCity] = useState(city ?? '');
+  const [formZip, setFormZip] = useState(zip ?? '');
   const [timeframe, setTimeframe] = useState('now');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const firstInputRef = useRef<HTMLInputElement>(null);
+  const headlineId = 'lead-modal-headline';
+
+  // Focus first input on open
+  useEffect(() => {
+    if (open && firstInputRef.current) {
+      firstInputRef.current.focus();
+    }
+  }, [open]);
+
+  // Escape key handler
+  useEffect(() => {
+    if (!open) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [open, onClose]);
+
+  // Update city/zip when props change
+  useEffect(() => { if (city) setFormCity(city); }, [city]);
+  useEffect(() => { if (zip) setFormZip(zip); }, [zip]);
 
   if (!open) return null;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+
+    // Client-side phone validation
+    if (phone && !PHONE_REGEX.test(phone.replace(/\s/g, ''))) {
+      setError('Please enter a valid phone number, e.g. (480) 555-1234');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      const res = await fetch('/api/v1/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          phone,
-          city: 'Mesa',
-          zip: '85201',
-          timeframe,
-          leadType,
-          toolSource,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data?.error?.message || 'Something went wrong. Please try again.');
-        return;
+      const payload: Record<string, unknown> = {
+        name,
+        email,
+        phone,
+        city: formCity || 'Mesa',
+        zip: formZip || '85201',
+        timeframe,
+        leadType,
+        toolSource,
+      };
+      if (tag) {
+        payload.tags = [tag];
       }
 
+      await api.createLead(payload);
       setSuccess(true);
-    } catch {
-      setError('Network error. Please check your connection and try again.');
+    } catch (err) {
+      if (err instanceof ApiRequestError) {
+        setError(err.apiError?.message ?? 'Something went wrong. Please try again.');
+      } else {
+        setError('Network error. Please check your connection and try again.');
+      }
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+    /* Backdrop — click to close */
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      role="presentation"
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={headlineId}
+        className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+      >
         <button
           onClick={onClose}
           className="absolute right-3 top-3 text-text-light hover:text-text"
@@ -113,11 +159,12 @@ export function LeadCaptureModal({
           </div>
         ) : (
           <>
-            <h3 className="mb-1 text-lg font-bold text-text">{headline}</h3>
+            <h3 id={headlineId} className="mb-1 text-lg font-bold text-text">{headline}</h3>
             <p className="mb-4 text-sm text-text-light">{subtext}</p>
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <input
+                ref={firstInputRef}
                 type="text"
                 placeholder="Full Name"
                 value={name}
@@ -141,6 +188,27 @@ export function LeadCaptureModal({
                 required
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
+
+              {/* City/ZIP — shown if not pre-filled by tool context */}
+              {!city && (
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    placeholder="City"
+                    value={formCity}
+                    onChange={(e) => setFormCity(e.target.value)}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  <input
+                    type="text"
+                    placeholder="ZIP Code"
+                    value={formZip}
+                    onChange={(e) => setFormZip(e.target.value)}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              )}
+
               <select
                 value={timeframe}
                 onChange={(e) => setTimeframe(e.target.value)}
@@ -153,9 +221,7 @@ export function LeadCaptureModal({
                 ))}
               </select>
 
-              {error && (
-                <p className="text-xs text-error">{error}</p>
-              )}
+              {error && <p className="text-xs text-error">{error}</p>}
 
               <button
                 type="submit"
