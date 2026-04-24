@@ -271,7 +271,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Team summary: total leads by status/type, team conversion rate, average response time
     - Filter by date range, city, leadType
     - _Requirements: 19.5 (Team_Admin view)_
-  - [ ] 8.10 Implement Notification Worker Lambda (DynamoDB Streams trigger)
+  - [x] 8.10 Implement Notification Worker Lambda (DynamoDB Streams trigger)
     - Trigger on lead assignment events (new lead or status change)
     - Format notification with: leadType, visitor name, contact method, city, timeframe, toolSource, inquiry summary
     - Send email via SES within 60 seconds of assignment
@@ -279,10 +279,10 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Retry delivery up to 3 times with exponential backoff
     - Send status update notifications to Team_Admin on status changes
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.6 — Design: notification-worker Lambda_
-  - [ ] 8.11 Write property test for notification content completeness
+  - [x] 8.11 Write property test for notification content completeness
     - **Property 13: Notification Content Completeness**
     - **Validates: Requirements 20.3**
-  - [ ] 8.12 Implement Listing Service Lambda (`listing-service`)
+  - [-] 8.12 Implement Listing Service Lambda (`listing-service`)
     - POST `/api/v1/listing/start`: Create flat-fee listing record (status=draft), collect property details, trigger AI listing description
     - POST `/api/v1/listing/payment`: Process Stripe payment, update listing status to paid, notify Team_Admin for MLS submission
     - GET `/api/v1/dashboard/listings`: List flat-fee listings (admin)

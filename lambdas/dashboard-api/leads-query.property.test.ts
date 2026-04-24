@@ -5,10 +5,9 @@
  *
  * Properties verified:
  * - Agent can only see leads assigned to them (never another agent's leads)
- * - Team_Admin can see all team leads
- * - Lead status filter returns only leads matching that status
- * - Lead type filter returns only leads matching that type
+ * - Team_Admin can see any lead regardless of assignment
  * - All valid lead statuses are accepted by the update endpoint
+ * - Invalid lead statuses are rejected by the update endpoint
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -27,10 +26,9 @@ vi.mock('../../lib/dynamodb.js', () => ({
   putItem: vi.fn(),
 }));
 
-import { getItem, queryGSI1, updateItem } from '../../lib/dynamodb.js';
+import { getItem, updateItem } from '../../lib/dynamodb.js';
 
 const mockGetItem = vi.mocked(getItem);
-const mockQueryGSI1 = vi.mocked(queryGSI1);
 const mockUpdateItem = vi.mocked(updateItem);
 
 // ---------------------------------------------------------------------------
@@ -64,116 +62,102 @@ function makeAuthEvent(
 }
 
 // ---------------------------------------------------------------------------
-// Property tests
+// Property tests — using fc.sample + async loops
 // ---------------------------------------------------------------------------
 
 describe('Property 12: Dashboard Lead Query Correctness', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('Agent can only view leads assigned to their own sub', () => {
-    fc.assert(
-      fc.property(
-        fc.uuid(), // agent sub
-        fc.uuid(), // lead id
-        fc.uuid(), // other agent sub
-        async (agentSub, leadId, otherAgentSub) => {
-          // Lead assigned to another agent
-          mockGetItem.mockResolvedValue({
-            PK: `LEAD#${leadId}`,
-            SK: `LEAD#${leadId}`,
-            data: { leadId, assignedAgentId: otherAgentSub },
-          });
+  it('Agent can only view leads assigned to their own sub', async () => {
+    const cases = fc.sample(fc.tuple(fc.uuid(), fc.uuid(), fc.uuid()), 50);
 
-          const result = await handler(
-            makeAuthEvent('GET', `/api/v1/dashboard/leads/${leadId}`, null, 'Agent', agentSub),
-          );
+    for (const [agentSub, leadId, otherAgentSub] of cases) {
+      mockGetItem.mockReset();
+      mockGetItem.mockResolvedValue({
+        PK: `LEAD#${leadId}`,
+        SK: `LEAD#${leadId}`,
+        data: { leadId, assignedAgentId: otherAgentSub },
+      });
 
-          if (agentSub === otherAgentSub) {
-            // Same agent — should succeed
-            expect(result.statusCode).toBe(200);
-          } else {
-            // Different agent — should be forbidden
-            expect(result.statusCode).toBe(403);
-          }
-        },
-      ),
-      { numRuns: 50 },
-    );
+      const result = await handler(
+        makeAuthEvent('GET', `/api/v1/dashboard/leads/${leadId}`, null, 'Agent', agentSub),
+      );
+
+      if (agentSub === otherAgentSub) {
+        expect(result.statusCode).toBe(200);
+      } else {
+        expect(result.statusCode).toBe(403);
+      }
+    }
   });
 
-  it('Team_Admin can view any lead regardless of assignment', () => {
-    fc.assert(
-      fc.property(
-        fc.uuid(), // admin sub
-        fc.uuid(), // lead id
-        fc.uuid(), // assigned agent sub
-        async (adminSub, leadId, assignedAgent) => {
-          mockGetItem.mockResolvedValue({
-            PK: `LEAD#${leadId}`,
-            SK: `LEAD#${leadId}`,
-            data: { leadId, assignedAgentId: assignedAgent },
-          });
+  it('Team_Admin can view any lead regardless of assignment', async () => {
+    const cases = fc.sample(fc.tuple(fc.uuid(), fc.uuid(), fc.uuid()), 50);
 
-          const result = await handler(
-            makeAuthEvent('GET', `/api/v1/dashboard/leads/${leadId}`, null, 'Team_Admin', adminSub),
-          );
+    for (const [adminSub, leadId, assignedAgent] of cases) {
+      mockGetItem.mockReset();
+      mockGetItem.mockResolvedValue({
+        PK: `LEAD#${leadId}`,
+        SK: `LEAD#${leadId}`,
+        data: { leadId, assignedAgentId: assignedAgent },
+      });
 
-          // Admin always succeeds
-          expect(result.statusCode).toBe(200);
-        },
-      ),
-      { numRuns: 50 },
-    );
+      const result = await handler(
+        makeAuthEvent('GET', `/api/v1/dashboard/leads/${leadId}`, null, 'Team_Admin', adminSub),
+      );
+
+      expect(result.statusCode).toBe(200);
+    }
   });
 
-  it('all valid lead statuses are accepted by update endpoint', () => {
+  it('all valid lead statuses are accepted by update endpoint', async () => {
     const validStatuses = ['New', 'Contacted', 'Showing', 'Under_Contract', 'Closed', 'Lost'];
-
-    fc.assert(
-      fc.property(
-        fc.constantFrom(...validStatuses),
-        fc.uuid(),
-        async (status, leadId) => {
-          mockGetItem.mockResolvedValue({
-            PK: `LEAD#${leadId}`,
-            SK: `LEAD#${leadId}`,
-            data: { leadId, assignedAgentId: 'agent-1', statusHistory: [] },
-          });
-          mockUpdateItem.mockResolvedValue(undefined);
-
-          const result = await handler(
-            makeAuthEvent('PATCH', `/api/v1/dashboard/leads/${leadId}`, { status }, 'Agent', 'agent-1'),
-          );
-
-          expect(result.statusCode).toBe(200);
-        },
-      ),
-      { numRuns: validStatuses.length * 3 },
+    const cases = fc.sample(
+      fc.tuple(fc.constantFrom(...validStatuses), fc.uuid()),
+      validStatuses.length * 3,
     );
+
+    for (const [status, leadId] of cases) {
+      mockGetItem.mockReset();
+      mockUpdateItem.mockReset();
+      mockGetItem.mockResolvedValue({
+        PK: `LEAD#${leadId}`,
+        SK: `LEAD#${leadId}`,
+        data: { leadId, assignedAgentId: 'agent-1', statusHistory: [] },
+      });
+      mockUpdateItem.mockResolvedValue(undefined);
+
+      const result = await handler(
+        makeAuthEvent('PATCH', `/api/v1/dashboard/leads/${leadId}`, { status }, 'Agent', 'agent-1'),
+      );
+
+      expect(result.statusCode).toBe(200);
+    }
   });
 
-  it('invalid lead statuses are rejected by update endpoint', () => {
-    fc.assert(
-      fc.property(
-        fc.string({ minLength: 1, maxLength: 20 }).filter(
-          (s) => !['New', 'Contacted', 'Showing', 'Under_Contract', 'Closed', 'Lost'].includes(s),
-        ),
+  it('invalid lead statuses are rejected by update endpoint', async () => {
+    const validSet = new Set(['New', 'Contacted', 'Showing', 'Under_Contract', 'Closed', 'Lost']);
+    const cases = fc.sample(
+      fc.tuple(
+        fc.stringMatching(/^[A-Za-z_]{2,20}$/).filter((s) => !validSet.has(s)),
         fc.uuid(),
-        async (invalidStatus, leadId) => {
-          mockGetItem.mockResolvedValue({
-            PK: `LEAD#${leadId}`,
-            SK: `LEAD#${leadId}`,
-            data: { leadId, assignedAgentId: 'agent-1' },
-          });
-
-          const result = await handler(
-            makeAuthEvent('PATCH', `/api/v1/dashboard/leads/${leadId}`, { status: invalidStatus }, 'Agent', 'agent-1'),
-          );
-
-          expect(result.statusCode).toBe(400);
-        },
       ),
-      { numRuns: 50 },
+      50,
     );
+
+    for (const [invalidStatus, leadId] of cases) {
+      mockGetItem.mockReset();
+      mockGetItem.mockResolvedValue({
+        PK: `LEAD#${leadId}`,
+        SK: `LEAD#${leadId}`,
+        data: { leadId, assignedAgentId: 'agent-1' },
+      });
+
+      const result = await handler(
+        makeAuthEvent('PATCH', `/api/v1/dashboard/leads/${leadId}`, { status: invalidStatus }, 'Agent', 'agent-1'),
+      );
+
+      expect(result.statusCode).toBe(400);
+    }
   });
 });
