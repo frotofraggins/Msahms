@@ -12,6 +12,7 @@
 /** Flat-fee listing lifecycle status. */
 export type ListingStatus =
   | 'draft'
+  | 'awaiting-broker-activation'
   | 'payment-pending'
   | 'paid'
   | 'mls-pending'
