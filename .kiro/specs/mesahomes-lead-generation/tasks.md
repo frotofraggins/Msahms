@@ -52,20 +52,20 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Implement retry logic: DynamoDB (3 retries, exponential 100/200/400ms), County GIS (2 retries, linear 1s/2s), SES (3 retries, exponential 1/2/4s), Street View (1 retry), AI proxy (1 retry, 2s delay)
     - Implement circuit breaker: County GIS (5 failures → 60s open), Street View (10 failures → 300s open), AI proxy (3 failures → 30s open)
     - _Requirements: 11.5, 20.4 — Design: Retry Strategy table_
-  - [ ] 2.4 Create lead data model with schema definition and validation
+  - [x] 2.4 Create lead data model with schema definition and validation
     - Define Lead TypeScript interface with all required fields (leadId, name, email, phone, city, zip, timeframe, leadType, leadStatus, toolSource) and optional fields (tags, assignedAgentId, toolData, pathHistory, readinessScore, utm*, notes, statusHistory)
     - Implement field validation: email regex, US phone format, enum checks for leadType/leadStatus/timeframe/toolSource
     - Implement DynamoDB key generation: PK=`LEAD#{leadId}`, SK=`LEAD#{leadId}`, GSI1PK=`AGENT#{agentId}`, GSI1SK=`LEAD#{createdAt}`
     - _Requirements: 11.2, 11.3, 45.1, 45.2, 45.3, 46.1, 46.4 — Design: Lead Records entity key patterns_
-  - [ ] 2.5 Write property tests for lead validation (required fields and field formats)
+  - [x] 2.5 Write property tests for lead validation (required fields and field formats)
     - **Property 4: Lead Capture Validation — Required Fields**
     - **Property 5: Lead Capture Validation — Field Formats**
     - **Validates: Requirements 11.2, 11.4, 45.1, 45.2, 45.3**
-  - [ ] 2.6 Create lead JSON serializer/deserializer with round-trip guarantee
+  - [x] 2.6 Create lead JSON serializer/deserializer with round-trip guarantee
     - Implement `serializeLead()` and `deserializeLead()` functions
     - Handle all field types including nested objects (toolData, notes, statusHistory, pathHistory)
     - _Requirements: 46.1, 46.2, 46.3_
-  - [ ] 2.7 Write property test for lead JSON round-trip
+  - [x] 2.7 Write property test for lead JSON round-trip
     - **Property 7: Lead Data JSON Round-Trip**
     - **Validates: Requirements 46.1, 46.2, 46.3**
   - [ ] 2.8 Create agent, market data, property cache, content, listing, and scenario data models
