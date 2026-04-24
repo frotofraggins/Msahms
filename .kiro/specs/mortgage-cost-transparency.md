@@ -203,6 +203,87 @@ first-time buyer guide.
 - `.kiro/STEERING.md` — "No kickbacks from lenders" is already in
   security/compliance rules
 
+## Free mortgage rate data — what we can pull
+
+Yes, free public sources exist. All cite-able, all refresh weekly.
+
+### Primary: Freddie Mac PMMS via FRED (St. Louis Fed)
+
+**Best option for us.** The Federal Reserve Bank of St. Louis (FRED)
+republishes Freddie Mac's Primary Mortgage Market Survey (PMMS) as free,
+queryable time series with a well-documented public API.
+
+- 30-year fixed rate average (U.S.): series `MORTGAGE30US`
+  https://fred.stlouisfed.org/series/MORTGAGE30US
+- 15-year fixed rate average (U.S.): series `MORTGAGE15US`
+  https://fred.stlouisfed.org/series/MORTGAGE15US
+- 5/1 ARM: series `MORTGAGE5US`
+- FRED API endpoint: `https://api.stlouisfed.org/fred/series/observations?series_id=MORTGAGE30US&api_key=<key>&file_type=json`
+- Free API key (instant, no payment): https://fredaccount.stlouisfed.org/apikeys
+- Rate limit: 120 requests/minute per key — way more than we need
+- Cadence: weekly (PMMS publishes Thursdays, data goes back to 1971)
+- License: public, citation required ("Source: Freddie Mac PMMS via FRED")
+
+**How we'd use it:**
+- EventBridge cron Thursday 10am MST → `lambdas/mortgage-rates/` Lambda
+- Fetch `MORTGAGE30US`, `MORTGAGE15US`, `MORTGAGE5US` latest observations
+- Store in DynamoDB: `PK=MARKET#MORTGAGE#US`, `SK=RATES#LATEST`
+- Archive weekly to S3 for trend charts
+- Display on affordability calculator and /buy/shopping-lenders with
+  timestamp + "Source: Freddie Mac PMMS (via FRED), updated weekly"
+
+This replaces the "no rate quotes" guardrail in the legal section above —
+PMMS is a *survey average*, not a live quote, so it's safe to display
+with proper attribution. We're not pretending to be a lender; we're
+citing a government-published average with a clear "your actual rate
+will differ based on credit, loan amount, and property type."
+
+### Secondary option: Freddie Mac PMMS directly
+
+- Weekly CSV download: https://www.freddiemac.com/pmms
+- Same data as FRED, just no API — we'd scrape the HTML page or ingest
+  the CSV each Thursday
+- Fallback if FRED is unavailable
+
+### Tertiary: Mortgage News Daily (MBS observations)
+
+- Daily rate data but requires scraping/paid subscription for API access
+- We wouldn't use this — complicated, commercial
+
+### What NOT to use
+
+- Individual lender advertised rates (not a standard, changes constantly)
+- Bankrate / NerdWallet aggregators (their data licensing terms prohibit redistribution)
+- Zillow mortgage marketplace (commercial, limited without paid partnership)
+
+### Rate display rules on MesaHomes
+
+When we display a rate, always include:
+1. The exact figure with one decimal (e.g., 6.8%)
+2. The data source: "Freddie Mac PMMS via FRED"
+3. The as-of date
+4. A disclaimer: "National survey average. Your actual rate depends on
+   credit score, loan amount, and property. Shop at least three Loan
+   Estimates."
+
+Never display a "today's rate" without date. Never display a rate
+claimed to be MesaHomes-specific (we don't originate loans).
+
+### Implementation notes
+
+- New Lambda: `lambdas/mortgage-rates/` — 256MB, 10s timeout
+- EventBridge cron: `0 17 * * THU` (10am MST Thursday after PMMS publishes
+  at 10am ET)
+- DynamoDB keys:
+  - `PK=MARKET#MORTGAGE#US` / `SK=RATES#LATEST` — current values
+  - `PK=MARKET#MORTGAGE#US` / `SK=RATES#<YYYY-MM-DD>` — historical, 2-year TTL
+- Secret: `mesahomes/fred-api-key` in Secrets Manager
+- Circuit breaker: `fredApiCircuit` (3 failures → 60s open, similar to
+  countyGisCircuit in `lib/retry.ts`)
+- Metrics: `MesaHomes/MortgageRates/FetchSuccess` with alarm at <90%
+  weekly success
+- Affordability tool Lambda reads latest from DynamoDB (no direct FRED call)
+
 ## References
 
 - CFPB Loan Estimate guide: https://www.consumerfinance.gov/owning-a-home/loan-estimate/
