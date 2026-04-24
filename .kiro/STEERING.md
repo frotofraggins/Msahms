@@ -256,3 +256,80 @@ Append-only for decisions. Overwrite sections only when a decision is
 reversed and the old version is captured in the commit message. Both agents
 can edit; both should cite the commit + date of any change. Substantive
 architecture changes need human sign-off.
+
+## Data sources — verified endpoints (Kiro B, 2026-04-24)
+
+These were discovered, tested, and verified during the build. Do not change
+URLs without re-verifying.
+
+| Source | Endpoint | Free tier | Notes |
+|--------|----------|-----------|-------|
+| Pinal County ArcGIS | `gis.pinal.gov/mapping/rest/services/TaxParcels/MapServer/3/query` | Unlimited, no auth | Layer 3. Returns parcel ID, owner, sqft, year built, assessed value, sale price/date, subdivision, floors, tax info |
+| Maricopa County ArcGIS | `gis.mcassessor.maricopa.gov/arcgis/rest/services/Parcels/MapServer/0/query` | Unlimited, no auth | Layer 0. Returns address, sale price/date, year built, living space, assessed value, lat/lon, zoning |
+| Zillow Research CSVs | `files.zillowstatic.com/research/public_csvs/` | Free, monthly | 13 datasets. ZIP-level ZHVI + metro-level metrics. Downloaded on 17th of each month |
+| Google Street View | Static API via `maps.googleapis.com` | 10,000 images/month free, unlimited metadata | Cache in S3 at `streetview/{zip}/{address}.jpg`. Alarm at 8,000/month |
+| Mesa Legistar API | `webapi.legistar.com/v1/mesa` | Free, no auth | City council meetings, zoning cases, 29 boards/committees |
+| Mesa Police Open Data | `data.mesaaz.gov/resource/hpbg-2wph.json` | Free, no auth | Crime incidents with GPS coordinates |
+| RentCast API | `api.rentcast.io` | 50 calls/month free | Backup for property estimates only |
+
+**ZIP-to-county routing**: San Tan Valley (85140) → Pinal County. Mesa/Gilbert/Chandler → Maricopa County. Full list in `lib/county-router.ts` (`PINAL_COUNTY_ZIPS` set, 23 ZIPs).
+
+## Cost constraints
+
+The owner explicitly said: **keep everything in free tier until we start getting leads.** Current estimated monthly cost at low traffic: ~$3/month (DynamoDB on-demand + S3 storage + occasional Lambda invocations).
+
+Known costs to watch:
+- Google Street View: 10K free images/month. CloudWatch alarm at 8K.
+- RentCast: 50 free calls/month. Use only as backup.
+- ALB from StackPro: ~$18/month (owner chose to keep it for now, may remove).
+- RDS from StackPro: stopped (was $15/month with zero connections).
+
+## Content strategy
+
+The platform is not just a tool site — it's a local information hub for Mesa, AZ. Content sources include:
+
+1. **City pages** for Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, Apache Junction
+2. **Blog posts** for SEO — market updates, first-time buyer guides, neighborhood profiles
+3. **Government meeting summaries** from Mesa Legistar API (zoning, city council)
+4. **Crime statistics** from Mesa Police Open Data
+5. **HOA data and community sentiment** from Reddit and local forums (Phase 1B)
+6. **Relocation guides** for people moving to Mesa from other states (high-value lead capture)
+7. **News and election info** relevant to Mesa residents
+
+Content is generated/summarized by the local RTX 4090 AI via MCP, then stored in DynamoDB as blog posts and city page data.
+
+## Business model
+
+| Revenue stream | Amount | When |
+|---------------|--------|------|
+| Flat-fee MLS listing | $999 | At listing start |
+| Broker transaction fee | $400 | At listing start |
+| Full-service upgrade | Standard commission | When seller opts for full agent |
+
+The flat-fee model is the primary differentiator. Every page has a Full Service Upgrade banner — we're honest about the option, not hiding it.
+
+## AWS account details
+
+- Account ID: 304052673868
+- Profile name: `Msahms` (capital M)
+- Region: us-west-2 (primary), us-west-1 (existing S3 bucket)
+- CloudFront distribution: E3TBTUT3LJLAAT
+- Domain: mesahomes.com (Route 53 + ACM cert for mesahomes.com + www.mesahomes.com)
+- GitHub repo: `https://github.com/frotofraggins/Msahms.git`
+
+## Implementation status (Kiro B, 2026-04-24)
+
+| Task | Status | Tests | Key files |
+|------|--------|-------|-----------|
+| 1. Infrastructure | ✅ Complete | 147 | `infrastructure/*.ts`, `lib/dynamodb.ts`, `lib/cognito.ts`, `lib/s3.ts`, `lib/secrets.ts` |
+| 2. Shared modules | ✅ Complete | 165 | `lib/errors.ts`, `lib/retry.ts`, `lib/models/*.ts`, `lib/types/*.ts` |
+| 3. Checkpoint | ✅ Pass | — | — |
+| 4. Data pipeline | ✅ Complete | 69 | `lambdas/data-pipeline/*`, `lambdas/property-lookup/*`, `lib/county-router.ts`, `lib/property-normalizer.ts` |
+| 5. Tool calculators | ✅ Complete | 75 | `lambdas/tools-calculator/*` (net-sheet, affordability, comparison, sell-now-or-wait) |
+| 6. Lead capture + AI + content | ✅ Complete | 60 | `lambdas/leads-capture/*`, `lambdas/ai-proxy/*`, `lambdas/market-data/*`, `lambdas/content-api/*` |
+| 7. Checkpoint | ✅ Pass | — | — |
+| 8. Auth + dashboard + notifications + listing | ✅ Complete | 148 | `lambdas/auth-api/*`, `lib/authorizer.ts`, `lambdas/dashboard-api/*`, `lambdas/notification-worker/*`, `lambdas/listing-service/*` |
+| 9. Checkpoint | ✅ Pass (0 tsc errors, 719 tests) | — | — |
+| 10-20. Frontend + deployment | ⬜ Not started | — | — |
+
+Total: **719 tests passing**, **52 test files**, **0 TypeScript errors**.
