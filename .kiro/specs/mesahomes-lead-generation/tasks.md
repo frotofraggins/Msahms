@@ -16,7 +16,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Enable DynamoDB Streams with NEW_AND_OLD_IMAGES
     - Create shared DynamoDB client module (`lib/dynamodb.ts`) with table name constant and helper functions for PK/SK patterns
     - _Requirements: 11.3, 19.4 — Design: DynamoDB Single-Table Design section_
-  - [ ] 1.2 Create Cognito User Pool for agent/admin authentication
+  - [x] 1.2 Create Cognito User Pool for agent/admin authentication
     - Configure custom attributes: `custom:role` (Agent | Team_Admin), `custom:teamId`
     - Set password policy: min 8 chars, require uppercase, lowercase, number, special
     - Set token validity: access 24h, refresh 30 days
