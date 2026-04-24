@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 
-import { SYNDICATION_PORTALS, portalsSentence } from '@/lib/brokerage';
+import { SYNDICATION_PORTALS, portalsSentence } from '@mesahomes/lib/brokerage';
 
 /** Flat fee amount. */
 const FLAT_FEE = 999;

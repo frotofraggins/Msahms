@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { tryGetBrokerOfRecord, portalsSentence } from '@mesahomes/lib/brokerage';
 
 const areaLinks = [
   { href: '/areas/mesa', label: 'Mesa' },
@@ -18,6 +19,8 @@ const toolLinks = [
 ];
 
 export function Footer() {
+  const broker = tryGetBrokerOfRecord();
+
   return (
     <footer className="border-t border-gray-200 bg-surface">
       <div className="mx-auto max-w-7xl px-4 py-12">
@@ -73,8 +76,14 @@ export function Footer() {
 
         <div className="mt-8 border-t border-gray-200 pt-6 text-center text-xs text-text-light">
           <p>© {new Date().getFullYear()} MesaHomes. Licensed in Arizona.</p>
+          {broker && (
+            <p className="mt-1">
+              {broker.name}, Arizona License #{broker.licenseNumber}
+              {broker.brokerageName !== 'MesaHomes' ? ` — ${broker.brokerageName}` : ''}
+            </p>
+          )}
           <p className="mt-1">
-            Flat-fee MLS listings syndicated to Zillow, Realtor.com, Redfin, Trulia, and Homes.com via ARMLS.
+            Flat-fee MLS listings syndicated to {portalsSentence()} via ARMLS.
           </p>
         </div>
       </div>
