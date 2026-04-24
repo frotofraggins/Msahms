@@ -176,9 +176,23 @@ describe('Authenticated dashboard routes', () => {
     }
   });
 
-  it('should target dashboard-api Lambda for all dashboard routes', () => {
+  it('should target the correct dashboard Lambda for each route group', () => {
+    const expectedTargets: Record<string, string> = {
+      '/api/v1/dashboard/leads': 'dashboard-leads',
+      '/api/v1/dashboard/leads/{id}': 'dashboard-leads',
+      '/api/v1/dashboard/performance': 'dashboard-leads',
+      '/api/v1/dashboard/team': 'dashboard-team',
+      '/api/v1/dashboard/team/invite': 'dashboard-team',
+      '/api/v1/dashboard/team/{agentId}': 'dashboard-team',
+      '/api/v1/dashboard/listings': 'dashboard-listings',
+      '/api/v1/dashboard/listings/{id}': 'dashboard-listings',
+      '/api/v1/dashboard/notifications/settings': 'dashboard-notifications',
+    };
     for (const route of authenticatedRoutes) {
-      expect(route.lambdaTarget, `${route.method} ${route.path}`).toBe('dashboard-api');
+      const expected = expectedTargets[route.path];
+      if (expected) {
+        expect(route.lambdaTarget, `${route.method} ${route.path}`).toBe(expected);
+      }
     }
   });
 

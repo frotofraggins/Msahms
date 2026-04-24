@@ -1,8 +1,7 @@
 /**
- * Tests for the dashboard-api Lambda handler.
+ * Tests for the dashboard-leads Lambda handler.
  *
- * Covers lead management, team management, notification preferences,
- * performance metrics, listing management, and permission enforcement.
+ * Covers lead management, performance metrics, and permission enforcement.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -20,12 +19,11 @@ vi.mock('../../lib/dynamodb.js', () => ({
   putItem: vi.fn(),
 }));
 
-import { getItem, queryGSI1, updateItem, putItem } from '../../lib/dynamodb.js';
+import { getItem, queryGSI1, updateItem } from '../../lib/dynamodb.js';
 
 const mockGetItem = vi.mocked(getItem);
 const mockQueryGSI1 = vi.mocked(queryGSI1);
 const mockUpdateItem = vi.mocked(updateItem);
-const mockPutItem = vi.mocked(putItem);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -229,159 +227,6 @@ describe('PATCH /api/v1/dashboard/leads/{id}', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Team management tests
-// ---------------------------------------------------------------------------
-
-describe('GET /api/v1/dashboard/team', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('should return team roster for admin', async () => {
-    mockQueryGSI1.mockResolvedValue({
-      items: [
-        { PK: 'AGENT#a1', SK: 'AGENT#a1', data: { agentId: 'a1', name: 'Agent One' } },
-      ],
-      lastKey: undefined,
-    });
-
-    const result = await handler(makeEvent('GET', '/api/v1/dashboard/team', null, 'Team_Admin'));
-    expect(result.statusCode).toBe(200);
-    const body = parseBody(result.body);
-    expect(body.count).toBe(1);
-  });
-
-  it('should return 403 for non-admin', async () => {
-    const result = await handler(makeEvent('GET', '/api/v1/dashboard/team'));
-    expect(result.statusCode).toBe(403);
-  });
-});
-
-describe('POST /api/v1/dashboard/team/invite', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('should create invite for admin', async () => {
-    mockPutItem.mockResolvedValue(undefined);
-
-    const result = await handler(
-      makeEvent('POST', '/api/v1/dashboard/team/invite', { email: 'new@mesa.com' }, 'Team_Admin'),
-    );
-    expect(result.statusCode).toBe(201);
-    const body = parseBody(result.body);
-    expect(body.agentId).toBeDefined();
-    expect(body.inviteToken).toBeDefined();
-    expect(body.registrationUrl).toBeDefined();
-  });
-
-  it('should return 400 when email is missing', async () => {
-    const result = await handler(
-      makeEvent('POST', '/api/v1/dashboard/team/invite', {}, 'Team_Admin'),
-    );
-    expect(result.statusCode).toBe(400);
-  });
-
-  it('should return 403 for non-admin', async () => {
-    const result = await handler(
-      makeEvent('POST', '/api/v1/dashboard/team/invite', { email: 'new@mesa.com' }),
-    );
-    expect(result.statusCode).toBe(403);
-  });
-});
-
-describe('PATCH /api/v1/dashboard/team/{agentId}', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('should deactivate agent for admin', async () => {
-    mockGetItem.mockResolvedValue({
-      PK: 'AGENT#a1',
-      SK: 'AGENT#a1',
-      data: { agentId: 'a1', status: 'active' },
-    });
-    mockUpdateItem.mockResolvedValue(undefined);
-
-    const result = await handler(
-      makeEvent('PATCH', '/api/v1/dashboard/team/a1', { status: 'deactivated' }, 'Team_Admin'),
-    );
-    expect(result.statusCode).toBe(200);
-  });
-
-  it('should return 403 for non-admin', async () => {
-    const result = await handler(
-      makeEvent('PATCH', '/api/v1/dashboard/team/a1', { status: 'deactivated' }),
-    );
-    expect(result.statusCode).toBe(403);
-  });
-
-  it('should return 404 for non-existent agent', async () => {
-    mockGetItem.mockResolvedValue(undefined);
-    const result = await handler(
-      makeEvent('PATCH', '/api/v1/dashboard/team/nope', { status: 'deactivated' }, 'Team_Admin'),
-    );
-    expect(result.statusCode).toBe(404);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Notification preferences tests
-// ---------------------------------------------------------------------------
-
-describe('GET /api/v1/dashboard/notifications/settings', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('should return notification preferences', async () => {
-    mockGetItem.mockResolvedValue({
-      PK: 'AGENT#agent-sub-1',
-      SK: 'NOTIF_PREFS',
-      data: { newLead: 'email-sms', statusChange: 'email' },
-    });
-
-    const result = await handler(
-      makeEvent('GET', '/api/v1/dashboard/notifications/settings'),
-    );
-    expect(result.statusCode).toBe(200);
-    const body = parseBody(result.body);
-    expect((body.preferences as Record<string, unknown>).newLead).toBe('email-sms');
-  });
-
-  it('should return defaults when no prefs exist', async () => {
-    mockGetItem.mockResolvedValue(undefined);
-
-    const result = await handler(
-      makeEvent('GET', '/api/v1/dashboard/notifications/settings'),
-    );
-    expect(result.statusCode).toBe(200);
-    const body = parseBody(result.body);
-    expect((body.preferences as Record<string, unknown>).newLead).toBe('email');
-  });
-});
-
-describe('PUT /api/v1/dashboard/notifications/settings', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('should update notification preferences', async () => {
-    mockPutItem.mockResolvedValue(undefined);
-
-    const result = await handler(
-      makeEvent('PUT', '/api/v1/dashboard/notifications/settings', {
-        newLead: 'email-sms',
-        statusChange: 'none',
-      }),
-    );
-    expect(result.statusCode).toBe(200);
-    const body = parseBody(result.body);
-    expect((body.preferences as Record<string, unknown>).newLead).toBe('email-sms');
-    expect((body.preferences as Record<string, unknown>).statusChange).toBe('none');
-  });
-
-  it('should return 400 for invalid preference value', async () => {
-    const result = await handler(
-      makeEvent('PUT', '/api/v1/dashboard/notifications/settings', {
-        newLead: 'invalid',
-      }),
-    );
-    expect(result.statusCode).toBe(400);
-  });
-});
-
-// ---------------------------------------------------------------------------
 // Performance metrics tests
 // ---------------------------------------------------------------------------
 
@@ -417,71 +262,6 @@ describe('GET /api/v1/dashboard/performance', () => {
       makeEvent('GET', '/api/v1/dashboard/performance'),
     );
     expect(result.statusCode).toBe(403);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Listing management tests
-// ---------------------------------------------------------------------------
-
-describe('GET /api/v1/dashboard/listings', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('should return listings', async () => {
-    // Mock 7 status queries (one per status)
-    for (let i = 0; i < 7; i++) {
-      mockQueryGSI1.mockResolvedValueOnce({
-        items: i === 0
-          ? [{ PK: 'LISTING#l1', SK: 'LISTING#l1', data: { listingId: 'l1', status: 'draft' } }]
-          : [],
-        lastKey: undefined,
-      });
-    }
-
-    const result = await handler(
-      makeEvent('GET', '/api/v1/dashboard/listings'),
-    );
-    expect(result.statusCode).toBe(200);
-    const body = parseBody(result.body);
-    expect(body.count).toBe(1);
-  });
-});
-
-describe('PATCH /api/v1/dashboard/listings/{id}', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('should update listing status for admin', async () => {
-    mockGetItem.mockResolvedValue({
-      PK: 'LISTING#l1',
-      SK: 'LISTING#l1',
-      data: { listingId: 'l1', status: 'paid' },
-    });
-    mockUpdateItem.mockResolvedValue(undefined);
-
-    const result = await handler(
-      makeEvent('PATCH', '/api/v1/dashboard/listings/l1', { status: 'mls-pending' }, 'Team_Admin'),
-    );
-    expect(result.statusCode).toBe(200);
-  });
-
-  it('should return 403 for non-admin', async () => {
-    const result = await handler(
-      makeEvent('PATCH', '/api/v1/dashboard/listings/l1', { status: 'active' }),
-    );
-    expect(result.statusCode).toBe(403);
-  });
-
-  it('should return 400 for invalid listing status', async () => {
-    mockGetItem.mockResolvedValue({
-      PK: 'LISTING#l1',
-      SK: 'LISTING#l1',
-      data: { listingId: 'l1' },
-    });
-
-    const result = await handler(
-      makeEvent('PATCH', '/api/v1/dashboard/listings/l1', { status: 'bogus' }, 'Team_Admin'),
-    );
-    expect(result.statusCode).toBe(400);
   });
 });
 

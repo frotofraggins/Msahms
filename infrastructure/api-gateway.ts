@@ -25,7 +25,10 @@ export type LambdaTarget =
   | 'content-api'
   | 'ai-proxy'
   | 'listing-service'
-  | 'dashboard-api'
+  | 'dashboard-leads'
+  | 'dashboard-team'
+  | 'dashboard-notifications'
+  | 'dashboard-listings'
   | 'auth-api';
 
 /** A single API Gateway route definition. */
@@ -99,23 +102,23 @@ export const publicRoutes: readonly RouteDefinition[] = [
  */
 export const authenticatedRoutes: readonly RouteDefinition[] = [
   // Dashboard — leads
-  { method: 'GET', path: '/api/v1/dashboard/leads', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'GET', path: '/api/v1/dashboard/leads/{id}', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'PATCH', path: '/api/v1/dashboard/leads/{id}', lambdaTarget: 'dashboard-api', authRequired: true },
+  { method: 'GET', path: '/api/v1/dashboard/leads', lambdaTarget: 'dashboard-leads', authRequired: true },
+  { method: 'GET', path: '/api/v1/dashboard/leads/{id}', lambdaTarget: 'dashboard-leads', authRequired: true },
+  { method: 'PATCH', path: '/api/v1/dashboard/leads/{id}', lambdaTarget: 'dashboard-leads', authRequired: true },
 
   // Dashboard — team
-  { method: 'GET', path: '/api/v1/dashboard/team', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'POST', path: '/api/v1/dashboard/team/invite', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'PATCH', path: '/api/v1/dashboard/team/{agentId}', lambdaTarget: 'dashboard-api', authRequired: true },
+  { method: 'GET', path: '/api/v1/dashboard/team', lambdaTarget: 'dashboard-team', authRequired: true },
+  { method: 'POST', path: '/api/v1/dashboard/team/invite', lambdaTarget: 'dashboard-team', authRequired: true },
+  { method: 'PATCH', path: '/api/v1/dashboard/team/{agentId}', lambdaTarget: 'dashboard-team', authRequired: true },
 
   // Dashboard — performance & listings
-  { method: 'GET', path: '/api/v1/dashboard/performance', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'GET', path: '/api/v1/dashboard/listings', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'PATCH', path: '/api/v1/dashboard/listings/{id}', lambdaTarget: 'dashboard-api', authRequired: true },
+  { method: 'GET', path: '/api/v1/dashboard/performance', lambdaTarget: 'dashboard-leads', authRequired: true },
+  { method: 'GET', path: '/api/v1/dashboard/listings', lambdaTarget: 'dashboard-listings', authRequired: true },
+  { method: 'PATCH', path: '/api/v1/dashboard/listings/{id}', lambdaTarget: 'dashboard-listings', authRequired: true },
 
   // Dashboard — notifications
-  { method: 'GET', path: '/api/v1/dashboard/notifications/settings', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'PUT', path: '/api/v1/dashboard/notifications/settings', lambdaTarget: 'dashboard-api', authRequired: true },
+  { method: 'GET', path: '/api/v1/dashboard/notifications/settings', lambdaTarget: 'dashboard-notifications', authRequired: true },
+  { method: 'PUT', path: '/api/v1/dashboard/notifications/settings', lambdaTarget: 'dashboard-notifications', authRequired: true },
 ] as const;
 
 /**

@@ -1,8 +1,7 @@
 /**
- * Lambda handler for the MesaHomes dashboard-api service.
+ * Lambda handler for the MesaHomes dashboard leads service.
  *
- * Routes authenticated requests to lead management, team management,
- * notification preferences, performance metrics, and listing management.
+ * Routes authenticated requests to lead management and performance metrics.
  *
  * All endpoints require Cognito JWT authentication. Role-based access
  * control is enforced via the shared authorizer module.
@@ -11,14 +10,7 @@
  *   GET    /api/v1/dashboard/leads                    → List leads (filtered)
  *   GET    /api/v1/dashboard/leads/{id}               → Lead detail
  *   PATCH  /api/v1/dashboard/leads/{id}               → Update lead
- *   GET    /api/v1/dashboard/team                     → Team roster (admin)
- *   POST   /api/v1/dashboard/team/invite              → Invite agent (admin)
- *   PATCH  /api/v1/dashboard/team/{agentId}           → Update agent (admin)
  *   GET    /api/v1/dashboard/performance              → Performance metrics (admin)
- *   GET    /api/v1/dashboard/listings                 → Flat-fee listings
- *   PATCH  /api/v1/dashboard/listings/{id}            → Update listing (admin)
- *   GET    /api/v1/dashboard/notifications/settings   → Get notification prefs
- *   PUT    /api/v1/dashboard/notifications/settings   → Update notification prefs
  *
  * Runtime: Node.js 20 | Memory: 256 MB | Timeout: 10s
  */
@@ -28,7 +20,6 @@ import {
   ErrorCode,
   toLambdaResponse,
   generateCorrelationId,
-  createValidationError,
   type LambdaProxyResponse,
 } from '../../lib/errors.js';
 import {
@@ -41,10 +32,7 @@ import {
   getItem,
   queryGSI1,
   updateItem,
-  putItem,
 } from '../../lib/dynamodb.js';
-import { generateAgentKeys } from '../../lib/models/keys.js';
-import { EntityType } from '../../lib/types/dynamodb.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -274,204 +262,6 @@ async function handleUpdateLead(
 }
 
 // ---------------------------------------------------------------------------
-// Team management handlers
-// ---------------------------------------------------------------------------
-
-/**
- * GET /api/v1/dashboard/team — List team agents (admin only).
- */
-async function handleListTeam(
-  claims: AuthClaims,
-  correlationId: string,
-): Promise<LambdaProxyResponse> {
-  requirePermission(claims, 'invite_agent', correlationId);
-
-  const result = await queryGSI1(`TEAM#${claims.teamId}`);
-  const agents = result.items
-    .map((item) => item.data as Record<string, unknown>)
-    .filter(Boolean);
-
-  return {
-    statusCode: 200,
-    headers: CORS_HEADERS,
-    body: JSON.stringify({ agents, count: agents.length }),
-  };
-}
-
-/**
- * POST /api/v1/dashboard/team/invite — Invite a new agent (admin only).
- */
-async function handleInviteAgent(
-  body: Record<string, unknown>,
-  claims: AuthClaims,
-  correlationId: string,
-): Promise<LambdaProxyResponse> {
-  requirePermission(claims, 'invite_agent', correlationId);
-
-  const email = body.email as string | undefined;
-  if (!email || email.trim().length === 0) {
-    return toLambdaResponse(
-      createValidationError([{ field: 'email', message: 'email is required' }], correlationId),
-    );
-  }
-
-  const { randomUUID } = await import('node:crypto');
-  const agentId = randomUUID();
-  const inviteToken = randomUUID();
-
-  // Create pending agent record
-  const agentKeys = generateAgentKeys(agentId, claims.teamId);
-  await putItem({
-    ...agentKeys,
-    entityType: EntityType.AGENT,
-    data: {
-      agentId,
-      cognitoSub: '',
-      name: '',
-      email,
-      phone: '',
-      role: 'Agent',
-      status: 'pending',
-      teamId: claims.teamId,
-      specialties: [],
-      assignedCities: [],
-      assignedZips: [],
-      productionData: { transactionsClosed: 0, volume: 0 },
-      notificationPrefs: { newLead: 'email', statusChange: 'email' },
-    },
-  });
-
-  // Create invite token record
-  await putItem({
-    PK: `INVITE#${inviteToken}`,
-    SK: 'INVITE',
-    entityType: 'INVITE' as EntityType,
-    data: {
-      email,
-      role: 'Agent',
-      teamId: claims.teamId,
-      agentId,
-      used: false,
-    },
-  });
-
-  // SES email would be sent here in production
-  // For MVP, return the invite token for manual distribution
-
-  return {
-    statusCode: 201,
-    headers: CORS_HEADERS,
-    body: JSON.stringify({
-      agentId,
-      inviteToken,
-      registrationUrl: `/auth/register?token=${inviteToken}`,
-    }),
-  };
-}
-
-/**
- * PATCH /api/v1/dashboard/team/{agentId} — Deactivate agent (admin only).
- */
-async function handleUpdateAgent(
-  agentId: string,
-  body: Record<string, unknown>,
-  claims: AuthClaims,
-  correlationId: string,
-): Promise<LambdaProxyResponse> {
-  requirePermission(claims, 'deactivate_agent', correlationId);
-
-  // Find agent record
-  const agentItem = await getItem(`AGENT#${agentId}`, `AGENT#${agentId}`);
-  if (!agentItem) {
-    throw new AppError(ErrorCode.NOT_FOUND, `Agent ${agentId} not found`, correlationId);
-  }
-
-  const updates: Record<string, unknown> = {};
-
-  if (body.status === 'deactivated') {
-    updates['data.status'] = 'deactivated';
-    // In production: reassign open leads to Team_Admin
-  }
-
-  if (Object.keys(updates).length === 0) {
-    throw new AppError(ErrorCode.VALIDATION_ERROR, 'No updates provided', correlationId);
-  }
-
-  await updateItem(`AGENT#${agentId}`, `AGENT#${agentId}`, updates);
-
-  return {
-    statusCode: 200,
-    headers: CORS_HEADERS,
-    body: JSON.stringify({ agentId, updated: true }),
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Notification preferences handlers
-// ---------------------------------------------------------------------------
-
-/**
- * GET /api/v1/dashboard/notifications/settings — Get notification prefs.
- */
-async function handleGetNotificationSettings(
-  claims: AuthClaims,
-): Promise<LambdaProxyResponse> {
-  const item = await getItem(`AGENT#${claims.sub}`, 'NOTIF_PREFS');
-
-  const defaults = { newLead: 'email', statusChange: 'email' };
-  const prefs = item?.data ?? defaults;
-
-  return {
-    statusCode: 200,
-    headers: CORS_HEADERS,
-    body: JSON.stringify({ preferences: prefs }),
-  };
-}
-
-/**
- * PUT /api/v1/dashboard/notifications/settings — Update notification prefs.
- */
-async function handleUpdateNotificationSettings(
-  body: Record<string, unknown>,
-  claims: AuthClaims,
-  correlationId: string,
-): Promise<LambdaProxyResponse> {
-  const validOptions = new Set(['email', 'email-sms', 'none']);
-
-  const newLead = body.newLead as string | undefined;
-  const statusChange = body.statusChange as string | undefined;
-
-  const fieldErrors: Array<{ field: string; message: string }> = [];
-  if (newLead && !validOptions.has(newLead)) {
-    fieldErrors.push({ field: 'newLead', message: 'Must be email, email-sms, or none' });
-  }
-  if (statusChange && !validOptions.has(statusChange)) {
-    fieldErrors.push({ field: 'statusChange', message: 'Must be email, email-sms, or none' });
-  }
-  if (fieldErrors.length > 0) {
-    return toLambdaResponse(createValidationError(fieldErrors, correlationId));
-  }
-
-  const prefs = {
-    newLead: newLead ?? 'email',
-    statusChange: statusChange ?? 'email',
-  };
-
-  await putItem({
-    PK: `AGENT#${claims.sub}`,
-    SK: 'NOTIF_PREFS',
-    entityType: 'NOTIF_PREFS' as EntityType,
-    data: prefs,
-  });
-
-  return {
-    statusCode: 200,
-    headers: CORS_HEADERS,
-    body: JSON.stringify({ preferences: prefs }),
-  };
-}
-
-// ---------------------------------------------------------------------------
 // Performance metrics handler
 // ---------------------------------------------------------------------------
 
@@ -555,85 +345,6 @@ async function handlePerformance(
 }
 
 // ---------------------------------------------------------------------------
-// Listing management handlers
-// ---------------------------------------------------------------------------
-
-/**
- * GET /api/v1/dashboard/listings — List flat-fee listings.
- */
-async function handleListListings(
-  _claims: AuthClaims,
-  _correlationId: string,
-): Promise<LambdaProxyResponse> {
-  // Both agents and admins can view listings
-  const statuses = ['draft', 'payment-pending', 'paid', 'mls-pending', 'active', 'sold', 'cancelled'];
-  const allListings: Record<string, unknown>[] = [];
-
-  for (const status of statuses) {
-    const result = await queryGSI1(`LISTING#STATUS#${status}`, { limit: 50 });
-    const listings = result.items
-      .map((item) => item.data as Record<string, unknown>)
-      .filter(Boolean);
-    allListings.push(...listings);
-  }
-
-  return {
-    statusCode: 200,
-    headers: CORS_HEADERS,
-    body: JSON.stringify({ listings: allListings, count: allListings.length }),
-  };
-}
-
-/**
- * PATCH /api/v1/dashboard/listings/{id} — Update listing status (admin only).
- */
-async function handleUpdateListing(
-  listingId: string,
-  body: Record<string, unknown>,
-  claims: AuthClaims,
-  correlationId: string,
-): Promise<LambdaProxyResponse> {
-  requirePermission(claims, 'manage_listings', correlationId);
-
-  const item = await getItem(`LISTING#${listingId}`, `LISTING#${listingId}`);
-  if (!item) {
-    throw new AppError(ErrorCode.NOT_FOUND, `Listing ${listingId} not found`, correlationId);
-  }
-
-  const updates: Record<string, unknown> = {};
-
-  if (body.status) {
-    const validStatuses = new Set([
-      'draft', 'payment-pending', 'paid', 'mls-pending', 'active', 'sold', 'cancelled',
-    ]);
-    if (!validStatuses.has(body.status as string)) {
-      throw new AppError(
-        ErrorCode.VALIDATION_ERROR,
-        `Invalid listing status: ${body.status}`,
-        correlationId,
-      );
-    }
-    updates['data.status'] = body.status;
-  }
-
-  if (body.mlsNumber) {
-    updates['data.mlsNumber'] = body.mlsNumber;
-  }
-
-  if (Object.keys(updates).length === 0) {
-    throw new AppError(ErrorCode.VALIDATION_ERROR, 'No updates provided', correlationId);
-  }
-
-  await updateItem(`LISTING#${listingId}`, `LISTING#${listingId}`, updates);
-
-  return {
-    statusCode: 200,
-    headers: CORS_HEADERS,
-    body: JSON.stringify({ listingId, updated: true }),
-  };
-}
-
-// ---------------------------------------------------------------------------
 // Utility
 // ---------------------------------------------------------------------------
 
@@ -697,52 +408,9 @@ export async function handler(event: AuthorizedEvent): Promise<LambdaProxyRespon
       return await handleUpdateLead(leadId, body, claims, correlationId);
     }
 
-    // --- Team management ---
-    if (path.match(/\/dashboard\/team\/?$/) && method === 'GET') {
-      return await handleListTeam(claims, correlationId);
-    }
-
-    if (path.match(/\/dashboard\/team\/invite\/?$/) && method === 'POST') {
-      if (!event.body) throw new AppError(ErrorCode.MISSING_FIELD, 'Request body required', correlationId);
-      const body = JSON.parse(event.body) as Record<string, unknown>;
-      return await handleInviteAgent(body, claims, correlationId);
-    }
-
-    if (path.match(/\/dashboard\/team\/[^/]+$/) && !path.includes('/invite') && method === 'PATCH') {
-      const agentId = extractPathParam(path, '/team/');
-      if (!agentId) throw new AppError(ErrorCode.VALIDATION_ERROR, 'Agent ID required', correlationId);
-      if (!event.body) throw new AppError(ErrorCode.MISSING_FIELD, 'Request body required', correlationId);
-      const body = JSON.parse(event.body) as Record<string, unknown>;
-      return await handleUpdateAgent(agentId, body, claims, correlationId);
-    }
-
-    // --- Notifications ---
-    if (path.match(/\/dashboard\/notifications\/settings\/?$/) && method === 'GET') {
-      return await handleGetNotificationSettings(claims);
-    }
-
-    if (path.match(/\/dashboard\/notifications\/settings\/?$/) && method === 'PUT') {
-      if (!event.body) throw new AppError(ErrorCode.MISSING_FIELD, 'Request body required', correlationId);
-      const body = JSON.parse(event.body) as Record<string, unknown>;
-      return await handleUpdateNotificationSettings(body, claims, correlationId);
-    }
-
     // --- Performance ---
     if (path.match(/\/dashboard\/performance\/?$/) && method === 'GET') {
       return await handlePerformance(claims, correlationId);
-    }
-
-    // --- Listings ---
-    if (path.match(/\/dashboard\/listings\/?$/) && method === 'GET') {
-      return await handleListListings(claims, correlationId);
-    }
-
-    if (path.match(/\/dashboard\/listings\/[^/]+$/) && method === 'PATCH') {
-      const listingId = extractPathParam(path, '/listings/');
-      if (!listingId) throw new AppError(ErrorCode.VALIDATION_ERROR, 'Listing ID required', correlationId);
-      if (!event.body) throw new AppError(ErrorCode.MISSING_FIELD, 'Request body required', correlationId);
-      const body = JSON.parse(event.body) as Record<string, unknown>;
-      return await handleUpdateListing(listingId, body, claims, correlationId);
     }
 
     throw new AppError(ErrorCode.NOT_FOUND, `Unknown path: ${path}`, correlationId);
@@ -757,7 +425,7 @@ export async function handler(event: AuthorizedEvent): Promise<LambdaProxyRespon
       );
     }
 
-    console.error('[dashboard-api] Unexpected error:', error);
+    console.error('[dashboard-leads] Unexpected error:', error);
     return toLambdaResponse(
       new AppError(ErrorCode.UPSTREAM_ERROR, 'Internal server error', correlationId),
     );
