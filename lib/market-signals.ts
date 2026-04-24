@@ -1,13 +1,24 @@
 /**
  * Market signal scoring for Sell-Now-or-Wait analysis.
  *
- * Pure functions — no I/O, no AWS SDK. Takes market data, returns a weighted
- * score in [-1, 1] (negative = wait, positive = sell now), a confidence in
- * [0, 1], a seasonal bias, and a simple 3-month projected value.
+ * Pure functions — no I/O, no AWS SDK.
  *
- * The differentiator vs a naive majority-vote: each signal has a calibrated
- * weight based on how predictive it is of short-term market direction.
- * Confidence is reduced when fewer signals are observed (missing data).
+ * Methodology:
+ * Aligned with Zillow's Market Heat Index convention (0-100 scale, with
+ * published buckets: 70+ strong seller, 55-69 seller, 44-55 neutral, 28-44
+ * buyer, <28 strong buyer). See
+ * https://www.zillow.com/research/market-heat-index-methodology-34057/
+ *
+ * Zillow's public index uses three inputs: buyer engagement, share of
+ * price-cut listings, and share of listings pending in 21 days. We extend
+ * that with county-data signals unique to our platform (ZHVI trend, 6-month
+ * change, sale-to-list ratio, inventory, your-home-vs-ZHVI, seasonal bias).
+ * Weights sum to 1 and are calibrated against leading-vs-lagging indicator
+ * practice: trend signals get the most weight, inventory least.
+ *
+ * Confidence reflects *data coverage*, not statistical confidence —
+ * if only 3 of 7 signals have data, the score could still be accurate,
+ * but we surface the partial observation to the user.
  */
 
 import type { MarketDataZip } from './types/market.js';
@@ -56,13 +67,32 @@ export interface WeightedSignal {
 export interface WeightedAnalysis {
   /** Overall score in [-1, 1]. Positive = sell-now, negative = wait. */
   score: number;
+  /**
+   * Market heat index mapped to the 0-100 scale used by Zillow's Market
+   * Heat Index. 100 = maximum seller-favoring, 0 = maximum buyer-favoring.
+   * Linear transform of `score`: heat = 50 + score * 50.
+   */
+  heatIndex: number;
+  /**
+   * Market bucket label aligned with Zillow's published thresholds:
+   *   >= 70  strong-seller
+   *   55-69  seller
+   *   44-54  neutral
+   *   28-43  buyer
+   *   < 28   strong-buyer
+   */
+  marketBucket: 'strong-seller' | 'seller' | 'neutral' | 'buyer' | 'strong-buyer';
   /** Confidence in [0, 1] based on observed signal coverage. */
   confidence: number;
   /** Per-signal breakdown. */
   signals: WeightedSignal[];
   /** Seasonal adjustment applied (+ favors selling, - favors waiting). */
   seasonalBias: number;
-  /** Recommendation mapped from score + confidence. */
+  /**
+   * Recommendation mapped from score + confidence.
+   * Simpler than the 5-bucket market classification above — meant for the
+   * user's direct question ("should I sell now or wait?").
+   */
   recommendation: 'sell-now' | 'wait' | 'neutral';
 }
 
@@ -215,6 +245,15 @@ export function computeWeightedAnalysis(
   // Blend seasonal bias in at 20% weight — enough to nudge, not dominate.
   const score = Math.max(-1, Math.min(1, rawScore * 0.8 + seasonalBias * 0.2));
 
+  // Map to Zillow's 0-100 heat index convention.
+  const heatIndex = 50 + score * 50;
+  const marketBucket: WeightedAnalysis['marketBucket'] =
+    heatIndex >= 70 ? 'strong-seller' :
+    heatIndex >= 55 ? 'seller' :
+    heatIndex >= 44 ? 'neutral' :
+    heatIndex >= 28 ? 'buyer' :
+    'strong-buyer';
+
   // Recommendation threshold: require confidence >= 0.4 to commit either way.
   let recommendation: 'sell-now' | 'wait' | 'neutral';
   if (confidence < 0.4) {
@@ -227,7 +266,7 @@ export function computeWeightedAnalysis(
     recommendation = 'neutral';
   }
 
-  return { score, confidence, signals, seasonalBias, recommendation };
+  return { score, heatIndex, marketBucket, confidence, signals, seasonalBias, recommendation };
 }
 
 /**

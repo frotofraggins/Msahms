@@ -266,7 +266,8 @@ export function generateSummary(
   const extras: string[] = [];
   if (weighted) {
     const pct = Math.round(weighted.confidence * 100);
-    extras.push(`Confidence: ${pct}% (based on ${weighted.signals.filter(s => s.observed).length} of ${weighted.signals.length} market signals).`);
+    const heat = Math.round(weighted.heatIndex);
+    extras.push(`Market heat ${heat}/100 (${weighted.marketBucket.replace('-', ' ')}). Confidence: ${pct}% (based on ${weighted.signals.filter(s => s.observed).length} of ${weighted.signals.length} market signals).`);
   }
   if (projection && projection.delta3Mo !== 0) {
     const dir = projection.delta3Mo > 0 ? 'gain' : 'lose';

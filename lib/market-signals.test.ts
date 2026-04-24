@@ -87,6 +87,29 @@ describe('computeWeightedAnalysis', () => {
     expect(r.confidence).toBeLessThan(0.4);
     expect(r.recommendation).toBe('neutral');
   });
+
+  it('maps score to Zillow 0-100 heat index with correct buckets', () => {
+    // Strong seller conditions
+    const strong = computeWeightedAnalysis(
+      { ...sampleZip, trendDirection: 'declining', zhviChange6Mo: -30000 },
+      { saleToList: 105, daysPending: 15, priceCuts: 30, inventory: 5000 },
+      500000,
+      new Date('2026-04-15'),
+    );
+    expect(strong.heatIndex).toBeGreaterThanOrEqual(55);
+    expect(strong.heatIndex).toBeLessThanOrEqual(100);
+    expect(['seller', 'strong-seller']).toContain(strong.marketBucket);
+
+    // Strong buyer conditions
+    const weak = computeWeightedAnalysis(
+      { ...sampleZip, trendDirection: 'rising', zhviChange6Mo: 40000 },
+      { saleToList: 93, daysPending: 90, priceCuts: 10, inventory: 12000 },
+      380000,
+      new Date('2026-12-15'),
+    );
+    expect(weak.heatIndex).toBeLessThanOrEqual(55);
+    expect(['buyer', 'strong-buyer', 'neutral']).toContain(weak.marketBucket);
+  });
 });
 
 describe('projectThreeMonths', () => {
@@ -158,6 +181,10 @@ describe('property: weighted analysis invariants', () => {
           const r = computeWeightedAnalysis(zipData as MarketDataZip | null, {}, value);
           expect(r.score).toBeGreaterThanOrEqual(-1);
           expect(r.score).toBeLessThanOrEqual(1);
+          // Zillow convention checks
+          expect(r.heatIndex).toBeGreaterThanOrEqual(0);
+          expect(r.heatIndex).toBeLessThanOrEqual(100);
+          expect(['strong-seller', 'seller', 'neutral', 'buyer', 'strong-buyer']).toContain(r.marketBucket);
         },
       ),
       { numRuns: 200 },
