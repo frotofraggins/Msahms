@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 
-const SYNDICATION_PORTALS = ['Zillow', 'Realtor.com', 'Redfin', 'Trulia', 'Homes.com'];
+import { SYNDICATION_PORTALS, portalsSentence } from '@/lib/brokerage';
 
 /** Flat fee amount. */
 const FLAT_FEE = 999;

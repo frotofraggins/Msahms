@@ -72,7 +72,10 @@ export function Footer() {
         </div>
 
         <div className="mt-8 border-t border-gray-200 pt-6 text-center text-xs text-text-light">
-          © {new Date().getFullYear()} MesaHomes. Licensed in Arizona.
+          <p>© {new Date().getFullYear()} MesaHomes. Licensed in Arizona.</p>
+          <p className="mt-1">
+            Flat-fee MLS listings syndicated to Zillow, Realtor.com, Redfin, Trulia, and Homes.com via ARMLS.
+          </p>
         </div>
       </div>
     </footer>
