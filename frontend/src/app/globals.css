@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/*
+ * MesaHomes Design Tokens
+ *
+ * Primary:   #1B4D3E (dark green — trust, real estate)
+ * Secondary: #F5A623 (warm gold — CTAs, savings highlights)
+ * See .kiro/specs/mesahomes-lead-generation/frontend-design.md
+ */
+
+@theme {
+  --color-primary: #1B4D3E;
+  --color-primary-light: #2D7A5F;
+  --color-primary-dark: #0F3329;
+  --color-secondary: #F5A623;
+  --color-secondary-light: #F7BC5C;
+  --color-secondary-dark: #D48E1A;
+  --color-surface: #F8F9FA;
+  --color-text: #1A1A1A;
+  --color-text-light: #6B7280;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  --font-heading: 'Inter', 'DM Sans', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Base styles */
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+/* Tabular figures for numbers in calculators and tables */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

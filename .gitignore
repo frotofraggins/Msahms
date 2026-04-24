@@ -35,3 +35,6 @@ coverage/
 # AWS
 .aws-sam/
 cdk.out/
+frontend/node_modules/
+frontend/.next/
+frontend/out/

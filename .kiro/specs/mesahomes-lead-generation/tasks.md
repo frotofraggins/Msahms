@@ -290,11 +290,11 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Handle Stripe webhook for payment confirmation
     - _Requirements: 17.2, 17.3, 17.4 — Design: listing-service Lambda_
 
-- [ ] 9. Checkpoint — Ensure all backend APIs compile and tests pass
+- [x] 9. Checkpoint — Ensure all backend APIs compile and tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 10. Frontend foundation — Next.js setup, design system, shared components
-  - [ ] 10.1 Initialize Next.js project with TypeScript, Tailwind CSS, and shadcn/ui
+- [-] 10. Frontend foundation — Next.js setup, design system, shared components
+  - [-] 10.1 Initialize Next.js project with TypeScript, Tailwind CSS, and shadcn/ui
     - Create Next.js app with App Router, TypeScript strict mode
     - Install and configure Tailwind CSS with MesaHomes design tokens
     - Install shadcn/ui (Radix UI + Tailwind) for component library
