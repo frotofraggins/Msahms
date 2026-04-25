@@ -43,3 +43,5 @@ Real estate contracts/
 .kiro/reference/
 *.docx
 *.pdf
+cdk.out/
+.build/
