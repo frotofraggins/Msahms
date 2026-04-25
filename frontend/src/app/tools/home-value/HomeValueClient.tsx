@@ -5,6 +5,7 @@ import { MapPin, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PropertyDataCard, type PropertyData } from '@/components/PropertyDataCard';
 import { api, ApiRequestError } from '@/lib/api';
+import { trackEvent } from '@/lib/tracking';
 
 const placeholderProperty: PropertyData = {
   address: '1234 E Main St, Mesa, AZ 85201',
@@ -46,6 +47,7 @@ export function HomeValueClient() {
         leadType: 'Seller',
         toolSource: 'home-value',
       });
+      trackEvent('valuation_request', 'home-value', { address });
       setSuccess(true);
     } catch (err) {
       if (err instanceof ApiRequestError) {

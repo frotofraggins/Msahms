@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Phone, Calendar, MessageCircle, ArrowUpCircle } from 'lucide-react';
 import { LeadCaptureModal } from './LeadCaptureModal';
+import { trackEvent } from '@/lib/tracking';
 
 /**
  * Mobile-only sticky bottom bar with quick contact actions.
@@ -18,6 +19,7 @@ export function StickyContactBar() {
         <div className="grid grid-cols-4">
           <a
             href="tel:+14805551234"
+            onClick={() => trackEvent('call_click', 'sticky-bar')}
             className="flex flex-col items-center gap-1 py-2 text-xs text-text-light hover:text-primary"
           >
             <Phone className="h-5 w-5" />
@@ -38,7 +40,10 @@ export function StickyContactBar() {
             Chat
           </Link>
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={() => {
+              trackEvent('full_service_click', 'sticky-bar');
+              setModalOpen(true);
+            }}
             className="flex flex-col items-center gap-1 py-2 text-xs font-medium text-secondary hover:text-secondary-dark"
           >
             <ArrowUpCircle className="h-5 w-5" />

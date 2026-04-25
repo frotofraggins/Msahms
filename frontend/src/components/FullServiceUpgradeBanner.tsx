@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { LeadCaptureModal } from './LeadCaptureModal';
+import { trackEvent } from '@/lib/tracking';
 
 /**
  * Persistent green banner displayed on every page.
@@ -15,7 +16,10 @@ export function FullServiceUpgradeBanner() {
       <div className="bg-primary px-4 py-3 text-center text-sm text-white">
         <span className="mr-2">Want a licensed agent to handle everything?</span>
         <button
-          onClick={() => setModalOpen(true)}
+          onClick={() => {
+            trackEvent('full_service_click', 'upgrade-banner');
+            setModalOpen(true);
+          }}
           className="inline-block rounded-md bg-white px-3 py-1 text-xs font-semibold text-primary transition-colors hover:bg-gray-100"
         >
           Switch to Full Service

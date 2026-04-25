@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { Sparkles, RefreshCw, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
+import { trackEvent } from '@/lib/tracking';
 
 const MOCK_DESCRIPTION = `Welcome to this beautifully maintained home in the heart of Mesa, AZ! This spacious residence features an open-concept floor plan with abundant natural light throughout. The updated kitchen boasts modern finishes, granite countertops, and stainless steel appliances — perfect for entertaining.
 
@@ -27,6 +28,7 @@ export function ListingGeneratorClient() {
   const [leadCaptured, setLeadCaptured] = useState(false);
 
   const handleGenerate = useCallback(() => {
+    trackEvent('tool_use', 'listing-generator');
     if (!leadCaptured && !hasGenerated) {
       // First generation — show lead capture
       setModalOpen(true);

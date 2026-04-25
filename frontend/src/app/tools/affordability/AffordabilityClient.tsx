@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
 import { ProgressIndicator, type PathStep } from '@/components/ProgressIndicator';
 import Link from 'next/link';
+import { trackEvent } from '@/lib/tracking';
 
 const buyerSteps: PathStep[] = [
   { id: 'affordability', label: 'Affordability', href: '/tools/affordability' },
@@ -84,7 +85,8 @@ export function AffordabilityClient() {
 
   const handleCalculate = useCallback(() => {
     setCalculated(true);
-  }, []);
+    trackEvent('tool_use', 'affordability', { income, downPayment });
+  }, [income, downPayment]);
 
   const maxPrice = calculateMaxPrice(income, debts, downPayment, rate, term);
   const loanAmount = maxPrice - downPayment;

@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { FileText, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
+import { trackEvent } from '@/lib/tracking';
 import Link from 'next/link';
 
 const FINANCING_TYPES = ['Conventional', 'FHA', 'VA', 'Cash', 'USDA'];
@@ -33,6 +34,7 @@ export function OfferWriterClient() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const handlePreview = useCallback(() => {
+    trackEvent('tool_use', 'offer-writer');
     setPreviewed(true);
   }, []);
 

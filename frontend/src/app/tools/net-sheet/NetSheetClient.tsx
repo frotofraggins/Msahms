@@ -9,6 +9,7 @@ import { NearbyComps, type CompRecord } from '@/components/NearbyComps';
 import { ProgressIndicator, type PathStep } from '@/components/ProgressIndicator';
 import { WhatsNextCard } from '@/components/WhatsNextCard';
 import { FAQSection, type FAQItem } from '@/components/FAQSection';
+import { trackEvent } from '@/lib/tracking';
 
 const FLAT_FEE = 999;
 const BROKER_FEE = 400;
@@ -79,7 +80,8 @@ export function NetSheetClient() {
 
   const handleCalculate = useCallback(() => {
     setCalculated(true);
-  }, []);
+    trackEvent('tool_use', 'net-sheet', { salePrice, mortgage });
+  }, [salePrice, mortgage]);
 
   // Calculations
   const flatFeeCommission = FLAT_FEE + BROKER_FEE;

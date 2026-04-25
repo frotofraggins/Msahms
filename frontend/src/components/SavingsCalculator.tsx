@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { trackEvent } from '@/lib/tracking';
 
 /** Flat fee amount. */
 const FLAT_FEE = 999;
@@ -46,6 +47,8 @@ export function SavingsCalculator() {
             step={10000}
             value={price}
             onChange={(e) => setPrice(Number(e.target.value))}
+            onMouseUp={() => trackEvent('tool_use', 'savings-calculator', { salePrice: price })}
+            onTouchEnd={() => trackEvent('tool_use', 'savings-calculator', { salePrice: price })}
             className="w-full accent-primary"
           />
           <div className="mt-2 text-lg font-semibold tabular-nums text-primary">

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { trackEvent } from '@/lib/tracking';
 
 // ---------------------------------------------------------------------------
 // Package data
@@ -121,6 +122,7 @@ export function FsboClient() {
 
   async function handleCreateLead() {
     if (!pkg) return;
+    trackEvent('listing_start', 'fsbo', { package: selectedPkg });
     setSubmitting(true);
     try {
       await api.createLead({

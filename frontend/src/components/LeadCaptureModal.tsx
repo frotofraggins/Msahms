@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { X, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api, ApiRequestError } from '@/lib/api';
+import { trackEvent } from '@/lib/tracking';
 
 /** Props for the LeadCaptureModal. */
 export interface LeadCaptureModalProps {
@@ -110,6 +111,7 @@ export function LeadCaptureModal({
       }
 
       await api.createLead(payload);
+      trackEvent('lead_capture', toolSource, { leadType, timeframe });
       setSuccess(true);
     } catch (err) {
       if (err instanceof ApiRequestError) {
