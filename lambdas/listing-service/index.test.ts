@@ -24,13 +24,21 @@ vi.mock('../../lib/brokerage.js', () => ({
     "MesaHomes flat-fee listings are coming soon. Leave your info and we'll notify you when we're live on the MLS.",
 }));
 
+vi.mock('../../lib/listing-webhooks.js', () => ({
+  signHandoff: vi.fn(() => 'mock-sig-abc123'),
+  verifyVhzWebhook: vi.fn(() => true),
+}));
+
 import { putItem, getItem, updateItem } from '../../lib/dynamodb.js';
 import { listingsPaymentEnabled } from '../../lib/brokerage.js';
+import { signHandoff, verifyVhzWebhook } from '../../lib/listing-webhooks.js';
 
 const mockPutItem = vi.mocked(putItem);
 const mockGetItem = vi.mocked(getItem);
 const mockUpdateItem = vi.mocked(updateItem);
 const mockListingsPaymentEnabled = vi.mocked(listingsPaymentEnabled);
+const mockSignHandoff = vi.mocked(signHandoff);
+const mockVerifyVhzWebhook = vi.mocked(verifyVhzWebhook);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -46,6 +54,20 @@ function makeEvent(
     path,
     body: body ? JSON.stringify(body) : null,
     headers: {},
+    requestContext: { requestId: 'test-corr' },
+  };
+}
+
+function makeWebhookEvent(
+  body: Record<string, unknown>,
+  signature = 'sha256=valid',
+) {
+  const rawBody = JSON.stringify(body);
+  return {
+    httpMethod: 'POST',
+    path: '/api/v1/listing/fsbo/vhz-webhook',
+    body: rawBody,
+    headers: { 'X-VHZ-Signature': signature },
     requestContext: { requestId: 'test-corr' },
   };
 }
@@ -488,5 +510,258 @@ describe('LISTINGS_PAYMENT_ENABLED gating', () => {
       makeEvent('/api/v1/listing/payment', { listingId: 'old1' }),
     );
     expect(result.statusCode).toBe(400);
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// POST /api/v1/listing/fsbo/intake tests (Blocker 1)
+// ---------------------------------------------------------------------------
+
+const validFsboIntake = {
+  propertyAddress: '1234 E Main St, Mesa, AZ 85201',
+  bedrooms: 3,
+  bathrooms: 2,
+  sqft: 1800,
+  packageType: 'fsbo-standard',
+  email: 'seller@example.com',
+  name: 'Jane Doe',
+  phone: '480-555-1234',
+};
+
+describe('POST /api/v1/listing/fsbo/intake', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env['VHZ_CHECKOUT_BASE_URL'] = 'https://virtualhomezone.com/checkout';
+  });
+
+  it('should create an FSBO listing and return handoffUrl', async () => {
+    mockPutItem.mockResolvedValue(undefined);
+
+    const result = await handler(
+      makeEvent('/api/v1/listing/fsbo/intake', validFsboIntake),
+    );
+    expect(result.statusCode).toBe(201);
+
+    const body = parseBody(result.body);
+    expect(body.listingId).toBeDefined();
+    expect(body.leadId).toBeDefined();
+    expect(body.handoffUrl).toBeDefined();
+    expect(typeof body.handoffUrl).toBe('string');
+    expect((body.handoffUrl as string)).toContain('https://virtualhomezone.com/checkout');
+    expect((body.handoffUrl as string)).toContain('sig=mock-sig-abc123');
+    expect((body.handoffUrl as string)).toContain('source=mesahomes-fsbo');
+  });
+
+  it('should store listing with status awaiting-payment', async () => {
+    mockPutItem.mockResolvedValue(undefined);
+
+    await handler(makeEvent('/api/v1/listing/fsbo/intake', validFsboIntake));
+
+    expect(mockPutItem).toHaveBeenCalledTimes(1);
+    const storedItem = mockPutItem.mock.calls[0][0];
+    const data = storedItem.data as Record<string, unknown>;
+    expect(data.status).toBe('awaiting-payment');
+    expect(data.packageType).toBe('fsbo-standard');
+    expect(data.email).toBe('seller@example.com');
+  });
+
+  it('should call signHandoff with correct params', async () => {
+    mockPutItem.mockResolvedValue(undefined);
+
+    await handler(makeEvent('/api/v1/listing/fsbo/intake', validFsboIntake));
+
+    expect(mockSignHandoff).toHaveBeenCalledTimes(1);
+    const signedParams = mockSignHandoff.mock.calls[0][0];
+    expect(signedParams.package).toBe('fsbo-standard');
+    expect(signedParams.email).toBe('seller@example.com');
+    expect(signedParams.source).toBe('mesahomes-fsbo');
+    expect(signedParams.ts).toBeDefined();
+    expect(signedParams.listing_id).toBeDefined();
+    expect(signedParams.lead_id).toBeDefined();
+  });
+
+  it('should return 400 when propertyAddress is missing', async () => {
+    const input = { ...validFsboIntake, propertyAddress: '' };
+    const result = await handler(makeEvent('/api/v1/listing/fsbo/intake', input));
+    expect(result.statusCode).toBe(400);
+  });
+
+  it('should return 400 when email is missing', async () => {
+    const { email, ...input } = validFsboIntake;
+    const result = await handler(makeEvent('/api/v1/listing/fsbo/intake', input));
+    expect(result.statusCode).toBe(400);
+  });
+
+  it('should return 400 when packageType is invalid', async () => {
+    const input = { ...validFsboIntake, packageType: 'flat-fee' };
+    const result = await handler(makeEvent('/api/v1/listing/fsbo/intake', input));
+    expect(result.statusCode).toBe(400);
+  });
+
+  it('should return 400 when sqft is zero', async () => {
+    const input = { ...validFsboIntake, sqft: 0 };
+    const result = await handler(makeEvent('/api/v1/listing/fsbo/intake', input));
+    expect(result.statusCode).toBe(400);
+  });
+
+  it('should accept all valid FSBO package types', async () => {
+    for (const pkgType of ['fsbo-starter', 'fsbo-standard', 'fsbo-pro']) {
+      mockPutItem.mockResolvedValue(undefined);
+      const result = await handler(
+        makeEvent('/api/v1/listing/fsbo/intake', {
+          ...validFsboIntake,
+          packageType: pkgType,
+        }),
+      );
+      expect(result.statusCode).toBe(201);
+    }
+  });
+
+  it('should default name and phone to empty string when not provided', async () => {
+    mockPutItem.mockResolvedValue(undefined);
+    const { name, phone, ...input } = validFsboIntake;
+
+    await handler(makeEvent('/api/v1/listing/fsbo/intake', input));
+
+    const storedItem = mockPutItem.mock.calls[0][0];
+    const data = storedItem.data as Record<string, unknown>;
+    expect(data.name).toBe('');
+    expect(data.phone).toBe('');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/v1/listing/fsbo/vhz-webhook tests (Blocker 1)
+// ---------------------------------------------------------------------------
+
+describe('POST /api/v1/listing/fsbo/vhz-webhook', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockVerifyVhzWebhook.mockReturnValue(true);
+  });
+
+  it('should return 401 when signature is invalid', async () => {
+    mockVerifyVhzWebhook.mockReturnValue(false);
+
+    const result = await handler(
+      makeWebhookEvent({ event: 'payment.succeeded', listing_id: 'lst-1' }),
+    );
+    expect(result.statusCode).toBe(401);
+  });
+
+  it('should update listing to paid on payment.succeeded', async () => {
+    mockGetItem.mockResolvedValue({
+      PK: 'LISTING#lst-1',
+      SK: 'LISTING#lst-1',
+      data: {
+        listingId: 'lst-1',
+        status: 'awaiting-payment',
+        stripePaymentId: null,
+      },
+    });
+    mockUpdateItem.mockResolvedValue(undefined);
+
+    const result = await handler(
+      makeWebhookEvent({
+        event: 'payment.succeeded',
+        listing_id: 'lst-1',
+        stripe_session_id: 'cs_test_123',
+        amount_paid_cents: 54900,
+        email: 'seller@example.com',
+        paid_at: '2024-01-15T10:00:00Z',
+      }),
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(mockUpdateItem).toHaveBeenCalledWith(
+      'LISTING#lst-1',
+      'LISTING#lst-1',
+      expect.objectContaining({
+        'data.status': 'paid',
+        'data.stripePaymentId': 'cs_test_123',
+        'data.paidAt': '2024-01-15T10:00:00Z',
+        'data.amountPaidCents': 54900,
+      }),
+    );
+  });
+
+  it('should skip duplicate payment (idempotency)', async () => {
+    mockGetItem.mockResolvedValue({
+      PK: 'LISTING#lst-2',
+      SK: 'LISTING#lst-2',
+      data: {
+        listingId: 'lst-2',
+        status: 'paid',
+        stripePaymentId: 'cs_test_dup',
+      },
+    });
+
+    const result = await handler(
+      makeWebhookEvent({
+        event: 'payment.succeeded',
+        listing_id: 'lst-2',
+        stripe_session_id: 'cs_test_dup',
+      }),
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(mockUpdateItem).not.toHaveBeenCalled();
+  });
+
+  it('should return 200 for unknown listing (graceful)', async () => {
+    mockGetItem.mockResolvedValue(undefined);
+
+    const result = await handler(
+      makeWebhookEvent({
+        event: 'payment.succeeded',
+        listing_id: 'lst-unknown',
+        stripe_session_id: 'cs_test_x',
+      }),
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(mockUpdateItem).not.toHaveBeenCalled();
+  });
+
+  it('should return 400 when listing_id is missing for payment.succeeded', async () => {
+    const result = await handler(
+      makeWebhookEvent({
+        event: 'payment.succeeded',
+        stripe_session_id: 'cs_test_x',
+      }),
+    );
+
+    expect(result.statusCode).toBe(400);
+  });
+
+  it('should return 200 for unhandled event types (future-proofing)', async () => {
+    const result = await handler(
+      makeWebhookEvent({
+        event: 'checkout.session.expired',
+        listing_id: 'lst-1',
+      }),
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(mockUpdateItem).not.toHaveBeenCalled();
+  });
+
+  it('should pass raw body and signature header to verifyVhzWebhook', async () => {
+    mockGetItem.mockResolvedValue({
+      PK: 'LISTING#lst-3',
+      SK: 'LISTING#lst-3',
+      data: { listingId: 'lst-3', status: 'awaiting-payment', stripePaymentId: null },
+    });
+    mockUpdateItem.mockResolvedValue(undefined);
+
+    const payload = { event: 'payment.succeeded', listing_id: 'lst-3', stripe_session_id: 'cs_3' };
+    const sig = 'sha256=test-sig';
+    await handler(makeWebhookEvent(payload, sig));
+
+    expect(mockVerifyVhzWebhook).toHaveBeenCalledWith(
+      JSON.stringify(payload),
+      sig,
+    );
   });
 });

@@ -26,6 +26,7 @@ import {
   listingsPaymentEnabled,
   PRE_LAUNCH_LISTING_MESSAGE,
 } from '../../lib/brokerage.js';
+import { signHandoff, verifyVhzWebhook } from '../../lib/listing-webhooks.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,6 +43,7 @@ interface APIGatewayEvent {
 /** Flat-fee listing status lifecycle. */
 export type ListingStatus =
   | 'draft'
+  | 'awaiting-payment'
   | 'payment-pending'
   | 'paid'
   | 'mls-pending'
@@ -274,6 +276,199 @@ async function handlePayment(
 }
 
 // ---------------------------------------------------------------------------
+// FSBO intake (Blocker 1 — Stripe handoff Approach A)
+// ---------------------------------------------------------------------------
+
+/** Valid FSBO package types for the intake endpoint. */
+const FSBO_INTAKE_PACKAGES: ReadonlySet<string> = new Set([
+  'fsbo-starter',
+  'fsbo-standard',
+  'fsbo-pro',
+]);
+
+/**
+ * POST /api/v1/listing/fsbo/intake — Create an FSBO listing and return
+ * a signed handoff URL for VHZ Stripe checkout.
+ */
+async function handleFsboIntake(
+  body: Record<string, unknown>,
+  correlationId: string,
+): Promise<LambdaProxyResponse> {
+  const propertyAddress = body.propertyAddress as string | undefined;
+  const bedrooms = body.bedrooms as number | undefined;
+  const bathrooms = body.bathrooms as number | undefined;
+  const sqft = body.sqft as number | undefined;
+  const packageType = body.packageType as string | undefined;
+  const email = body.email as string | undefined;
+  const name = body.name as string | undefined;
+  const phone = body.phone as string | undefined;
+
+  // Validate required fields
+  const fieldErrors: Array<{ field: string; message: string }> = [];
+  if (!propertyAddress || propertyAddress.trim().length === 0) {
+    fieldErrors.push({ field: 'propertyAddress', message: 'propertyAddress is required' });
+  }
+  if (bedrooms === undefined || bedrooms === null || bedrooms < 0) {
+    fieldErrors.push({ field: 'bedrooms', message: 'bedrooms is required and must be >= 0' });
+  }
+  if (bathrooms === undefined || bathrooms === null || bathrooms < 0) {
+    fieldErrors.push({ field: 'bathrooms', message: 'bathrooms is required and must be >= 0' });
+  }
+  if (sqft === undefined || sqft === null || sqft <= 0) {
+    fieldErrors.push({ field: 'sqft', message: 'sqft is required and must be > 0' });
+  }
+  if (!packageType || !FSBO_INTAKE_PACKAGES.has(packageType)) {
+    fieldErrors.push({
+      field: 'packageType',
+      message: `packageType must be one of: ${[...FSBO_INTAKE_PACKAGES].join(', ')}`,
+    });
+  }
+  if (!email || email.trim().length === 0) {
+    fieldErrors.push({ field: 'email', message: 'email is required' });
+  }
+
+  if (fieldErrors.length > 0) {
+    return toLambdaResponse(createValidationError(fieldErrors, correlationId));
+  }
+
+  const listingId = randomUUID();
+  const leadId = randomUUID();
+  const now = new Date().toISOString();
+  const status: ListingStatus = 'awaiting-payment';
+
+  const listingData = {
+    listingId,
+    leadId,
+    propertyAddress: propertyAddress!,
+    propertyDetails: {
+      bedrooms,
+      bathrooms,
+      sqft,
+    },
+    packageType,
+    status,
+    email: email!,
+    name: name ?? '',
+    phone: phone ?? '',
+    stripePaymentId: null,
+  };
+
+  const keys = generateListingKeys(listingId, status, now);
+
+  await putItem({
+    ...keys,
+    entityType: EntityType.LISTING,
+    data: listingData as unknown as Record<string, unknown>,
+  });
+
+  // Build signed handoff URL
+  const baseUrl =
+    process.env['VHZ_CHECKOUT_BASE_URL'] ?? 'https://virtualhomezone.com/checkout';
+  const ts = Math.floor(Date.now() / 1000);
+  const handoffParams: Record<string, string | number> = {
+    package: packageType!,
+    lead_id: leadId,
+    listing_id: listingId,
+    email: email!,
+    source: 'mesahomes-fsbo',
+    ts,
+  };
+  const sig = signHandoff(handoffParams);
+  const qs = Object.entries({ ...handoffParams, sig })
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+    .join('&');
+  const handoffUrl = `${baseUrl}?${qs}`;
+
+  return {
+    statusCode: 201,
+    headers: CORS_HEADERS,
+    body: JSON.stringify({
+      listingId,
+      leadId,
+      handoffUrl,
+    }),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// VHZ webhook (Blocker 1 — payment confirmation callback)
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/v1/listing/fsbo/vhz-webhook — Receives payment confirmation
+ * from Virtual Home Zone after Stripe checkout completes.
+ */
+async function handleVhzWebhook(
+  event: APIGatewayEvent,
+  correlationId: string,
+): Promise<LambdaProxyResponse> {
+  const rawBody = event.body ?? '';
+  const signatureHeader =
+    event.headers['X-VHZ-Signature'] ??
+    event.headers['x-vhz-signature'] ??
+    '';
+
+  if (!verifyVhzWebhook(rawBody, signatureHeader)) {
+    return {
+      statusCode: 401,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        error: { code: 'UNAUTHORIZED', message: 'Invalid webhook signature', correlationId },
+      }),
+    };
+  }
+
+  const payload = JSON.parse(rawBody) as Record<string, unknown>;
+  const eventType = payload.event as string | undefined;
+  const listingId = payload.listing_id as string | undefined;
+  const stripeSessionId = payload.stripe_session_id as string | undefined;
+
+  if (eventType === 'payment.succeeded') {
+    if (!listingId) {
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          error: { code: 'VALIDATION_ERROR', message: 'listing_id is required', correlationId },
+        }),
+      };
+    }
+
+    // Fetch listing to check idempotency
+    const item = await getItem(`LISTING#${listingId}`, `LISTING#${listingId}`);
+    if (!item) {
+      console.warn(`[vhz-webhook] Listing ${listingId} not found — ignoring`);
+      return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ ok: true }) };
+    }
+
+    const listingData = item.data as Record<string, unknown>;
+
+    // Idempotency: skip if already paid with the same stripe session
+    if (
+      listingData.stripePaymentId === stripeSessionId &&
+      listingData.status === 'paid'
+    ) {
+      console.log(`[vhz-webhook] Duplicate payment for listing ${listingId} — skipping`);
+      return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ ok: true }) };
+    }
+
+    await updateItem(`LISTING#${listingId}`, `LISTING#${listingId}`, {
+      'data.status': 'paid',
+      'data.stripePaymentId': stripeSessionId ?? null,
+      'data.paidAt': payload.paid_at ?? new Date().toISOString(),
+      'data.amountPaidCents': payload.amount_paid_cents ?? null,
+    });
+
+    console.log(`[vhz-webhook] Listing ${listingId} marked as paid via VHZ webhook`);
+  } else {
+    // Future-proofing: log unhandled event types and return 200
+    console.log(`[vhz-webhook] Unhandled event type: ${eventType}`);
+  }
+
+  return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ ok: true }) };
+}
+
+// ---------------------------------------------------------------------------
 // Lambda handler
 // ---------------------------------------------------------------------------
 
@@ -293,8 +488,18 @@ export async function handler(event: APIGatewayEvent): Promise<LambdaProxyRespon
       throw new AppError(ErrorCode.MISSING_FIELD, 'Request body is required', correlationId);
     }
 
-    const body = JSON.parse(event.body) as Record<string, unknown>;
     const path = event.path;
+
+    // VHZ webhook needs raw body for signature verification — handle before JSON parse
+    if (path.endsWith('/listing/fsbo/vhz-webhook')) {
+      return await handleVhzWebhook(event, correlationId);
+    }
+
+    const body = JSON.parse(event.body) as Record<string, unknown>;
+
+    if (path.endsWith('/listing/fsbo/intake')) {
+      return await handleFsboIntake(body, correlationId);
+    }
 
     if (path.endsWith('/listing/start')) {
       return await handleStartListing(body, correlationId);

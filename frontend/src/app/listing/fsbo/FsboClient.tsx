@@ -107,6 +107,11 @@ export function FsboClient() {
   const [lot, setLot] = useState('');
   const [yearBuilt, setYearBuilt] = useState('');
 
+  // Contact info form state for FSBO intake
+  const [email, setEmail] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [phone, setPhone] = useState('');
+
   const currentStepIndex = STEPS.findIndex((s) => s.id === step);
   const pkg = packages.find((p) => p.id === selectedPkg) ?? null;
 
@@ -120,32 +125,26 @@ export function FsboClient() {
     if (prev) setStep(prev.id);
   }
 
-  async function handleCreateLead() {
+  async function handleStartFsboListing() {
     if (!pkg) return;
     trackEvent('listing_start', 'fsbo', { package: selectedPkg });
     setSubmitting(true);
     try {
-      await api.createLead({
-        name: '',
-        email: '',
-        phone: '',
-        city: 'Mesa',
-        zip: '85201',
-        leadType: 'Seller',
-        toolSource: 'flat-fee-listing',
-        tags: [`fsbo-${pkg.id}`],
+      const result = await api.startFsboListing({
         propertyAddress: address,
-        propertyDetails: {
-          bedrooms: Number(beds) || 0,
-          bathrooms: Number(baths) || 0,
-          sqft: Number(sqft) || 0,
-          lotSize: Number(lot) || undefined,
-          yearBuilt: Number(yearBuilt) || undefined,
-        },
-      });
-      setLeadCreated(true);
+        bedrooms: Number(beds) || 0,
+        bathrooms: Number(baths) || 0,
+        sqft: Number(sqft) || 0,
+        packageType: `fsbo-${pkg.id}`,
+        email,
+        name: contactName,
+        phone,
+      }) as { listingId: string; leadId: string; handoffUrl: string };
+
+      // Redirect to VHZ signed checkout URL
+      window.location.href = result.handoffUrl;
     } catch {
-      // Lead creation is best-effort; user still proceeds to VHZ
+      // Fallback: still allow user to proceed
       setLeadCreated(true);
     } finally {
       setSubmitting(false);
@@ -455,12 +454,54 @@ export function FsboClient() {
 
           {!leadCreated ? (
             <div className="space-y-3">
+              <div>
+                <label htmlFor="fsbo-email" className="mb-1 block text-sm font-medium text-text">
+                  Email *
+                </label>
+                <input
+                  id="fsbo-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="fsbo-name" className="mb-1 block text-sm font-medium text-text">
+                    Name
+                  </label>
+                  <input
+                    id="fsbo-name"
+                    type="text"
+                    placeholder="Jane Doe"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="fsbo-phone" className="mb-1 block text-sm font-medium text-text">
+                    Phone
+                  </label>
+                  <input
+                    id="fsbo-phone"
+                    type="tel"
+                    placeholder="480-555-1234"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
               <button
-                onClick={handleCreateLead}
-                disabled={submitting}
+                onClick={handleStartFsboListing}
+                disabled={submitting || !email.trim()}
                 className={cn(
                   'w-full rounded-lg py-3 text-sm font-semibold text-white transition-colors',
-                  submitting
+                  submitting || !email.trim()
                     ? 'cursor-not-allowed bg-gray-400'
                     : 'bg-secondary hover:bg-secondary-dark',
                 )}

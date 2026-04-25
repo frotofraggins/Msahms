@@ -194,6 +194,8 @@ export const api = {
     apiRequest('/listing/start', { method: 'POST', body }),
   payListing: (body: unknown) =>
     apiRequest('/listing/payment', { method: 'POST', body }),
+  startFsboListing: (body: unknown) =>
+    apiRequest('/listing/fsbo/intake', { method: 'POST', body }),
 
   // Auth
   login: (body: unknown) =>

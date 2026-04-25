@@ -21,6 +21,11 @@ VIRTUAL_HOME_ZONE_STRIPE_ACCOUNT_ID=
 VIRTUAL_HOME_ZONE_STRIPE_PUBLIC_KEY=
 VHZ_STRIPE_WEBHOOK_SECRET=
 
+# VHZ Stripe handoff (Blocker 1 — Approach A)
+VHZ_HANDOFF_SECRET=
+VHZ_MESAHOMES_WEBHOOK_SECRET=
+VHZ_CHECKOUT_BASE_URL=https://virtualhomezone.com/checkout
+
 # Stripe (MesaHomes — flat-fee tier, gated)
 # mesahomes/stripe-secret-key in Secrets Manager
 # mesahomes/stripe-webhook-secret in Secrets Manager

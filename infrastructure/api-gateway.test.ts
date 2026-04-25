@@ -25,8 +25,8 @@ describe('API Gateway configuration', () => {
 });
 
 describe('Route definitions', () => {
-  it('should define 18 public routes', () => {
-    expect(publicRoutes).toHaveLength(18);
+  it('should define 20 public routes', () => {
+    expect(publicRoutes).toHaveLength(20);
   });
 
   it('should define 11 authenticated dashboard routes', () => {
@@ -37,8 +37,8 @@ describe('Route definitions', () => {
     expect(authRoutes).toHaveLength(3);
   });
 
-  it('should define 32 total routes', () => {
-    expect(allRoutes).toHaveLength(32);
+  it('should define 34 total routes', () => {
+    expect(allRoutes).toHaveLength(34);
   });
 
   it('should have all paths start with /api/v1', () => {
@@ -165,6 +165,20 @@ describe('Public routes', () => {
       expect(route, path).toBeDefined();
       expect(route!.method).toBe('POST');
       expect(route!.lambdaTarget).toBe('listing-service');
+    }
+  });
+
+  it('should include FSBO Stripe handoff routes targeting listing-service', () => {
+    const fsboPaths = [
+      '/api/v1/listing/fsbo/intake',
+      '/api/v1/listing/fsbo/vhz-webhook',
+    ];
+    for (const path of fsboPaths) {
+      const route = publicRoutes.find((r) => r.path === path);
+      expect(route, path).toBeDefined();
+      expect(route!.method).toBe('POST');
+      expect(route!.lambdaTarget).toBe('listing-service');
+      expect(route!.authRequired).toBe(false);
     }
   });
 });

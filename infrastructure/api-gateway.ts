@@ -4,10 +4,10 @@
  * API: mesahomes-api
  * - Region: us-west-2
  * - Base path: /api/v1
- * - 18 public routes (no auth required)
+ * - 20 public routes (no auth required)
  * - 11 authenticated dashboard routes (Cognito JWT required)
  * - 3 auth routes (login, refresh, register — public)
- * - 32 total routes
+ * - 34 total routes
  *
  * This module exports typed route definitions as arrays that can be used
  * with AWS CDK, CloudFormation, or the AWS SDK APIs.
@@ -92,6 +92,10 @@ export const publicRoutes: readonly RouteDefinition[] = [
   // Flat-fee listing
   { method: 'POST', path: '/api/v1/listing/start', lambdaTarget: 'listing-service', authRequired: false },
   { method: 'POST', path: '/api/v1/listing/payment', lambdaTarget: 'listing-service', authRequired: false },
+
+  // FSBO Stripe handoff (Blocker 1 — Approach A)
+  { method: 'POST', path: '/api/v1/listing/fsbo/intake', lambdaTarget: 'listing-service', authRequired: false },
+  { method: 'POST', path: '/api/v1/listing/fsbo/vhz-webhook', lambdaTarget: 'listing-service', authRequired: false },
 ] as const;
 
 /**
@@ -136,10 +140,10 @@ export const authRoutes: readonly RouteDefinition[] = [
 /**
  * All routes combined — the complete API surface.
  *
- * - 18 public routes (consumer tools, lead capture, content, AI, listing flow)
+ * - 20 public routes (consumer tools, lead capture, content, AI, listing flow)
  * - 11 authenticated dashboard routes (Cognito JWT required)
  * - 3 auth routes (login, refresh, register — public)
- * - 32 total routes
+ * - 34 total routes
  */
 export const allRoutes: readonly RouteDefinition[] = [
   ...publicRoutes,
