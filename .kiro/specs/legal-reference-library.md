@@ -150,19 +150,46 @@ real estate profession. Per ARS § 32-2101, unrestricted online access
 on ADRE's site satisfies the statutory requirement — so ADRE no longer
 mails physical copies, they publish it online.
 
-**Location (as of 2026):** The most recent PDF copy I can locate is
-hosted at `https://www.asreb.com/reg/bklst.php` (Arizona School of Real
-Estate & Business bookstore). ADRE's own site indexes the underlying
-statutes and rules rather than a single PDF.
+**Location (as of 2026):** Owner obtained the **2026 Arizona Real
+Estate Law Book, updated February 2026** (published by ADRE,
+292 pages). Cached locally at `.kiro/reference/2026 ADRE Law Book.pdf`
+(gitignored). Structured citation index at
+`.kiro/reference/adre-lawbook-index.json` — 200+ statute citations
+with page numbers, ready for AI prompt grounding.
+
+**Top-level structure of the 2026 Law Book:**
+- Constitution of Arizona, Article 26 (real estate broker/salesman powers)
+- Title 32 Chapter 20 — Real Estate (the licensing law)
+  - Article 1: Real Estate Department (§ 32-2101 through § 32-2119)
+  - Article 2: Licensing (§ 32-2121 through § 32-2137)
+  - Article 3: Regulation (§ 32-2151 through § 32-2166)
+  - Article 3.1: Property Management (§ 32-2171 through § 32-2175)
+  - Article 4: Sale of Subdivided Lands (§ 32-2181+)
+  - Article 5: Real Estate Recovery Fund
+  - Article 6: Organization and Regulation of Cemeteries
+  - Article 7: Sale of Unsubdivided Lands
+  - Article 7.1: Licensing Time Frames
+  - Article 7.2: Licensing Requirements
+  - Article 9: Real Estate Timeshares
+  - Article 10: Membership Camping
+  - Article 11: Administrative Hearings
+  - Article 12: Board of Fingerprinting
+
+**2024 legislative changes + 2025 5-year rule review** are highlighted
+throughout the PDF. This is the single most important reference for
+anyone building MesaHomes content touching licensing, disclosures, or
+broker obligations.
 
 **Recommended approach for MesaHomes:**
-- DON'T cache/host the Law Book locally (changes frequently; stale
-  version is a legal liability)
-- DO link to `https://azleg.gov/arstitle/` for statutes and
-  `https://apps.azsos.gov/public_services/CodeTOC.htm` Title 4 Ch 28
-  for the Commissioner's Rules
+- DON'T cache/host the Law Book on the public site (changes annually;
+  stale version is a legal liability)
+- DO reference `.kiro/reference/2026 ADRE Law Book.pdf` locally for
+  primary-source grounding during content generation
+- DO link to `https://azleg.gov/arstitle/` for statutes on public pages
 - DO monitor ADRE Substantive Policy Statements quarterly for changes
   (already in `content-sources.md` content pipeline)
+- Re-download Law Book each February when ADRE publishes the new
+  edition; replace the cached copy
 
 ### Arizona Administrative Code — the "rules" side
 
