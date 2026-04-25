@@ -36,3 +36,10 @@ coverage/
 # AWS
 .aws-sam/
 cdk.out/
+
+# Reference materials — never tracked
+# (AAR forms, executed transaction docs, anything with PII)
+Real estate contracts/
+.kiro/reference/
+*.docx
+*.pdf
