@@ -87,6 +87,235 @@ GoDaddy site can accept query-param handoff.
 Which approach? **I'd recommend A for MVP.** Rebuild VHZ to match our
 packages anyway (per `three-tier-product.md`), and A keeps things decoupled.
 
+### OWNER DECISION: Approach A (confirmed 2026-04-25)
+
+Full implementation detail below. Zero ambiguity for Kiro B.
+
+#### Handoff data contract — MesaHomes → VHZ
+
+MesaHomes redirects the user to virtualhomezone.com/checkout with these
+query params:
+
+| Param | Type | Example | Notes |
+|-------|------|---------|-------|
+| `package` | enum | `starter` | One of: starter, standard, pro |
+| `lead_id` | uuid | `550e8400-e29b-...` | From the FSBO intake record |
+| `listing_id` | uuid | `650e9500-...` | From the FSBO listing record |
+| `email` | string | `seller@example.com` | Pre-fills VHZ checkout |
+| `source` | string | `mesahomes-fsbo` | Always this value |
+| `ts` | integer | `1735100000` | Unix seconds; VHZ rejects if >30min old |
+| `sig` | hex | `a3b7c9...` | HMAC-SHA256 of all other params, see below |
+
+**Signing (MesaHomes side):**
+```ts
+import { createHmac } from 'node:crypto';
+
+function signHandoff(params: Record<string, string>): string {
+  const secret = process.env['VHZ_HANDOFF_SECRET']!;
+  const canonical = Object.keys(params).sort()
+    .filter(k => k !== 'sig')
+    .map(k => `${k}=${params[k]}`)
+    .join('&');
+  return createHmac('sha256', secret).update(canonical).digest('hex');
+}
+```
+
+**Verifying (VHZ side):** same function; reject if signature doesn't match
+or `ts` is more than 30 minutes old. Same `VHZ_HANDOFF_SECRET` on both
+sides.
+
+#### Webhook data contract — VHZ → MesaHomes
+
+After Stripe Checkout succeeds on VHZ, VHZ POSTs to:
+`https://mesahomes.com/api/v1/listing/fsbo/vhz-webhook`
+
+Body (JSON):
+```json
+{
+  "event": "payment.succeeded",
+  "lead_id": "550e8400-...",
+  "listing_id": "650e9500-...",
+  "package": "standard",
+  "stripe_session_id": "cs_live_...",
+  "stripe_payment_intent_id": "pi_live_...",
+  "amount_paid_cents": 54900,
+  "currency": "usd",
+  "email": "seller@example.com",
+  "paid_at": "2026-04-25T15:30:00Z"
+}
+```
+
+Headers:
+```
+Content-Type: application/json
+X-VHZ-Signature: sha256=<hex>
+```
+
+Signature header = HMAC-SHA256 of the raw request body using
+`VHZ_MESAHOMES_WEBHOOK_SECRET`. Standard webhook verification pattern.
+
+**Idempotency:** VHZ sends `stripe_session_id`; MesaHomes rejects
+duplicates (don't double-trigger photography scheduling).
+
+#### Failure events (future-proofing)
+
+Same webhook endpoint, different `event`:
+- `payment.failed` — update listing status to `payment-failed`, send
+  seller an email with retry link
+- `payment.refunded` — update status to `refunded`, notify Team_Admin
+
+For MVP: only handle `payment.succeeded`; log + ignore others.
+
+#### MesaHomes implementation (Kiro B's work)
+
+**New file: `lib/listing-webhooks.ts`**
+
+```ts
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
+export function verifyVhzWebhook(rawBody: string, signatureHeader: string): boolean {
+  const secret = process.env['VHZ_MESAHOMES_WEBHOOK_SECRET'];
+  if (!secret) return false;
+  const expected = 'sha256=' + createHmac('sha256', secret).update(rawBody).digest('hex');
+  const a = Buffer.from(signatureHeader);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+export function signHandoff(params: Record<string, string | number>): string {
+  const secret = process.env['VHZ_HANDOFF_SECRET'];
+  if (!secret) throw new Error('VHZ_HANDOFF_SECRET not set');
+  const canonical = Object.keys(params).sort()
+    .filter(k => k !== 'sig')
+    .map(k => `${k}=${params[k]}`)
+    .join('&');
+  return createHmac('sha256', secret).update(canonical).digest('hex');
+}
+```
+
+Co-located tests: `lib/listing-webhooks.test.ts` — valid sig passes,
+tampered sig fails, wrong secret fails, timing-safe comparison verified.
+
+**New endpoint: `POST /api/v1/listing/fsbo/intake` in `lambdas/listing-service/`**
+
+Input body:
+```json
+{
+  "package": "starter" | "standard" | "pro",
+  "email": "seller@example.com",
+  "phone": "+15555551234",
+  "name": "Jane Seller",
+  "propertyAddress": "...",
+  "bedrooms": 3,
+  "bathrooms": 2,
+  "sqft": 1800,
+  ...
+}
+```
+
+Response:
+```json
+{
+  "leadId": "550e8400-...",
+  "listingId": "650e9500-...",
+  "redirectUrl": "https://virtualhomezone.com/checkout?package=starter&lead_id=...&sig=..."
+}
+```
+
+Steps:
+1. Validate input (existing validation patterns)
+2. Create Lead record with `toolSource: 'fsbo-intake'`
+3. Create Listing record with `status: 'awaiting-payment'`, `packageType: 'fsbo-<tier>'`
+4. Build handoff URL with `signHandoff()`
+5. Return JSON with IDs + redirectUrl
+
+**New endpoint: `POST /api/v1/listing/fsbo/vhz-webhook`**
+
+Steps:
+1. Read raw request body (API Gateway proxy integration: `event.body`)
+2. Verify `X-VHZ-Signature` header via `verifyVhzWebhook()`
+3. Parse JSON, validate required fields
+4. Idempotency check: DynamoDB `PK=LISTING#{listingId}` — if
+   `stripeSessionId` already set, return 200 no-op
+5. Update listing: `status: 'paid'`, `stripeSessionId`, `amountPaidCents`,
+   `paidAt`
+6. Trigger SES email to seller: "Photography scheduling link"
+7. Trigger SES to VHZ photographer: new booking
+8. Trigger Team_Admin notification via DynamoDB Streams (existing pattern)
+9. Return `{ok: true}` with 200
+
+**Frontend update: `FsboClient.tsx`**
+
+Step 4 (currently static link) becomes:
+```tsx
+const handlePaymentStep = async () => {
+  const res = await api.listingIntake({
+    package: selectedPackage,
+    email, phone, name,
+    propertyAddress, bedrooms, bathrooms, sqft,
+    // ... other intake fields
+  });
+  // res.redirectUrl is the signed URL; browser navigates there
+  window.location.href = res.redirectUrl;
+};
+```
+
+`api.ts` adds:
+```ts
+listingIntake: (body: unknown) =>
+  apiRequest<{ leadId: string; listingId: string; redirectUrl: string }>('/listing/fsbo/intake', { method: 'POST', body }),
+```
+
+**Env additions (`deploy/env-template.txt`):**
+```
+VHZ_HANDOFF_SECRET=<hex, 64 chars, same on both sites>
+VHZ_MESAHOMES_WEBHOOK_SECRET=<hex, 64 chars, same on both sites>
+VHZ_CHECKOUT_URL=https://virtualhomezone.com/checkout
+```
+
+Generate secrets once (owner):
+```bash
+openssl rand -hex 32   # run twice, save both values, put on both sites
+```
+
+#### VHZ site changes (owner's work)
+
+Minimum for MVP (until VHZ rebuild per `three-tier-product.md`):
+
+1. Add a `/checkout` page that:
+   - Reads query params
+   - Verifies signature (same HMAC logic as above)
+   - Checks `ts` freshness (<30 min)
+   - Shows package info with price
+   - Creates Stripe Checkout Session with:
+     - Line item: "MesaHomes FSBO — {Package} Package"
+     - Amount from package param: starter=29900, standard=54900, pro=89900
+     - `metadata: { lead_id, listing_id, package, source: 'mesahomes-fsbo' }`
+   - Redirects to Stripe Checkout URL
+
+2. Stripe webhook handler at `POST /stripe/webhook`:
+   - Standard Stripe signature verification
+   - On `checkout.session.completed`:
+     - Build payload per webhook data contract above
+     - Sign with `VHZ_MESAHOMES_WEBHOOK_SECRET` (HMAC-SHA256 of JSON body)
+     - POST to `https://mesahomes.com/api/v1/listing/fsbo/vhz-webhook`
+
+The VHZ `/checkout` page can be a simple PHP/static page or part of the
+upcoming VHZ Next.js rebuild. Minimum viable is a single HTML page with
+a Stripe Checkout button and a webhook handler script.
+
+#### Testing end-to-end
+
+Before DNS flip:
+1. Set Stripe to test mode on VHZ
+2. Click through `/listing/fsbo` → complete 4 steps → land on VHZ checkout
+3. Pay with Stripe test card 4242 4242 4242 4242
+4. Verify MesaHomes DynamoDB: listing status = `paid`, `stripeSessionId` set
+5. Verify email received to seller
+6. Verify idempotency: trigger same webhook twice → second is no-op
+7. Verify signature failure: tamper with handoff URL → VHZ rejects
+8. Flip to live keys only after all 7 pass
+
 ### Kiro B tasks
 
 - [ ] `lambdas/listing-service/index.ts`: add `POST /listing/fsbo/intake`
