@@ -593,18 +593,18 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
 - [x] 17. Checkpoint — Ensure all features compile and tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 18. Event tracking, analytics, and lead capture UX polish
-  - [ ] 18.1 Implement event tracking on all lead capture touchpoints
+- [x] 18. Event tracking, analytics, and lead capture UX polish
+  - [x] 18.1 Implement event tracking on all lead capture touchpoints
     - Track: form submissions, call clicks, chat initiations, valuation requests
     - Log: page source, timestamp, visitor session ID
     - UTM parameter capture and persistence in lead records
     - _Requirements: 12.3, 12.4_
-  - [ ] 18.2 Implement calendar booking integration
+  - [x] 18.2 Implement calendar booking integration
     - Booking form: name, email, phone, consultation type
     - Create lead on booking submission
     - _Requirements: 12.5_
 
-- [ ] 19. Deployment — S3, CloudFront, and production configuration
+- [-] 19. Deployment — S3, CloudFront, and production configuration
   - [ ] 19.1 Configure Next.js build output for S3 + CloudFront deployment
     - Build Next.js SSR output for S3 static hosting
     - Configure CloudFront distribution E3TBTUT3LJLAAT with origins: S3 static + API Gateway
