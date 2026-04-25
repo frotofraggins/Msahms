@@ -47,7 +47,7 @@ export function PropertyDataCard({ property, loading }: PropertyDataCardProps) {
     n != null ? n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }) : '—';
 
   return (
-    <div className="rounded-xl bg-surface p-4">
+    <div className="rounded-xl bg-warm-beige p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       <div className="flex flex-col gap-4 sm:flex-row">
         {/* Photo */}
         <div className="h-32 w-full overflow-hidden rounded-lg bg-gray-200 sm:w-48">

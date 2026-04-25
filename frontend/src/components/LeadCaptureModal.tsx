@@ -229,10 +229,10 @@ export function LeadCaptureModal({
                 type="submit"
                 disabled={submitting}
                 className={cn(
-                  'w-full rounded-lg py-3 text-sm font-semibold text-white transition-colors',
+                  'w-full rounded-lg py-3 text-sm font-semibold text-white transition-all duration-100',
                   submitting
                     ? 'cursor-not-allowed bg-gray-400'
-                    : 'bg-secondary hover:bg-secondary-dark',
+                    : 'bg-secondary hover:bg-secondary-dark active:scale-[0.98]',
                 )}
               >
                 {submitting ? 'Submitting...' : 'Unlock Full Report →'}

@@ -25,9 +25,9 @@ export function MarketSnapshot() {
   const data = placeholderData[activeCity] ?? placeholderData.Mesa;
 
   return (
-    <section className="bg-white px-4 py-12">
+    <section className="bg-paper px-4 py-12">
       <div className="mx-auto max-w-4xl">
-        <h2 className="mb-2 text-center text-2xl font-bold text-text">
+        <h2 className="mb-2 text-center text-2xl font-bold text-charcoal">
           Local Market Snapshot
         </h2>
         <p className="mb-6 text-center text-sm text-text-light">
@@ -41,10 +41,10 @@ export function MarketSnapshot() {
               key={city}
               onClick={() => setActiveCity(city)}
               className={cn(
-                'rounded-full px-4 py-1.5 text-xs font-medium transition-colors',
+                'rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-100 active:scale-[0.98]',
                 activeCity === city
                   ? 'bg-primary text-white'
-                  : 'bg-surface text-text-light hover:bg-gray-200',
+                  : 'bg-warm-beige text-text-light hover:bg-warm-border',
               )}
             >
               {city}
@@ -66,7 +66,7 @@ export function MarketSnapshot() {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-surface p-4 text-center">
+    <div className="rounded-lg bg-warm-beige p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       <div className="text-xl font-bold tabular-nums text-primary">{value}</div>
       <div className="mt-1 text-xs text-text-light">{label}</div>
     </div>

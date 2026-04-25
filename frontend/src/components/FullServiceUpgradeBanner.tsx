@@ -20,7 +20,7 @@ export function FullServiceUpgradeBanner() {
             trackEvent('full_service_click', 'upgrade-banner');
             setModalOpen(true);
           }}
-          className="inline-block rounded-md bg-white px-3 py-1 text-xs font-semibold text-primary transition-colors hover:bg-gray-100"
+          className="inline-block rounded-md bg-white px-3 py-1 text-xs font-semibold text-primary transition-all duration-100 hover:bg-gray-100 active:scale-[0.98]"
         >
           Switch to Full Service
         </button>

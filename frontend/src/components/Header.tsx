@@ -17,10 +17,10 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
+    <header className="sticky top-0 z-50 border-b border-warm-border bg-paper">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         {/* Logo */}
-        <Link href="/" className="text-xl font-bold text-primary">
+        <Link href="/" className="font-heading text-xl font-bold text-primary">
           MesaHomes
         </Link>
 
@@ -48,7 +48,7 @@ export function Header() {
           </a>
           <Link
             href="/booking"
-            className="rounded-lg bg-secondary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-secondary-dark"
+            className="rounded-lg bg-secondary px-4 py-2 text-sm font-semibold text-white transition-all duration-100 hover:bg-secondary-dark active:scale-[0.98]"
           >
             Talk to Agent
           </Link>
@@ -60,13 +60,13 @@ export function Header() {
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
         >
-          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {mobileOpen ? <X className="h-6 w-6 text-charcoal" /> : <Menu className="h-6 w-6 text-charcoal" />}
         </button>
       </div>
 
       {/* Mobile nav */}
       {mobileOpen && (
-        <nav className="border-t border-gray-100 bg-white px-4 pb-4 md:hidden">
+        <nav className="border-t border-warm-border bg-paper px-4 pb-4 md:hidden">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -79,7 +79,7 @@ export function Header() {
           ))}
           <Link
             href="/booking"
-            className="mt-2 block rounded-lg bg-secondary px-4 py-2 text-center text-sm font-semibold text-white"
+            className="mt-2 block rounded-lg bg-secondary px-4 py-2 text-center text-sm font-semibold text-white transition-all duration-100 active:scale-[0.98]"
             onClick={() => setMobileOpen(false)}
           >
             Talk to Agent

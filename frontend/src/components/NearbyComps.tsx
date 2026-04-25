@@ -22,7 +22,7 @@ export function NearbyComps({ comps, subdivision }: NearbyCompsProps) {
     n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
   return (
-    <div className="rounded-xl bg-surface p-4">
+    <div className="rounded-xl bg-warm-beige p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       <h3 className="mb-3 text-sm font-semibold text-text">
         Recent Sales{subdivision ? ` in ${subdivision}` : ''}
       </h3>

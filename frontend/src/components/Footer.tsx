@@ -22,12 +22,12 @@ export function Footer() {
   const broker = tryGetBrokerOfRecord();
 
   return (
-    <footer className="border-t border-gray-200 bg-surface">
+    <footer className="border-t border-warm-border bg-warm-beige">
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* About */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-primary">MesaHomes</h3>
+            <h3 className="font-heading mb-3 text-sm font-semibold text-primary">MesaHomes</h3>
             <p className="text-sm text-text-light">
               Flat-fee real estate for the Mesa, AZ metro area. Save thousands
               with county-verified data and free tools.
@@ -36,7 +36,7 @@ export function Footer() {
 
           {/* Areas */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-text">Areas</h3>
+            <h3 className="font-heading mb-3 text-sm font-semibold text-charcoal">Areas</h3>
             <ul className="space-y-1">
               {areaLinks.map((link) => (
                 <li key={link.href}>
@@ -50,7 +50,7 @@ export function Footer() {
 
           {/* Tools */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-text">Tools</h3>
+            <h3 className="font-heading mb-3 text-sm font-semibold text-charcoal">Tools</h3>
             <ul className="space-y-1">
               {toolLinks.map((link) => (
                 <li key={link.href}>
@@ -64,7 +64,7 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-text">Company</h3>
+            <h3 className="font-heading mb-3 text-sm font-semibold text-charcoal">Company</h3>
             <ul className="space-y-1">
               <li><Link href="/about" className="text-sm text-text-light hover:text-primary">About</Link></li>
               <li><Link href="/contact" className="text-sm text-text-light hover:text-primary">Contact</Link></li>
@@ -74,7 +74,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 border-t border-gray-200 pt-6 text-center text-xs text-text-light">
+        <div className="mt-8 border-t border-warm-border pt-6 text-center text-xs text-text-light">
           <p>© {new Date().getFullYear()} MesaHomes. Licensed in Arizona.</p>
           {broker && (
             <p className="mt-1">
