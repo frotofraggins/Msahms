@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { Suspense, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { UserPlus, AlertCircle, Loader2 } from 'lucide-react';
@@ -10,6 +10,14 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><p className="text-text-light">Loading...</p></div>}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const searchParams = useSearchParams();
   const [token, setToken] = useState(searchParams.get('token') ?? '');
   const [name, setName] = useState('');

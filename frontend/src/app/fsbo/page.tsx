@@ -6,7 +6,7 @@ import { StickyContactBar } from '@/components/StickyContactBar';
 import { FullServiceUpgradeBanner } from '@/components/FullServiceUpgradeBanner';
 import { SavingsCalculator } from '@/components/SavingsCalculator';
 import { FadeInOnScroll } from '@/components/FadeInOnScroll';
-import { FsboFAQ, getFsboFAQJsonLd } from './FsboLandingClient';
+import { FsboFAQ } from './FsboLandingClient';
 
 export const metadata: Metadata = {
   title: 'Sell Your Home FSBO in Mesa, AZ — Complete Guide',
@@ -80,7 +80,7 @@ const comparisonRows = [
 ];
 
 export default function FsboPage() {
-  const faqJsonLd = getFsboFAQJsonLd();
+  // FAQ JSON-LD is rendered by the FsboFAQ client component itself
 
   return (
     <>
@@ -88,11 +88,6 @@ export default function FsboPage() {
       <FullServiceUpgradeBanner />
 
       <main>
-        {/* FAQ Schema JSON-LD */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-        />
 
         {/* Hero with embedded SavingsCalculator */}
         <FadeInOnScroll>
