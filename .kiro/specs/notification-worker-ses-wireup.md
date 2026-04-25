@@ -38,10 +38,12 @@ async function sendNotification(payload: NotificationPayload): Promise<void> {
   const subject = buildSubject(payload);
   const toAddress = await getAgentEmailAddress(payload.agentId);
   const fromAddress = process.env['NOTIFICATION_FROM_ADDRESS'] ?? 'notifications@mesahomes.com';
+  const replyToAddress = process.env['NOTIFICATION_REPLY_TO'] ?? 'sales@mesahomes.com';
 
   await sesClient.send(new SendEmailCommand({
     FromEmailAddress: fromAddress,
     Destination: { ToAddresses: [toAddress] },
+    ReplyToAddresses: [replyToAddress],
     Content: {
       Simple: {
         Subject: { Data: subject, Charset: 'UTF-8' },
@@ -78,6 +80,7 @@ In `deploy/lambda-config.json` for `mesahomes-notification-worker`:
 "environment": {
   "MESAHOMES_TABLE": "mesahomes-main",
   "NOTIFICATION_FROM_ADDRESS": "notifications@mesahomes.com",
+  "NOTIFICATION_REPLY_TO": "sales@mesahomes.com",
   "SES_CONFIG_SET": "mesahomes-default"
 }
 ```
@@ -91,6 +94,7 @@ And in `infrastructure/cdk/stack.ts` under `LAMBDA_CONFIGS['notification-worker'
   timeout: 10,
   env: {
     NOTIFICATION_FROM_ADDRESS: 'notifications@mesahomes.com',
+    NOTIFICATION_REPLY_TO: 'sales@mesahomes.com',
     SES_CONFIG_SET: 'mesahomes-default',
   },
 },
