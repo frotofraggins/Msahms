@@ -491,23 +491,23 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Implement JSON-LD structured data on all pages (LocalBusiness, FAQ, Article, RealEstateListing)
     - _Requirements: 16.5, 16.2_
 
-- [ ] 13. Checkpoint — Ensure all frontend pages render correctly and tests pass
+- [x] 13. Checkpoint — Ensure all frontend pages render correctly and tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 14. Agent Dashboard — auth UI, lead management, team, notifications
-  - [ ] 14.1 Implement auth pages (`/auth/login`, `/auth/register`)
+- [x] 14. Agent Dashboard — auth UI, lead management, team, notifications
+  - [x] 14.1 Implement auth pages (`/auth/login`, `/auth/register`)
     - Login form: email, password → POST `/api/v1/auth/login` → store tokens
     - Register form: invite token validation, name, email, password → POST `/api/v1/auth/register`
     - Handle account lockout display (429 response)
     - Auto-redirect to dashboard on successful auth
     - _Requirements: 18.1, 18.2, 18.3_
-  - [ ] 14.2 Implement Dashboard layout with sidebar navigation
+  - [x] 14.2 Implement Dashboard layout with sidebar navigation
     - Sidebar: Leads, Team (admin only), Performance, Listings, Settings
     - Header: agent name, notification bell with count, logout
     - Responsive: sidebar collapses on mobile
     - Auth guard: redirect to login if no valid token
     - _Requirements: 19.1 — Frontend Design: Agent Dashboard Layout_
-  - [ ] 14.3 Implement Lead Overview and Lead Table (`/dashboard/leads`)
+  - [x] 14.3 Implement Lead Overview and Lead Table (`/dashboard/leads`)
     - Overview cards: count by status (New, Contacted, Showing, Under Contract, Closed)
     - Lead table with columns: Name, Type, Source, Timeframe, Status
     - Filters: Status, Type, Source, City/ZIP, Timeframe, Date range, Financing status
@@ -515,7 +515,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Search by name/email
     - Pagination
     - _Requirements: 19.1, 19.2, 19.3, 19.5 — Frontend Design: Agent Dashboard LEAD TABLE_
-  - [ ] 14.4 Implement Lead Detail view (`/dashboard/leads/[id]`)
+  - [x] 14.4 Implement Lead Detail view (`/dashboard/leads/[id]`)
     - Full lead info: contact details, city/ZIP, timeframe, price range, financing status
     - Tool source and tool data display
     - Path history visualization (guided decision engine steps)
@@ -524,28 +524,28 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Action buttons: Call, Email, Schedule, Reassign
     - Status history timeline
     - _Requirements: 19.4, 19.6 — Frontend Design: Agent Dashboard LEAD DETAIL_
-  - [ ] 14.5 Implement Team Management page (`/dashboard/team`, admin only)
+  - [x] 14.5 Implement Team Management page (`/dashboard/team`, admin only)
     - Team roster: agent name, email, status, assigned lead count, specialties
     - Invite agent form: email → POST `/api/v1/dashboard/team/invite`
     - Deactivate agent action with confirmation
     - _Requirements: 18.4_
-  - [ ] 14.6 Implement Notification Settings page (`/dashboard/settings`)
+  - [x] 14.6 Implement Notification Settings page (`/dashboard/settings`)
     - Per-notification-type preferences: newLead, statusChange
     - Options: email only, email + SMS, none
     - Save → PUT `/api/v1/dashboard/notifications/settings`
     - _Requirements: 20.5_
-  - [ ] 14.7 Implement Performance Metrics page (`/dashboard/performance`, admin only)
+  - [x] 14.7 Implement Performance Metrics page (`/dashboard/performance`, admin only)
     - Per-agent metrics: response time, conversion rate, active leads, leads by source
     - Team summary: total leads by status/type, team conversion rate, avg response time
     - Date range filter (default: last 30 days)
     - _Requirements: 19.5_
-  - [ ] 14.8 Implement Flat-Fee Listings management page (`/dashboard/listings`, admin only)
+  - [x] 14.8 Implement Flat-Fee Listings management page (`/dashboard/listings`, admin only)
     - List all flat-fee listings with status (draft, payment-pending, paid, mls-pending, active, sold, cancelled)
     - Update listing status
     - _Requirements: 17.3, 17.4_
 
-- [ ] 15. Flat-Fee Listing Service — onboarding flow and Stripe integration
-  - [ ] 15.1 Implement flat-fee listing onboarding flow (`/listing/start`)
+- [x] 15. Flat-Fee Listing Service — onboarding flow and Stripe integration
+  - [x] 15.1 Implement flat-fee listing onboarding flow (`/listing/start`)
     - Step 1: Property details entry (address, bedrooms, bathrooms, sqft, lot size, year built, upgrades)
     - Step 2: AI listing description generation (using `/api/v1/ai/listing-description`)
     - Step 3: Photo upload guidance
@@ -554,7 +554,7 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Clear pricing display: flat fee + $400 broker transaction fee
     - Comparison with Full_Service_Upgrade tier at every step
     - _Requirements: 17.1, 17.2, 17.4_
-  - [ ] 15.2 Implement Stripe payment integration
+  - [x] 15.2 Implement Stripe payment integration
     - Create Stripe checkout session from listing-service Lambda
     - Handle payment success → update listing status to "paid"
     - Handle payment failure → display error, allow retry
@@ -562,38 +562,38 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Notify Team_Admin on successful payment for MLS submission
     - _Requirements: 17.3 — Data Sources: §9 Stripe secrets_
 
-- [ ] 16. Guided Decision Engine — path logic, save/resume, risk detection
-  - [ ] 16.1 Implement guided decision path definitions and engine
+- [x] 16. Guided Decision Engine — path logic, save/resume, risk detection
+  - [x] 16.1 Implement guided decision path definitions and engine
     - Define path sequences: Seller (Home Value → Net Sheet → Sell Now or Wait → Listing Prep → Flat-Fee or Full-Service), Buyer (Affordability → First-Time Guide → Offer Guidance → Offer Writer → Consult or Full-Service), Landlord (Rent Estimate → PM Pain Points → PM Overview → PM Sub or Consult), Investor (Cash-Flow Check → Market Comparison → Investment Consult)
     - Engine: given current path and completed steps, determine next step
     - "What This Means For You" plain-English summary generation for each tool result
     - _Requirements: 48.1, 48.2, 48.4_
-  - [ ] 16.2 Write property test for guided path progression
+  - [x] 16.2 Write property test for guided path progression
     - **Property 16: Guided Decision Path Progression**
     - **Validates: Requirements 48.2, 48.7**
-  - [ ] 16.3 Implement path save/resume with email return link
+  - [x] 16.3 Implement path save/resume with email return link
     - Save path state to DynamoDB: SCENARIO#{token} with tool inputs, results, path progress
     - Generate unique return link, send via SES
     - Resume: load saved state, restore all tool inputs and results
     - TTL: 12 months
     - Pass complete path history to lead record when lead is created
     - _Requirements: 48.3, 48.6_
-  - [ ] 16.4 Write property test for guided path save/resume round-trip
+  - [x] 16.4 Write property test for guided path save/resume round-trip
     - **Property 17: Guided Path Save/Resume Round-Trip**
     - **Validates: Requirements 48.3**
-  - [ ] 16.5 Implement risk detection and Full Service Upgrade triggers
+  - [x] 16.5 Implement risk detection and Full Service Upgrade triggers
     - Detect risk indicators: short sale, estate sale, investment property with tenants, first-time buyer with < 5% down payment
     - Trigger Full_Service_Upgrade prompt with explanation of why professional help is recommended
     - No false triggers for scenarios without risk indicators
     - _Requirements: 48.5_
-  - [ ] 16.6 Write property test for risk detection
+  - [x] 16.6 Write property test for risk detection
     - **Property 18: Risk Detection in Guided Paths**
     - **Validates: Requirements 48.5**
 
-- [ ] 17. Checkpoint — Ensure all features compile and tests pass
+- [x] 17. Checkpoint — Ensure all features compile and tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 18. Event tracking, analytics, and lead capture UX polish
+- [-] 18. Event tracking, analytics, and lead capture UX polish
   - [ ] 18.1 Implement event tracking on all lead capture touchpoints
     - Track: form submissions, call clicks, chat initiations, valuation requests
     - Log: page source, timestamp, visitor session ID
