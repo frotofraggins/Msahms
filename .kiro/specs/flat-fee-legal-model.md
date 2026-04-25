@@ -4,7 +4,97 @@ Author: Kiro A, 2026-04-25. Status: spec — binds Task 15 implementation
 and listing onboarding UI copy. Review with Arizona real estate counsel
 before any payment flow goes live.
 
-## Short answer
+## CRITICAL: Salesperson vs broker distinction
+
+**The human owner is a real estate SALESPERSON (agent), not a broker.**
+In Arizona (ARS § 32-2155 and ADRE rules), a salesperson:
+
+- MUST work under a licensed designated broker at all times
+- CANNOT receive compensation directly from a consumer
+- CANNOT be "broker of record" on any listing
+- All fees, commissions, and client payments MUST flow THROUGH the
+  employing brokerage
+- The brokerage then pays the salesperson per their written employment
+  or independent-contractor agreement
+
+This changes the structure, not the architecture. MesaHomes can still
+operate with the exact tech stack we've built — but the LEGAL ENTITY
+that collects Stripe payments, holds the ARMLS subscription, and appears
+as broker of record on listings MUST be a licensed designated broker or
+brokerage, not the owner personally.
+
+### Three business-structure paths (pick one before Task 15 goes live)
+
+**Path A: Partner with a designated broker (recommended for speed)**
+- Find a designated broker willing to be broker of record for MesaHomes listings
+- Stripe merchant account and ARMLS subscription under the brokerage
+- Broker pays the owner per commission split agreement (standard 70/30,
+  80/20, etc. — negotiate with the broker)
+- Owner remains the face of MesaHomes, drives marketing + tech + leads
+- Fastest path to revenue. Starts day the broker agrees.
+
+**Path B: Hang license at an existing flat-fee brokerage**
+- Join a brokerage that already runs the flat-fee model (AZ Flat Fee,
+  HomeSmart, My Home Group, etc.)
+- MesaHomes becomes your personal lead-gen + branding platform under
+  their umbrella
+- They own the broker-of-record + Stripe side; you drive the tech
+- Less control but fastest to start — they already have the infra
+
+**Path C: Get broker's license (long-term)**
+- Arizona requires 3 years full-time salesperson experience + 90 hours
+  broker education + state exam
+- Only viable if owner has years of experience already
+- Not a MVP-timeframe option
+
+### Implications for what we've built
+
+Nothing architectural changes. All the following still work as designed:
+- `lib/brokerage.ts` env-sourced broker-of-record — just populate with
+  the PARTNER broker's info, not the owner's
+- Stripe Checkout flow — but the Stripe account is the partner
+  brokerage's, not the owner's personal account
+- ARMLS subscription — held by the partner brokerage
+- Listing agreement — signed between seller and the partner brokerage,
+  with MesaHomes listed as the marketing/tech platform
+- `LISTINGS_PAYMENT_ENABLED=false` stays false until the partnership is
+  formalized and the Stripe account is active
+
+### What the owner does right now
+
+1. Decide between Path A, B, or C
+2. For Path A: identify 2-3 designated brokers in Mesa area, pitch the
+   partnership (you bring tech + leads, they bring the license). Good
+   candidates: brokers running 50-200 agents who'd welcome a new
+   lead-gen channel.
+3. For Path B: pick the flat-fee brokerage whose culture fits and hang
+   the license there.
+4. Once decided, the env vars get set:
+   - `BROKER_OF_RECORD_NAME` = partner brokerage legal name
+   - `BROKER_OF_RECORD_LICENSE` = partner brokerage's ER license number
+   - `BROKER_OF_RECORD_ARMLS_ID` = partner brokerage's ARMLS ID
+5. Written agreement between owner (salesperson) and the brokerage
+   covering: commission split, MesaHomes as DBA or referral source,
+   who controls the Stripe account, marketing language boundaries, E&O
+   coverage.
+
+### Things to NEVER do as a salesperson
+
+1. NEVER open a Stripe account in owner's personal name for listing fees
+2. NEVER sign a listing agreement with a seller in owner's personal name
+3. NEVER claim "MesaHomes" is a brokerage unless it's registered as a
+   DBA of the partner brokerage
+4. NEVER advertise MesaHomes without the partner brokerage's name and
+   license number clearly visible per ADRE advertising rules
+5. NEVER accept a fee directly from a seller (even if seller offers)
+6. NEVER operate before a signed broker-agent agreement is in place
+
+This isn't a "nice to have" — violating ARS § 32-2155 is grounds for
+license revocation.
+
+---
+
+## Short answer on the original question (upfront payment legality)
 
 **Yes, upfront credit-card payment for flat-fee MLS listings is legal
 and standard.** It's what every major competitor does (Houzeo, Homecoin,
