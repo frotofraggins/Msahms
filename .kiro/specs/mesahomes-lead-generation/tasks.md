@@ -604,29 +604,29 @@ This plan implements the MesaHomes MVP: a serverless lead-generation real estate
     - Create lead on booking submission
     - _Requirements: 12.5_
 
-- [-] 19. Deployment — S3, CloudFront, and production configuration
-  - [ ] 19.1 Configure Next.js build output for S3 + CloudFront deployment
+- [x] 19. Deployment — S3, CloudFront, and production configuration
+  - [x] 19.1 Configure Next.js build output for S3 + CloudFront deployment
     - Build Next.js SSR output for S3 static hosting
     - Configure CloudFront distribution E3TBTUT3LJLAAT with origins: S3 static + API Gateway
     - HTTPS via existing ACM certificate
     - Domain: mesahomes.com via Route 53
     - _Requirements: 1.1 — Design: Deployment Architecture_
-  - [ ] 19.2 Deploy all Lambda functions with correct memory, timeout, and environment configuration
+  - [x] 19.2 Deploy all Lambda functions with correct memory, timeout, and environment configuration
     - Deploy 11 Lambda functions with configurations per design: leads-capture (256MB/10s), tools-calculator (256MB/10s), property-lookup (512MB/30s), market-data (256MB/5s), content-api (256MB/5s), ai-proxy (512MB/30s), listing-service (256MB/15s), auth-api (256MB/10s), dashboard-api (256MB/10s), data-pipeline (1024MB/300s), notification-worker (256MB/10s)
     - Configure DynamoDB Streams trigger for notification-worker
     - Configure EventBridge cron for data-pipeline
     - _Requirements: 45.5 — Design: Lambda Function Organization table_
-  - [ ] 19.3 Run initial Zillow CSV data pipeline to populate market data
+  - [x] 19.3 Run initial Zillow CSV data pipeline to populate market data
     - Trigger data-pipeline Lambda manually to load initial market data
     - Verify ZIP-level and metro-level records in DynamoDB
     - _Requirements: 15.1, 8.1_
-  - [ ] 19.4 Seed initial content — city pages and blog posts
+  - [x] 19.4 Seed initial content — city pages and blog posts
     - Create city page records in DynamoDB for all 6 cities with current market data
     - Create initial blog posts for SEO foundation
     - Verify sitemap.xml generation
     - _Requirements: 15.1, 16.1, 16.3_
 
-- [ ] 20. Final checkpoint — Full integration verification
+- [x] 20. Final checkpoint — Full integration verification
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
