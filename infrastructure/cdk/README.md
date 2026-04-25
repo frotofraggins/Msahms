@@ -157,3 +157,60 @@ construct which bundles with esbuild
 **Cognito user pool ID needs to reach frontend**: After deploy, read
 outputs and set `NEXT_PUBLIC_COGNITO_USER_POOL_ID` in `frontend/.env.production`
 then rebuild the frontend
+
+## CloudFront SPA Rewrite Function (one-time setup)
+
+The existing CloudFront distribution `E3TBTUT3LJLAAT` needs a viewer-request
+function attached so `/dashboard/leads/:id` paths all serve the same shell
+(client-side code reads the id from `window.location.pathname`).
+
+```bash
+# 1. Create the function
+aws cloudfront create-function \
+  --name mesahomes-spa-rewrite \
+  --function-config '{"Comment":"SPA rewrites for static export","Runtime":"cloudfront-js-2.0"}' \
+  --function-code fileb://infrastructure/cdk/cloudfront-spa-rewrite.js \
+  --profile Msahms --region us-east-1
+
+# Response includes ETag and FunctionARN — save both
+
+# 2. Publish the function (move from DEVELOPMENT to LIVE stage)
+aws cloudfront publish-function \
+  --name mesahomes-spa-rewrite \
+  --if-match <ETAG-FROM-STEP-1> \
+  --profile Msahms
+
+# 3. Get the current distribution config
+aws cloudfront get-distribution-config \
+  --id E3TBTUT3LJLAAT \
+  --profile Msahms > /tmp/cf-config.json
+
+# 4. Extract ETag (you'll need it for the update)
+CF_ETAG=$(jq -r .ETag /tmp/cf-config.json)
+
+# 5. Edit /tmp/cf-config.json — add FunctionAssociations to DefaultCacheBehavior:
+#    "FunctionAssociations": {
+#      "Quantity": 1,
+#      "Items": [{
+#        "FunctionARN": "arn:aws:cloudfront::304052673868:function/mesahomes-spa-rewrite",
+#        "EventType": "viewer-request"
+#      }]
+#    }
+#    (remove the wrapper "DistributionConfig" key; update-distribution
+#     expects just the inner object)
+
+# 6. Apply the update
+aws cloudfront update-distribution \
+  --id E3TBTUT3LJLAAT \
+  --distribution-config file:///tmp/cf-config.json \
+  --if-match "$CF_ETAG" \
+  --profile Msahms
+
+# 7. Wait ~5 minutes for CloudFront to roll out, then test:
+curl -sI https://mesahomes.com/dashboard/leads/test-id-12345
+# Should return 200 OK with content from /dashboard/leads/_/index.html
+```
+
+Once done this is set-and-forget. The function runs at every edge location
+at sub-millisecond cost (~$0.10 per million requests).
+
