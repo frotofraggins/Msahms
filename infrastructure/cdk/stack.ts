@@ -21,8 +21,10 @@ import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as eventsources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { MesaHomesSesConstruct } from './ses.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(__dirname, '..', '..');
@@ -249,6 +251,22 @@ export class MesaHomesStack extends Stack {
         authorizer: route.auth ? authorizer : undefined,
       });
     }
+
+    // SES — transactional email for notifications and lead alerts
+    // Imports the existing mesahomes.com hosted zone (DNS already delegated)
+    const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+      hostedZoneId: 'Z10182223SPYFYDHCGZH7',
+      zoneName: 'mesahomes.com',
+    });
+    new MesaHomesSesConstruct(this, 'Ses', {
+      hostedZone,
+      senderLambdas: [
+        fns['notification-worker']!,
+        fns['listing-service']!,
+        fns['leads-capture']!,
+        fns['auth-api']!,
+      ],
+    });
 
     // Outputs
     new CfnOutput(this, 'ApiUrl', { value: api.url, description: 'API Gateway invoke URL' });
