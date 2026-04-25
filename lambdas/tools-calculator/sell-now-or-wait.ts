@@ -9,6 +9,12 @@
 
 import { getItem } from '../../lib/dynamodb.js';
 import type { MarketDataZip } from '../../lib/types/market.js';
+import {
+  computeWeightedAnalysis,
+  projectThreeMonths,
+  type WeightedAnalysis,
+  type Projection,
+} from '../../lib/market-signals.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,6 +56,10 @@ export interface SellNowOrWaitResponse {
   recommendation: 'sell-now' | 'wait' | 'neutral';
   /** Summary text */
   summary: string;
+  /** Weighted scoring breakdown with confidence (differentiator). */
+  weighted: WeightedAnalysis;
+  /** 3-month counterfactual projection of home value. */
+  projection: Projection;
 }
 
 // ---------------------------------------------------------------------------
@@ -230,20 +240,41 @@ export function determineRecommendation(
 
 /**
  * Generate summary text based on recommendation.
+ *
+ * When `weighted` and `projection` are supplied, the summary includes a
+ * confidence percentage and a 3-month projected-value line. Legacy callers
+ * that omit them get the original shorter summary.
  */
 export function generateSummary(
   recommendation: 'sell-now' | 'wait' | 'neutral',
   zip: string,
   estimatedHomeValue: number,
+  weighted?: WeightedAnalysis,
+  projection?: Projection,
 ): string {
-  switch (recommendation) {
-    case 'sell-now':
-      return `Based on current market conditions in ${zip}, the indicators suggest selling sooner rather than later. Your estimated home value of $${estimatedHomeValue.toLocaleString()} positions you well in the current market. Contact us for a personalized consultation.`;
-    case 'wait':
-      return `Market conditions in ${zip} suggest that waiting may be beneficial. Home values are trending upward and market dynamics favor patience. Your estimated value of $${estimatedHomeValue.toLocaleString()} could increase. We recommend monitoring the market and consulting with an agent.`;
-    case 'neutral':
-      return `Market conditions in ${zip} are balanced. Your estimated home value of $${estimatedHomeValue.toLocaleString()} is competitive. The decision to sell now or wait depends on your personal circumstances. Schedule a consultation to discuss your specific situation.`;
+  const base = (() => {
+    switch (recommendation) {
+      case 'sell-now':
+        return `Based on current market conditions in ${zip}, the indicators suggest selling sooner rather than later. Your estimated home value of $${estimatedHomeValue.toLocaleString()} positions you well in the current market. Contact us for a personalized consultation.`;
+      case 'wait':
+        return `Market conditions in ${zip} suggest that waiting may be beneficial. Home values are trending upward and market dynamics favor patience. Your estimated value of $${estimatedHomeValue.toLocaleString()} could increase. We recommend monitoring the market and consulting with an agent.`;
+      case 'neutral':
+        return `Market conditions in ${zip} are balanced. Your estimated home value of $${estimatedHomeValue.toLocaleString()} is competitive. The decision to sell now or wait depends on your personal circumstances. Schedule a consultation to discuss your specific situation.`;
+    }
+  })();
+
+  const extras: string[] = [];
+  if (weighted) {
+    const pct = Math.round(weighted.confidence * 100);
+    const heat = Math.round(weighted.heatIndex);
+    extras.push(`Market heat ${heat}/100 (${weighted.marketBucket.replace('-', ' ')}). Confidence: ${pct}% (based on ${weighted.signals.filter(s => s.observed).length} of ${weighted.signals.length} market signals).`);
   }
+  if (projection && projection.delta3Mo !== 0) {
+    const dir = projection.delta3Mo > 0 ? 'gain' : 'lose';
+    const abs = Math.abs(projection.delta3Mo);
+    extras.push(`At current trend, your home could ${dir} ~$${abs.toLocaleString()} over the next 3 months (projected value ~$${projection.projectedValue3Mo.toLocaleString()}).`);
+  }
+  return extras.length > 0 ? `${base} ${extras.join(' ')}` : base;
 }
 
 // ---------------------------------------------------------------------------
@@ -273,14 +304,23 @@ export async function analyzeSellNowOrWait(
     getMetroMarketData(),
   ]);
 
-  // Analyze indicators
+  // Analyze indicators (legacy simple-majority, kept for UI detail rows)
   const indicators = analyzeMarketIndicators(zipData, metroData, estimatedHomeValue);
 
-  // Determine recommendation
-  const recommendation = determineRecommendation(indicators);
+  // Weighted analysis with confidence (differentiator)
+  const weighted = computeWeightedAnalysis(zipData, metroData, estimatedHomeValue);
 
-  // Generate summary
-  const summary = generateSummary(recommendation, zip, estimatedHomeValue);
+  // Prefer the weighted recommendation when confidence is sufficient;
+  // fall back to the legacy majority vote otherwise.
+  const recommendation = weighted.confidence >= 0.4
+    ? weighted.recommendation
+    : determineRecommendation(indicators);
+
+  // 3-month counterfactual projection
+  const projection = projectThreeMonths(zipData, estimatedHomeValue);
+
+  // Generate summary (now confidence + projection aware)
+  const summary = generateSummary(recommendation, zip, estimatedHomeValue, weighted, projection);
 
   return {
     zip,
@@ -290,5 +330,7 @@ export async function analyzeSellNowOrWait(
     indicators,
     recommendation,
     summary,
+    weighted,
+    projection,
   };
 }
