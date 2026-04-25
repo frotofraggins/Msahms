@@ -22,6 +22,10 @@ import {
 import { putItem, getItem, updateItem } from '../../lib/dynamodb.js';
 import { generateListingKeys } from '../../lib/models/keys.js';
 import { EntityType } from '../../lib/types/dynamodb.js';
+import {
+  listingsPaymentEnabled,
+  PRE_LAUNCH_LISTING_MESSAGE,
+} from '../../lib/brokerage.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -45,6 +49,30 @@ export type ListingStatus =
   | 'sold'
   | 'cancelled';
 
+/** Three-tier product model package types. */
+export type PackageType =
+  | 'fsbo-starter'
+  | 'fsbo-standard'
+  | 'fsbo-pro'
+  | 'flat-fee'
+  | 'full-service';
+
+/** FSBO packages are always allowed — no broker needed. */
+const FSBO_PACKAGES: ReadonlySet<PackageType> = new Set([
+  'fsbo-starter',
+  'fsbo-standard',
+  'fsbo-pro',
+]);
+
+/** Valid package type values for input validation. */
+const VALID_PACKAGE_TYPES: ReadonlySet<string> = new Set<string>([
+  'fsbo-starter',
+  'fsbo-standard',
+  'fsbo-pro',
+  'flat-fee',
+  'full-service',
+]);
+
 /** Input for starting a flat-fee listing. */
 export interface ListingStartInput {
   propertyAddress: string;
@@ -56,6 +84,7 @@ export interface ListingStartInput {
   upgrades?: string[];
   neighborhood?: string;
   listingDescription?: string;
+  packageType?: PackageType;
 }
 
 // ---------------------------------------------------------------------------
@@ -93,6 +122,7 @@ async function handleStartListing(
   const bedrooms = body.bedrooms as number | undefined;
   const bathrooms = body.bathrooms as number | undefined;
   const sqft = body.sqft as number | undefined;
+  const packageType = (body.packageType as string | undefined) ?? 'flat-fee';
 
   // Validate required fields
   const fieldErrors: Array<{ field: string; message: string }> = [];
@@ -107,6 +137,9 @@ async function handleStartListing(
   }
   if (sqft === undefined || sqft === null || sqft <= 0) {
     fieldErrors.push({ field: 'sqft', message: 'sqft is required and must be > 0' });
+  }
+  if (!VALID_PACKAGE_TYPES.has(packageType)) {
+    fieldErrors.push({ field: 'packageType', message: `packageType must be one of: ${[...VALID_PACKAGE_TYPES].join(', ')}` });
   }
 
   if (fieldErrors.length > 0) {
@@ -135,6 +168,7 @@ async function handleStartListing(
     photos: [],
     pricingRecommendation: null,
     status,
+    packageType,
     stripePaymentId: null,
     assignedAdminId: '',
     mlsNumber: null,
@@ -195,6 +229,16 @@ async function handlePayment(
 
   const listingData = item.data as Record<string, unknown>;
   const currentStatus = listingData.status as string;
+  const pkgType = (listingData.packageType as string) ?? 'flat-fee';
+
+  // Gate flat-fee and full-service payments behind feature flag
+  if (!listingsPaymentEnabled() && !FSBO_PACKAGES.has(pkgType as PackageType)) {
+    throw new AppError(
+      ErrorCode.VALIDATION_ERROR,
+      PRE_LAUNCH_LISTING_MESSAGE,
+      correlationId,
+    );
+  }
 
   // Only draft or payment-pending listings can be paid
   if (currentStatus !== 'draft' && currentStatus !== 'payment-pending') {

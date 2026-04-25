@@ -18,11 +18,19 @@ vi.mock('../../lib/dynamodb.js', () => ({
   updateItem: vi.fn(),
 }));
 
+vi.mock('../../lib/brokerage.js', () => ({
+  listingsPaymentEnabled: vi.fn(() => false),
+  PRE_LAUNCH_LISTING_MESSAGE:
+    "MesaHomes flat-fee listings are coming soon. Leave your info and we'll notify you when we're live on the MLS.",
+}));
+
 import { putItem, getItem, updateItem } from '../../lib/dynamodb.js';
+import { listingsPaymentEnabled } from '../../lib/brokerage.js';
 
 const mockPutItem = vi.mocked(putItem);
 const mockGetItem = vi.mocked(getItem);
 const mockUpdateItem = vi.mocked(updateItem);
+const mockListingsPaymentEnabled = vi.mocked(listingsPaymentEnabled);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -131,7 +139,11 @@ describe('POST /api/v1/listing/start', () => {
 // ---------------------------------------------------------------------------
 
 describe('POST /api/v1/listing/payment', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Existing payment tests assume payment is enabled
+    mockListingsPaymentEnabled.mockReturnValue(true);
+  });
 
   it('should process payment for a draft listing', async () => {
     mockGetItem.mockResolvedValue({
@@ -277,5 +289,204 @@ describe('handler general', () => {
   it('pricing constants are correct', () => {
     expect(FLAT_FEE_AMOUNT).toBe(999);
     expect(BROKER_FEE_AMOUNT).toBe(400);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Package type tests (Task 15)
+// ---------------------------------------------------------------------------
+
+describe('packageType field', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('should store packageType in listing data', async () => {
+    mockPutItem.mockResolvedValue(undefined);
+
+    await handler(
+      makeEvent('/api/v1/listing/start', {
+        ...validListingInput,
+        packageType: 'fsbo-starter',
+      }),
+    );
+
+    expect(mockPutItem).toHaveBeenCalledTimes(1);
+    const storedItem = mockPutItem.mock.calls[0][0];
+    const data = storedItem.data as Record<string, unknown>;
+    expect(data.packageType).toBe('fsbo-starter');
+  });
+
+  it('should default packageType to flat-fee when not provided', async () => {
+    mockPutItem.mockResolvedValue(undefined);
+
+    await handler(makeEvent('/api/v1/listing/start', validListingInput));
+
+    const storedItem = mockPutItem.mock.calls[0][0];
+    const data = storedItem.data as Record<string, unknown>;
+    expect(data.packageType).toBe('flat-fee');
+  });
+
+  it('should reject invalid packageType', async () => {
+    const result = await handler(
+      makeEvent('/api/v1/listing/start', {
+        ...validListingInput,
+        packageType: 'invalid-type',
+      }),
+    );
+    expect(result.statusCode).toBe(400);
+  });
+
+  it('should accept all valid FSBO package types', async () => {
+    for (const pkgType of ['fsbo-starter', 'fsbo-standard', 'fsbo-pro']) {
+      mockPutItem.mockResolvedValue(undefined);
+      const result = await handler(
+        makeEvent('/api/v1/listing/start', {
+          ...validListingInput,
+          packageType: pkgType,
+        }),
+      );
+      expect(result.statusCode).toBe(201);
+    }
+  });
+
+  it('should accept flat-fee and full-service package types', async () => {
+    for (const pkgType of ['flat-fee', 'full-service']) {
+      mockPutItem.mockResolvedValue(undefined);
+      const result = await handler(
+        makeEvent('/api/v1/listing/start', {
+          ...validListingInput,
+          packageType: pkgType,
+        }),
+      );
+      expect(result.statusCode).toBe(201);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// LISTINGS_PAYMENT_ENABLED gating (Task 15)
+// ---------------------------------------------------------------------------
+
+describe('LISTINGS_PAYMENT_ENABLED gating', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('should allow FSBO payment regardless of LISTINGS_PAYMENT_ENABLED=false', async () => {
+    mockListingsPaymentEnabled.mockReturnValue(false);
+    mockGetItem.mockResolvedValue({
+      PK: 'LISTING#fsbo1',
+      SK: 'LISTING#fsbo1',
+      data: { listingId: 'fsbo1', status: 'draft', packageType: 'fsbo-starter' },
+    });
+    mockUpdateItem.mockResolvedValue(undefined);
+
+    const result = await handler(
+      makeEvent('/api/v1/listing/payment', { listingId: 'fsbo1' }),
+    );
+    expect(result.statusCode).toBe(200);
+  });
+
+  it('should allow FSBO-standard payment when LISTINGS_PAYMENT_ENABLED=false', async () => {
+    mockListingsPaymentEnabled.mockReturnValue(false);
+    mockGetItem.mockResolvedValue({
+      PK: 'LISTING#fsbo2',
+      SK: 'LISTING#fsbo2',
+      data: { listingId: 'fsbo2', status: 'draft', packageType: 'fsbo-standard' },
+    });
+    mockUpdateItem.mockResolvedValue(undefined);
+
+    const result = await handler(
+      makeEvent('/api/v1/listing/payment', { listingId: 'fsbo2' }),
+    );
+    expect(result.statusCode).toBe(200);
+  });
+
+  it('should allow FSBO-pro payment when LISTINGS_PAYMENT_ENABLED=false', async () => {
+    mockListingsPaymentEnabled.mockReturnValue(false);
+    mockGetItem.mockResolvedValue({
+      PK: 'LISTING#fsbo3',
+      SK: 'LISTING#fsbo3',
+      data: { listingId: 'fsbo3', status: 'draft', packageType: 'fsbo-pro' },
+    });
+    mockUpdateItem.mockResolvedValue(undefined);
+
+    const result = await handler(
+      makeEvent('/api/v1/listing/payment', { listingId: 'fsbo3' }),
+    );
+    expect(result.statusCode).toBe(200);
+  });
+
+  it('should block flat-fee payment when LISTINGS_PAYMENT_ENABLED=false', async () => {
+    mockListingsPaymentEnabled.mockReturnValue(false);
+    mockGetItem.mockResolvedValue({
+      PK: 'LISTING#ff1',
+      SK: 'LISTING#ff1',
+      data: { listingId: 'ff1', status: 'draft', packageType: 'flat-fee' },
+    });
+
+    const result = await handler(
+      makeEvent('/api/v1/listing/payment', { listingId: 'ff1' }),
+    );
+    expect(result.statusCode).toBe(400);
+    const body = parseBody(result.body);
+    expect((body.error as Record<string, unknown>).message).toContain('coming soon');
+  });
+
+  it('should block full-service payment when LISTINGS_PAYMENT_ENABLED=false', async () => {
+    mockListingsPaymentEnabled.mockReturnValue(false);
+    mockGetItem.mockResolvedValue({
+      PK: 'LISTING#fs1',
+      SK: 'LISTING#fs1',
+      data: { listingId: 'fs1', status: 'draft', packageType: 'full-service' },
+    });
+
+    const result = await handler(
+      makeEvent('/api/v1/listing/payment', { listingId: 'fs1' }),
+    );
+    expect(result.statusCode).toBe(400);
+    const body = parseBody(result.body);
+    expect((body.error as Record<string, unknown>).message).toContain('coming soon');
+  });
+
+  it('should allow flat-fee payment when LISTINGS_PAYMENT_ENABLED=true', async () => {
+    mockListingsPaymentEnabled.mockReturnValue(true);
+    mockGetItem.mockResolvedValue({
+      PK: 'LISTING#ff2',
+      SK: 'LISTING#ff2',
+      data: { listingId: 'ff2', status: 'draft', packageType: 'flat-fee' },
+    });
+    mockUpdateItem.mockResolvedValue(undefined);
+
+    const result = await handler(
+      makeEvent('/api/v1/listing/payment', { listingId: 'ff2' }),
+    );
+    expect(result.statusCode).toBe(200);
+  });
+
+  it('should allow full-service payment when LISTINGS_PAYMENT_ENABLED=true', async () => {
+    mockListingsPaymentEnabled.mockReturnValue(true);
+    mockGetItem.mockResolvedValue({
+      PK: 'LISTING#fs2',
+      SK: 'LISTING#fs2',
+      data: { listingId: 'fs2', status: 'draft', packageType: 'full-service' },
+    });
+    mockUpdateItem.mockResolvedValue(undefined);
+
+    const result = await handler(
+      makeEvent('/api/v1/listing/payment', { listingId: 'fs2' }),
+    );
+    expect(result.statusCode).toBe(200);
+  });
+
+  it('should default to flat-fee gating when packageType is missing from stored data', async () => {
+    mockListingsPaymentEnabled.mockReturnValue(false);
+    mockGetItem.mockResolvedValue({
+      PK: 'LISTING#old1',
+      SK: 'LISTING#old1',
+      data: { listingId: 'old1', status: 'draft' },
+    });
+
+    const result = await handler(
+      makeEvent('/api/v1/listing/payment', { listingId: 'old1' }),
+    );
+    expect(result.statusCode).toBe(400);
   });
 });
