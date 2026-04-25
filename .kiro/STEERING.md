@@ -126,13 +126,18 @@ Maricopa (everything else).
    No `as any` in source code. In tests, prefer making mocks satisfy the real
    interface over casting.
 3. `npx vitest run` passes 100%. No skipped tests in main without a linked issue.
-4. No bare `except` / `catch(e)` without at least `console.error(e)` — hot
+4. **Frontend changes**: `cd frontend && npm run build` exits 0. Static
+   export to `out/` must succeed — this catches Next.js static-export
+   incompatibilities that `tsc` and `vitest` miss (dynamic routes
+   without generateStaticParams, metadata routes without force-static,
+   etc.). Do NOT claim "ready to deploy" without running this.
+5. No bare `except` / `catch(e)` without at least `console.error(e)` — hot
    polling paths (system metrics, WebSocket send to dead client) excluded.
-5. Every Lambda has: a unit test, a property test (if logic is non-trivial),
+6. Every Lambda has: a unit test, a property test (if logic is non-trivial),
    and a co-located index test exercising the handler.
-6. Every shared lib has: unit tests. Property tests encouraged for anything
+7. Every shared lib has: unit tests. Property tests encouraged for anything
    with invariants (validators, serializers).
-7. UTF-8, LF line endings, no BOM. (We've been burned by UTF-16 `.gitignore`.)
+8. UTF-8, LF line endings, no BOM. (We've been burned by UTF-16 `.gitignore`.)
 
 ## Process rules
 
