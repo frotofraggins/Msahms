@@ -209,7 +209,7 @@ export function NetSheetClient() {
 
           <button
             onClick={handleCalculate}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-secondary py-3 text-sm font-semibold text-white transition-colors hover:bg-secondary-dark"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-secondary py-3 text-sm font-semibold text-white transition-all duration-100 hover:bg-secondary-dark active:scale-[0.98]"
           >
             <Calculator className="h-4 w-4" />
             Calculate My Net Proceeds

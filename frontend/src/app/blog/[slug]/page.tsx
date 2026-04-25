@@ -278,17 +278,22 @@ export default async function BlogPostPage({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
         />
 
-        <article className="bg-white px-4 py-16">
-          <div className="mx-auto max-w-3xl">
+        <article className="bg-paper px-4 py-16">
+          <div className="mx-auto" style={{ maxWidth: '65ch' }}>
             <time className="text-sm text-text-light">{formatDate(post.date)}</time>
-            <h1 className="mt-2 mb-6 text-3xl font-bold text-text">{post.title}</h1>
+            <h1
+              className="mt-2 mb-6 font-heading font-bold text-charcoal"
+              style={{ fontSize: 'var(--text-section)' }}
+            >
+              {post.title}
+            </h1>
 
             {/* Rendered markdown body (placeholder — plain text paragraphs) */}
             <div className="prose prose-sm max-w-none text-text-light">
               {post.body.split('\n\n').map((paragraph, i) => {
                 if (paragraph.startsWith('## ')) {
                   return (
-                    <h2 key={i} className="mt-8 mb-3 text-xl font-bold text-text">
+                    <h2 key={i} className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
                       {paragraph.replace('## ', '')}
                     </h2>
                   );

@@ -110,16 +110,16 @@ export default function PerformancePage() {
 
       {/* Team summary cards */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl bg-white p-5 shadow-sm">
+        <div className="rounded-xl bg-paper p-5 shadow-sm">
           <div className="flex items-center gap-2 text-sm text-text-light">
             <Users className="h-4 w-4" />
             Total Leads
           </div>
-          <p className="mt-1 text-3xl font-bold tabular-nums text-text">
+          <p className="mt-1 text-3xl font-bold tabular-nums text-charcoal">
             {summary.totalLeads}
           </p>
         </div>
-        <div className="rounded-xl bg-white p-5 shadow-sm">
+        <div className="rounded-xl bg-paper p-5 shadow-sm">
           <div className="flex items-center gap-2 text-sm text-text-light">
             <Target className="h-4 w-4" />
             Total Closed
@@ -128,7 +128,7 @@ export default function PerformancePage() {
             {summary.totalClosed}
           </p>
         </div>
-        <div className="rounded-xl bg-white p-5 shadow-sm">
+        <div className="rounded-xl bg-paper p-5 shadow-sm">
           <div className="flex items-center gap-2 text-sm text-text-light">
             <TrendingUp className="h-4 w-4" />
             Conversion Rate
@@ -140,14 +140,14 @@ export default function PerformancePage() {
       </div>
 
       {/* Per-agent table */}
-      <div className="overflow-x-auto rounded-xl bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-xl bg-paper shadow-sm">
         {agents.length === 0 ? (
           <div className="py-16 text-center text-sm text-text-light">
             No agent metrics available yet.
           </div>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50">
+            <thead className="border-b border-warm-border bg-warm-beige">
               <tr>
                 <th className="px-4 py-3 font-medium text-text-light">Agent</th>
                 <th className="px-4 py-3 font-medium text-text-light">Total Leads</th>

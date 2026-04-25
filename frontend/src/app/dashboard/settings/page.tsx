@@ -98,8 +98,8 @@ export default function SettingsPage() {
       )}
 
       {/* Notification preferences */}
-      <div className="rounded-xl bg-white p-6 shadow-sm">
-        <h2 className="mb-6 flex items-center gap-2 text-lg font-semibold text-text">
+      <div className="rounded-xl bg-paper p-6 shadow-sm">
+        <h2 className="mb-6 flex items-center gap-2 text-lg font-semibold text-charcoal">
           <Bell className="h-5 w-5" />
           Notification Preferences
         </h2>

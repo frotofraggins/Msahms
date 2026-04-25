@@ -54,7 +54,7 @@ export default function DashboardLayout({
 
   if (checking || !authenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface">
+      <div className="flex min-h-screen items-center justify-center bg-warm-beige">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-text-light">Loading dashboard…</p>
@@ -64,7 +64,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-surface">
+    <div className="flex min-h-screen bg-warm-beige">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -77,12 +77,12 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-gray-200 bg-white transition-transform lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-warm-border bg-paper transition-transform lg:static lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         {/* Sidebar header */}
-        <div className="flex h-16 items-center justify-between border-b border-gray-200 px-4">
+        <div className="flex h-16 items-center justify-between border-b border-warm-border px-4">
           <Link href="/dashboard/leads" className="text-lg font-bold text-primary">
             MesaHomes
           </Link>
@@ -109,7 +109,7 @@ export default function DashboardLayout({
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                   active
                     ? 'bg-primary/10 text-primary'
-                    : 'text-text-light hover:bg-gray-100 hover:text-text',
+                    : 'text-text-light hover:bg-warm-beige hover:text-charcoal',
                 )}
               >
                 <Icon className="h-5 w-5" />
@@ -120,10 +120,10 @@ export default function DashboardLayout({
         </nav>
 
         {/* Sidebar footer */}
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-warm-border p-4">
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-text-light transition-colors hover:bg-gray-100 hover:text-error"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-text-light transition-colors hover:bg-warm-beige hover:text-error"
           >
             <LogOut className="h-5 w-5" />
             Logout
@@ -134,27 +134,27 @@ export default function DashboardLayout({
       {/* Main content area */}
       <div className="flex flex-1 flex-col">
         {/* Top header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 lg:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-warm-border bg-paper px-4 lg:px-6">
           <button
             className="lg:hidden"
             onClick={() => setSidebarOpen(true)}
             aria-label="Open sidebar"
           >
-            <Menu className="h-6 w-6 text-text" />
+            <Menu className="h-6 w-6 text-charcoal" />
           </button>
 
-          <div className="hidden text-sm font-medium text-text lg:block">
+          <div className="hidden text-sm font-medium text-charcoal lg:block">
             Dashboard
           </div>
 
           <div className="flex items-center gap-4">
             <button
-              className="relative text-text-light hover:text-text"
+              className="relative text-text-light hover:text-charcoal"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
             </button>
-            <span className="text-sm font-medium text-text">Agent</span>
+            <span className="text-sm font-medium text-charcoal">Agent</span>
             <button
               onClick={handleLogout}
               className="hidden text-sm font-medium text-text-light hover:text-error lg:block"

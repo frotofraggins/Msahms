@@ -219,7 +219,7 @@ export function AffordabilityClient() {
 
           <button
             onClick={handleCalculate}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-secondary py-3 text-sm font-semibold text-white transition-colors hover:bg-secondary-dark"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-secondary py-3 text-sm font-semibold text-white transition-all duration-100 hover:bg-secondary-dark active:scale-[0.98]"
           >
             <Calculator className="h-4 w-4" />
             Calculate Affordability
@@ -246,7 +246,7 @@ export function AffordabilityClient() {
               const loan = maxPrice - dp;
               const payment = calculateMonthlyPayment(loan, s.rate, s.term);
               return (
-                <div key={s.label} className="rounded-xl border border-gray-200 bg-white p-4">
+                <div key={s.label} className="rounded-xl border border-gray-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                   <h3 className="mb-2 text-sm font-semibold text-primary">{s.label}</h3>
                   <div className="space-y-1 text-xs text-text-light">
                     <div className="flex justify-between">
@@ -290,7 +290,7 @@ export function AffordabilityClient() {
         <h2 className="mb-4 text-lg font-bold text-text">Arizona Down Payment Assistance Programs</h2>
         <div className="space-y-3">
           {AZ_DPA_PROGRAMS.map((program) => (
-            <div key={program.name} className="rounded-lg border border-gray-200 bg-white p-4">
+            <div key={program.name} className="rounded-lg border border-gray-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
               <h3 className="text-sm font-semibold text-primary">{program.name}</h3>
               <p className="mt-1 text-xs text-text-light">{program.description}</p>
               <a

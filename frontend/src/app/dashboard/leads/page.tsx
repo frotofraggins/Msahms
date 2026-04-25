@@ -151,7 +151,7 @@ export default function LeadsPage() {
           return (
             <div
               key={key}
-              className="rounded-xl bg-white p-4 shadow-sm"
+              className="rounded-xl bg-paper p-4 shadow-sm"
             >
               <div className="flex items-center gap-2">
                 <Icon className="h-4 w-4 text-text-light" />
@@ -224,7 +224,7 @@ export default function LeadsPage() {
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-xl bg-paper shadow-sm">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -235,7 +235,7 @@ export default function LeadsPage() {
           </div>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50">
+            <thead className="border-b border-warm-border bg-warm-beige">
               <tr>
                 <th className="px-4 py-3 font-medium text-text-light">Name</th>
                 <th className="px-4 py-3 font-medium text-text-light">Type</th>

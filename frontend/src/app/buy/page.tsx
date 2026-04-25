@@ -5,6 +5,7 @@ import { Footer } from '@/components/Footer';
 import { StickyContactBar } from '@/components/StickyContactBar';
 import { FullServiceUpgradeBanner } from '@/components/FullServiceUpgradeBanner';
 import { FAQSection } from '@/components/FAQSection';
+import { FadeInOnScroll } from '@/components/FadeInOnScroll';
 import { BuyLeadCapture } from './BuyClient';
 import { Calculator, BookOpen, FileText, Users } from 'lucide-react';
 
@@ -79,75 +80,104 @@ export default function BuyPage() {
       <FullServiceUpgradeBanner />
 
       <main>
-        {/* Hero with lead capture */}
-        <section className="bg-white px-4 py-16 text-center">
-          <h1 className="mb-4 text-3xl font-bold text-text md:text-4xl">
-            Buy a Home in Mesa, AZ
-          </h1>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-text-light">
-            Free tools, expert guidance, and local agents who know the East Valley.
-            Whether you&apos;re a first-time buyer or experienced investor, we&apos;ll help you
-            find the right home at the right price.
-          </p>
-          <BuyLeadCapture />
-        </section>
+        {/* Hero with gradient mesh + lead capture */}
+        <FadeInOnScroll>
+          <section className="relative overflow-hidden bg-paper px-4 py-16 text-center">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-30"
+              style={{
+                background:
+                  'radial-gradient(ellipse at 20% 50%, #1B4D3E 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, #F5A623 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, #707B4C 0%, transparent 50%)',
+              }}
+            />
+            <div className="relative">
+              <h1
+                className="mb-4 font-heading font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-hero)' }}
+              >
+                Buy a Home in Mesa, AZ
+              </h1>
+              <p className="mx-auto mb-8 max-w-2xl text-lg text-text-light">
+                Free tools, expert guidance, and local agents who know the East Valley.
+                Whether you&apos;re a first-time buyer or experienced investor, we&apos;ll help you
+                find the right home at the right price.
+              </p>
+              <BuyLeadCapture />
+            </div>
+          </section>
+        </FadeInOnScroll>
 
         {/* Buyer Paths */}
-        <section className="bg-surface px-4 py-12">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="mb-6 text-center text-2xl font-bold text-text">
-              Where Would You Like to Start?
-            </h2>
-            <div className="grid gap-6 sm:grid-cols-2">
-              {buyerPaths.map((path) => (
-                <Link
-                  key={path.href}
-                  href={path.href}
-                  className="flex gap-4 rounded-xl bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
-                >
-                  <path.icon className="mt-0.5 h-6 w-6 shrink-0 text-primary" />
-                  <div>
-                    <h3 className="mb-1 text-sm font-semibold text-text">{path.label}</h3>
-                    <p className="text-xs text-text-light">{path.desc}</p>
-                  </div>
-                </Link>
-              ))}
+        <FadeInOnScroll delay={100}>
+          <section className="bg-warm-beige px-4 py-12">
+            <div className="mx-auto max-w-4xl">
+              <h2
+                className="mb-6 text-center font-heading font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-section)' }}
+              >
+                Where Would You Like to Start?
+              </h2>
+              <div className="grid gap-6 sm:grid-cols-2">
+                {buyerPaths.map((path, i) => (
+                  <FadeInOnScroll key={path.href} delay={i * 100}>
+                    <Link
+                      href={path.href}
+                      className="flex gap-4 rounded-xl bg-paper p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                    >
+                      <path.icon className="mt-0.5 h-6 w-6 shrink-0 text-primary" />
+                      <div>
+                        <h3 className="mb-1 text-sm font-semibold text-charcoal">{path.label}</h3>
+                        <p className="text-xs text-text-light">{path.desc}</p>
+                      </div>
+                    </Link>
+                  </FadeInOnScroll>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </FadeInOnScroll>
 
         {/* Additional Links */}
-        <section className="bg-white px-4 py-12">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="mb-6 text-center text-2xl font-bold text-text">Buyer Resources</h2>
-            <div className="flex flex-wrap justify-center gap-3">
-              {additionalLinks.map((link) => (
+        <FadeInOnScroll>
+          <section className="bg-paper px-4 py-12">
+            <div className="mx-auto max-w-4xl">
+              <h2
+                className="mb-6 text-center font-heading font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-section)' }}
+              >
+                Buyer Resources
+              </h2>
+              <div className="flex flex-wrap justify-center gap-3">
+                {additionalLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="rounded-full border border-primary px-4 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-white"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
                 <Link
-                  key={link.href}
-                  href={link.href}
+                  href="/buy/shopping-lenders"
                   className="rounded-full border border-primary px-4 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-white"
                 >
-                  {link.label}
+                  Shopping for Lenders
                 </Link>
-              ))}
-              <Link
-                href="/buy/shopping-lenders"
-                className="rounded-full border border-primary px-4 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-white"
-              >
-                Shopping for Lenders
-              </Link>
-              <Link
-                href="/buy/lender-costs-explained"
-                className="rounded-full border border-primary px-4 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-white"
-              >
-                Lender Costs Explained
-              </Link>
+                <Link
+                  href="/buy/lender-costs-explained"
+                  className="rounded-full border border-primary px-4 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-white"
+                >
+                  Lender Costs Explained
+                </Link>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </FadeInOnScroll>
 
         {/* Mortgage FAQ */}
-        <FAQSection items={mortgageFAQs} title="Mortgage & Closing Cost FAQ" />
+        <FadeInOnScroll>
+          <FAQSection items={mortgageFAQs} title="Mortgage & Closing Cost FAQ" />
+        </FadeInOnScroll>
       </main>
 
       <Footer />

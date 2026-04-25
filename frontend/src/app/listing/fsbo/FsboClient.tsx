@@ -205,7 +205,7 @@ export function FsboClient() {
     return (
       <>
         <StepIndicator />
-        <h2 className="mb-4 text-lg font-bold text-text">Choose Your Package</h2>
+        <h2 className="mb-4 font-heading text-lg font-bold text-charcoal">Choose Your Package</h2>
         <div className="space-y-4">
           {packages.map((p) => (
             <button
@@ -255,7 +255,7 @@ export function FsboClient() {
     return (
       <>
         <StepIndicator />
-        <h2 className="mb-4 text-lg font-bold text-text">Property Details</h2>
+        <h2 className="mb-4 font-heading text-lg font-bold text-charcoal">Property Details</h2>
         <div className="space-y-3">
           <div>
             <label htmlFor="fsbo-address" className="mb-1 block text-sm font-medium text-text">
@@ -383,7 +383,7 @@ export function FsboClient() {
     return (
       <>
         <StepIndicator />
-        <h2 className="mb-4 text-lg font-bold text-text">Photography Scheduling</h2>
+        <h2 className="mb-4 font-heading text-lg font-bold text-charcoal">Photography Scheduling</h2>
         <div className="rounded-lg border border-primary/20 bg-primary/5 p-6 text-center">
           <Camera className="mx-auto mb-3 h-10 w-10 text-primary" />
           <p className="mb-2 text-sm font-medium text-text">
@@ -427,7 +427,7 @@ export function FsboClient() {
     return (
       <>
         <StepIndicator />
-        <h2 className="mb-4 text-lg font-bold text-text">Payment Summary</h2>
+        <h2 className="mb-4 font-heading text-lg font-bold text-charcoal">Payment Summary</h2>
 
         <div className="rounded-lg border border-gray-200 bg-white p-6">
           <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">

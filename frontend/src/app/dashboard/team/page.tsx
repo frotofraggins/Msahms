@@ -115,8 +115,8 @@ export default function TeamPage() {
       <h1 className="text-2xl font-bold text-text">Team</h1>
 
       {/* Invite form */}
-      <div className="rounded-xl bg-white p-6 shadow-sm">
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-text">
+      <div className="rounded-xl bg-paper p-6 shadow-sm">
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-charcoal">
           <UserPlus className="h-5 w-5" />
           Invite Agent
         </h2>
@@ -170,7 +170,7 @@ export default function TeamPage() {
       )}
 
       {/* Team table */}
-      <div className="overflow-x-auto rounded-xl bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-xl bg-paper shadow-sm">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -182,7 +182,7 @@ export default function TeamPage() {
           </div>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50">
+            <thead className="border-b border-warm-border bg-warm-beige">
               <tr>
                 <th className="px-4 py-3 font-medium text-text-light">Name</th>
                 <th className="px-4 py-3 font-medium text-text-light">Email</th>

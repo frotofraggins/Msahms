@@ -112,7 +112,7 @@ export function SellNowClient() {
 
           <button
             onClick={handleAnalyze}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-secondary py-3 text-sm font-semibold text-white transition-colors hover:bg-secondary-dark"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-secondary py-3 text-sm font-semibold text-white transition-all duration-100 hover:bg-secondary-dark active:scale-[0.98]"
           >
             <BarChart3 className="h-4 w-4" />
             Analyze Market Conditions
@@ -140,7 +140,7 @@ export function SellNowClient() {
             {placeholderIndicators.map((indicator) => (
               <div
                 key={indicator.label}
-                className="rounded-xl border border-gray-200 bg-white p-4"
+                className="rounded-xl border border-gray-200 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-xs font-medium uppercase text-text-light">

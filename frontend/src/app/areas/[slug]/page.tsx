@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer';
 import { StickyContactBar } from '@/components/StickyContactBar';
 import { FullServiceUpgradeBanner } from '@/components/FullServiceUpgradeBanner';
 import { FAQSection } from '@/components/FAQSection';
+import { FadeInOnScroll } from '@/components/FadeInOnScroll';
 
 interface CityData {
   name: string;
@@ -244,127 +245,154 @@ export default async function CityPage({
         />
 
         {/* Hero */}
-        <section className="bg-white px-4 py-16 text-center">
-          <h1 className="mb-4 text-3xl font-bold text-text md:text-4xl">
-            {city.name}, AZ Real Estate
-          </h1>
-          <p className="mx-auto mb-6 max-w-2xl text-text-light">{city.description}</p>
-          <div className="mx-auto flex max-w-md justify-center gap-6">
-            <div>
-              <div className="text-2xl font-bold tabular-nums text-primary">{city.median}</div>
-              <div className="text-xs text-text-light">Median Home Value</div>
+        <FadeInOnScroll>
+          <section className="bg-paper px-4 py-16 text-center">
+            <h1
+              className="mb-4 font-heading text-3xl font-bold text-charcoal md:text-4xl"
+              style={{ fontSize: 'var(--text-section)' }}
+            >
+              {city.name}, AZ Real Estate
+            </h1>
+            <p className="mx-auto mb-6 max-w-2xl text-text-light">{city.description}</p>
+            <div className="mx-auto flex max-w-md justify-center gap-6">
+              <div>
+                <div className="text-2xl font-bold tabular-nums text-primary">{city.median}</div>
+                <div className="text-xs text-text-light">Median Home Value</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold tabular-nums text-primary">{city.typicalRent}</div>
+                <div className="text-xs text-text-light">Typical Rent</div>
+              </div>
             </div>
-            <div>
-              <div className="text-2xl font-bold tabular-nums text-primary">{city.typicalRent}</div>
-              <div className="text-xs text-text-light">Typical Rent</div>
-            </div>
-          </div>
-        </section>
+          </section>
+        </FadeInOnScroll>
 
         {/* Market Snapshot */}
-        <section className="bg-surface px-4 py-12">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="mb-6 text-center text-2xl font-bold text-text">
-              {city.name} Market Snapshot
-            </h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-              <StatCard label="Median Value" value={city.median} />
-              <StatCard label="Days on Market" value={city.dom} />
-              <StatCard label="Sale-to-List" value={city.stl} />
-              <StatCard label="Active Listings" value={city.inventory} />
-              <StatCard label="YoY Change" value={city.yoyChange} />
+        <FadeInOnScroll>
+          <section className="bg-warm-beige px-4 py-12">
+            <div className="mx-auto max-w-4xl">
+              <h2
+                className="mb-6 text-center font-heading text-2xl font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-section)' }}
+              >
+                {city.name} Market Snapshot
+              </h2>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+                <StatCard label="Median Value" value={city.median} />
+                <StatCard label="Days on Market" value={city.dom} />
+                <StatCard label="Sale-to-List" value={city.stl} />
+                <StatCard label="Active Listings" value={city.inventory} />
+                <StatCard label="YoY Change" value={city.yoyChange} />
+              </div>
+              <p className="mt-4 text-center text-xs text-text-light">
+                Data from county assessors and Zillow Research — updated monthly.
+              </p>
             </div>
-            <p className="mt-4 text-center text-xs text-text-light">
-              Data from county assessors and Zillow Research — updated monthly.
-            </p>
-          </div>
-        </section>
+          </section>
+        </FadeInOnScroll>
 
         {/* ZIP Code Breakdown */}
-        <section className="bg-white px-4 py-12">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="mb-6 text-center text-2xl font-bold text-text">
-              {city.name} ZIP Code Breakdown
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="px-3 py-2 font-semibold text-text">ZIP Code</th>
-                    <th className="px-3 py-2 font-semibold text-text">Area</th>
-                    <th className="px-3 py-2 font-semibold text-text">Median Value</th>
-                    <th className="px-3 py-2 font-semibold text-text">YoY Change</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {city.zips.map((zip) => (
-                    <tr key={zip.code} className="border-b border-gray-100">
-                      <td className="px-3 py-2 font-medium tabular-nums text-primary">{zip.code}</td>
-                      <td className="px-3 py-2 text-text-light">{zip.area}</td>
-                      <td className="px-3 py-2 tabular-nums text-text">{zip.median}</td>
-                      <td className="px-3 py-2 tabular-nums text-text-light">{zip.change}</td>
+        <FadeInOnScroll>
+          <section className="bg-paper px-4 py-12">
+            <div className="mx-auto max-w-4xl">
+              <h2
+                className="mb-6 text-center font-heading text-2xl font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-section)' }}
+              >
+                {city.name} ZIP Code Breakdown
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-warm-border">
+                      <th className="px-3 py-2 font-semibold text-charcoal">ZIP Code</th>
+                      <th className="px-3 py-2 font-semibold text-charcoal">Area</th>
+                      <th className="px-3 py-2 font-semibold text-charcoal">Median Value</th>
+                      <th className="px-3 py-2 font-semibold text-charcoal">YoY Change</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {city.zips.map((zip) => (
+                      <tr key={zip.code} className="border-b border-warm-border/50">
+                        <td className="px-3 py-2 font-medium tabular-nums text-primary">{zip.code}</td>
+                        <td className="px-3 py-2 text-text-light">{zip.area}</td>
+                        <td className="px-3 py-2 tabular-nums text-charcoal">{zip.median}</td>
+                        <td className="px-3 py-2 tabular-nums text-text-light">{zip.change}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </FadeInOnScroll>
 
         {/* Seller CTA */}
-        <section className="bg-surface px-4 py-12">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="mb-4 text-2xl font-bold text-text">
-              Thinking of selling in {city.name}?
-            </h2>
-            <p className="mb-6 text-text-light">
-              Save thousands with flat-fee MLS listing. Your home appears on Zillow, Redfin, and all major portals.
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Link
-                href="/tools/home-value"
-                className="rounded-lg bg-secondary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-secondary-dark"
+        <FadeInOnScroll>
+          <section className="bg-warm-beige px-4 py-12">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2
+                className="mb-4 font-heading text-2xl font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-section)' }}
               >
-                Get Your Home Value
-              </Link>
-              <Link
-                href="/tools/net-sheet"
-                className="rounded-lg border border-primary px-6 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
-              >
-                See Your Net Sheet
-              </Link>
+                Thinking of selling in {city.name}?
+              </h2>
+              <p className="mb-6 text-text-light">
+                Save thousands with flat-fee MLS listing. Your home appears on Zillow, Redfin, and all major portals.
+              </p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Link
+                  href="/tools/home-value"
+                  className="rounded-lg bg-secondary px-6 py-3 text-sm font-semibold text-white transition-all duration-100 hover:bg-secondary-dark active:scale-[0.98]"
+                >
+                  Get Your Home Value
+                </Link>
+                <Link
+                  href="/tools/net-sheet"
+                  className="rounded-lg border border-primary px-6 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
+                >
+                  See Your Net Sheet
+                </Link>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </FadeInOnScroll>
 
         {/* Buyer CTA */}
-        <section className="bg-white px-4 py-12">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="mb-4 text-2xl font-bold text-text">
-              Looking to buy in {city.name}?
-            </h2>
-            <p className="mb-6 text-text-light">
-              Free tools and local agent support to help you find the right home at the right price.
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Link
-                href="/tools/affordability"
-                className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-light"
+        <FadeInOnScroll>
+          <section className="bg-paper px-4 py-12">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2
+                className="mb-4 font-heading text-2xl font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-section)' }}
               >
-                Check Affordability
-              </Link>
-              <Link
-                href="/buy/first-time-buyer"
-                className="rounded-lg border border-primary px-6 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
-              >
-                First-Time Buyer Guide
-              </Link>
+                Looking to buy in {city.name}?
+              </h2>
+              <p className="mb-6 text-text-light">
+                Free tools and local agent support to help you find the right home at the right price.
+              </p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Link
+                  href="/tools/affordability"
+                  className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white transition-all duration-100 hover:bg-primary-light active:scale-[0.98]"
+                >
+                  Check Affordability
+                </Link>
+                <Link
+                  href="/buy/first-time-buyer"
+                  className="rounded-lg border border-primary px-6 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
+                >
+                  First-Time Buyer Guide
+                </Link>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </FadeInOnScroll>
 
         {/* FAQ */}
-        <FAQSection items={city.faqs} title={`${city.name} FAQ`} />
+        <FadeInOnScroll>
+          <FAQSection items={city.faqs} title={`${city.name} FAQ`} />
+        </FadeInOnScroll>
       </main>
 
       <Footer />
@@ -375,7 +403,7 @@ export default async function CityPage({
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-white p-4 text-center shadow-sm">
+    <div className="rounded-lg bg-paper p-4 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       <div className="text-xl font-bold tabular-nums text-primary">{value}</div>
       <div className="mt-1 text-xs text-text-light">{label}</div>
     </div>

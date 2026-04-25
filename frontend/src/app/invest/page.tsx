@@ -5,6 +5,7 @@ import { Footer } from '@/components/Footer';
 import { StickyContactBar } from '@/components/StickyContactBar';
 import { FullServiceUpgradeBanner } from '@/components/FullServiceUpgradeBanner';
 import { FAQSection } from '@/components/FAQSection';
+import { FadeInOnScroll } from '@/components/FadeInOnScroll';
 import { InvestLeadCapture } from './InvestClient';
 import { TrendingUp, Home, Calculator, BarChart3 } from 'lucide-react';
 
@@ -77,72 +78,101 @@ export default function InvestPage() {
       <FullServiceUpgradeBanner />
 
       <main>
-        {/* Hero */}
-        <section className="bg-white px-4 py-16 text-center">
-          <h1 className="mb-4 text-3xl font-bold text-text md:text-4xl">
-            Invest in Mesa, AZ Real Estate
-          </h1>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-text-light">
-            Market data, investment tools, and local expertise for landlords and investors
-            in the East Valley. Save on commissions with flat-fee listing when you sell.
-          </p>
-          <InvestLeadCapture />
-        </section>
+        {/* Hero with gradient mesh */}
+        <FadeInOnScroll>
+          <section className="relative overflow-hidden bg-paper px-4 py-16 text-center">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-30"
+              style={{
+                background:
+                  'radial-gradient(ellipse at 30% 30%, #1B4D3E 0%, transparent 50%), radial-gradient(ellipse at 70% 70%, #F5A623 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, #707B4C 0%, transparent 50%)',
+              }}
+            />
+            <div className="relative">
+              <h1
+                className="mb-4 font-heading font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-hero)' }}
+              >
+                Invest in Mesa, AZ Real Estate
+              </h1>
+              <p className="mx-auto mb-8 max-w-2xl text-lg text-text-light">
+                Market data, investment tools, and local expertise for landlords and investors
+                in the East Valley. Save on commissions with flat-fee listing when you sell.
+              </p>
+              <InvestLeadCapture />
+            </div>
+          </section>
+        </FadeInOnScroll>
 
         {/* Investor Tools */}
-        <section className="bg-surface px-4 py-12">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="mb-6 text-center text-2xl font-bold text-text">Investor Tools</h2>
-            <div className="grid gap-6 sm:grid-cols-2">
-              {investorTools.map((tool) => (
-                <Link
-                  key={tool.href}
-                  href={tool.href}
-                  className="flex gap-4 rounded-xl bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
-                >
-                  <tool.icon className="mt-0.5 h-6 w-6 shrink-0 text-primary" />
-                  <div>
-                    <h3 className="mb-1 text-sm font-semibold text-text">{tool.label}</h3>
-                    <p className="text-xs text-text-light">{tool.desc}</p>
-                  </div>
-                </Link>
-              ))}
+        <FadeInOnScroll delay={100}>
+          <section className="bg-warm-beige px-4 py-12">
+            <div className="mx-auto max-w-4xl">
+              <h2
+                className="mb-6 text-center font-heading font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-section)' }}
+              >
+                Investor Tools
+              </h2>
+              <div className="grid gap-6 sm:grid-cols-2">
+                {investorTools.map((tool, i) => (
+                  <FadeInOnScroll key={tool.href} delay={i * 100}>
+                    <Link
+                      href={tool.href}
+                      className="flex gap-4 rounded-xl bg-paper p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                    >
+                      <tool.icon className="mt-0.5 h-6 w-6 shrink-0 text-primary" />
+                      <div>
+                        <h3 className="mb-1 text-sm font-semibold text-charcoal">{tool.label}</h3>
+                        <p className="text-xs text-text-light">{tool.desc}</p>
+                      </div>
+                    </Link>
+                  </FadeInOnScroll>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </FadeInOnScroll>
 
         {/* Market Highlights */}
-        <section className="bg-white px-4 py-12">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="mb-6 text-center text-2xl font-bold text-text">
-              East Valley Market Highlights
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-lg bg-surface p-4 text-center">
-                <div className="text-xl font-bold tabular-nums text-primary">$448K</div>
-                <div className="mt-1 text-xs text-text-light">Mesa Median Value</div>
+        <FadeInOnScroll delay={200}>
+          <section className="bg-paper px-4 py-12">
+            <div className="mx-auto max-w-4xl">
+              <h2
+                className="mb-6 text-center font-heading font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-section)' }}
+              >
+                East Valley Market Highlights
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-lg bg-warm-beige p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                  <div className="text-xl font-bold tabular-nums text-primary">$448K</div>
+                  <div className="mt-1 text-xs text-text-light">Mesa Median Value</div>
+                </div>
+                <div className="rounded-lg bg-warm-beige p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                  <div className="text-xl font-bold tabular-nums text-primary">$1,735</div>
+                  <div className="mt-1 text-xs text-text-light">Typical Monthly Rent</div>
+                </div>
+                <div className="rounded-lg bg-warm-beige p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                  <div className="text-xl font-bold tabular-nums text-primary">60</div>
+                  <div className="mt-1 text-xs text-text-light">Days on Market</div>
+                </div>
+                <div className="rounded-lg bg-warm-beige p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                  <div className="text-xl font-bold tabular-nums text-primary">97.7%</div>
+                  <div className="mt-1 text-xs text-text-light">Sale-to-List Ratio</div>
+                </div>
               </div>
-              <div className="rounded-lg bg-surface p-4 text-center">
-                <div className="text-xl font-bold tabular-nums text-primary">$1,735</div>
-                <div className="mt-1 text-xs text-text-light">Typical Monthly Rent</div>
-              </div>
-              <div className="rounded-lg bg-surface p-4 text-center">
-                <div className="text-xl font-bold tabular-nums text-primary">60</div>
-                <div className="mt-1 text-xs text-text-light">Days on Market</div>
-              </div>
-              <div className="rounded-lg bg-surface p-4 text-center">
-                <div className="text-xl font-bold tabular-nums text-primary">97.7%</div>
-                <div className="mt-1 text-xs text-text-light">Sale-to-List Ratio</div>
-              </div>
+              <p className="mt-4 text-center text-xs text-text-light">
+                Data from county assessors and Zillow Research — updated monthly.
+              </p>
             </div>
-            <p className="mt-4 text-center text-xs text-text-light">
-              Data from county assessors and Zillow Research — updated monthly.
-            </p>
-          </div>
-        </section>
+          </section>
+        </FadeInOnScroll>
 
         {/* FAQ */}
-        <FAQSection items={investFAQs} title="Investor FAQ" />
+        <FadeInOnScroll>
+          <FAQSection items={investFAQs} title="Investor FAQ" />
+        </FadeInOnScroll>
       </main>
 
       <Footer />

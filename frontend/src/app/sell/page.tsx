@@ -5,6 +5,7 @@ import { Footer } from '@/components/Footer';
 import { StickyContactBar } from '@/components/StickyContactBar';
 import { FullServiceUpgradeBanner } from '@/components/FullServiceUpgradeBanner';
 import { FAQSection } from '@/components/FAQSection';
+import { FadeInOnScroll } from '@/components/FadeInOnScroll';
 import { SellHeroLeadCapture, SellSavingsCalculator } from './SellClient';
 
 export const metadata: Metadata = {
@@ -68,74 +69,104 @@ export default function SellPage() {
       <FullServiceUpgradeBanner />
 
       <main>
-        {/* Hero */}
-        <section className="bg-white px-4 py-16 text-center">
-          <h1 className="mx-auto mb-4 max-w-3xl text-3xl font-bold text-text md:text-4xl">
-            Your home on Zillow, Realtor.com, Redfin — for a flat fee.
-          </h1>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-text-light">
-            List on the MLS for just $999. Save thousands compared to the typical 5% agent
-            commission — your home gets the same exposure on every major portal.
-          </p>
-          <SellHeroLeadCapture />
-        </section>
+        {/* Hero with gradient mesh */}
+        <FadeInOnScroll>
+          <section className="relative overflow-hidden bg-paper px-4 py-16 text-center">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-30"
+              style={{
+                background:
+                  'radial-gradient(ellipse at 20% 50%, #F5A623 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, #1B4D3E 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, #707B4C 0%, transparent 50%)',
+              }}
+            />
+            <div className="relative">
+              <h1
+                className="mx-auto mb-4 max-w-3xl font-heading font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-hero)' }}
+              >
+                Your home on Zillow, Realtor.com, Redfin — for a flat fee.
+              </h1>
+              <p className="mx-auto mb-8 max-w-2xl text-lg text-text-light">
+                List on the MLS for just $999. Save thousands compared to the typical 5% agent
+                commission — your home gets the same exposure on every major portal.
+              </p>
+              <SellHeroLeadCapture />
+            </div>
+          </section>
+        </FadeInOnScroll>
 
         {/* Savings Calculator with syndication message */}
-        <SellSavingsCalculator />
+        <FadeInOnScroll delay={100}>
+          <SellSavingsCalculator />
+        </FadeInOnScroll>
 
         {/* How It Works */}
-        <section className="bg-white px-4 py-12">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="mb-8 text-center text-2xl font-bold text-text">
-              How Flat-Fee Listing Works
-            </h2>
-            <div className="grid gap-8 md:grid-cols-3">
-              <div className="text-center">
-                <div className="mb-2 text-3xl">①</div>
-                <h3 className="mb-2 text-lg font-semibold text-primary">Use Our Free Tools</h3>
-                <p className="text-sm text-text-light">
-                  Get your home value, calculate net proceeds, and generate your listing description with AI.
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="mb-2 text-3xl">②</div>
-                <h3 className="mb-2 text-lg font-semibold text-primary">Submit Your Listing</h3>
-                <p className="text-sm text-text-light">
-                  Once your listing goes live via our MLS partner, it appears on Zillow, Redfin, Realtor.com, and more.
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="mb-2 text-3xl">③</div>
-                <h3 className="mb-2 text-lg font-semibold text-primary">Save Thousands</h3>
-                <p className="text-sm text-text-light">
-                  Pay $999 flat fee instead of 5% commission. Upgrade to full-service agent support at any time.
-                </p>
+        <FadeInOnScroll delay={200}>
+          <section className="bg-paper px-4 py-12">
+            <div className="mx-auto max-w-4xl">
+              <h2
+                className="mb-8 text-center font-heading font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-section)' }}
+              >
+                How Flat-Fee Listing Works
+              </h2>
+              <div className="grid gap-8 md:grid-cols-3">
+                <div className="text-center">
+                  <div className="mb-2 text-3xl">①</div>
+                  <h3 className="mb-2 text-lg font-semibold text-primary">Use Our Free Tools</h3>
+                  <p className="text-sm text-text-light">
+                    Get your home value, calculate net proceeds, and generate your listing description with AI.
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="mb-2 text-3xl">②</div>
+                  <h3 className="mb-2 text-lg font-semibold text-primary">Submit Your Listing</h3>
+                  <p className="text-sm text-text-light">
+                    Once your listing goes live via our MLS partner, it appears on Zillow, Redfin, Realtor.com, and more.
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="mb-2 text-3xl">③</div>
+                  <h3 className="mb-2 text-lg font-semibold text-primary">Save Thousands</h3>
+                  <p className="text-sm text-text-light">
+                    Pay $999 flat fee instead of 5% commission. Upgrade to full-service agent support at any time.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </FadeInOnScroll>
 
         {/* Seller Tools */}
-        <section className="bg-surface px-4 py-12">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="mb-6 text-center text-2xl font-bold text-text">Free Seller Tools</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {toolLinks.map((tool) => (
-                <Link
-                  key={tool.href}
-                  href={tool.href}
-                  className="rounded-xl bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
-                >
-                  <h3 className="mb-1 text-sm font-semibold text-text">{tool.label}</h3>
-                  <p className="text-xs text-text-light">{tool.desc}</p>
-                </Link>
-              ))}
+        <FadeInOnScroll>
+          <section className="bg-warm-beige px-4 py-12">
+            <div className="mx-auto max-w-4xl">
+              <h2
+                className="mb-6 text-center font-heading font-bold text-charcoal"
+                style={{ fontSize: 'var(--text-section)' }}
+              >
+                Free Seller Tools
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {toolLinks.map((tool) => (
+                  <Link
+                    key={tool.href}
+                    href={tool.href}
+                    className="rounded-xl bg-paper p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    <h3 className="mb-1 text-sm font-semibold text-charcoal">{tool.label}</h3>
+                    <p className="text-xs text-text-light">{tool.desc}</p>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </FadeInOnScroll>
 
         {/* FAQ */}
-        <FAQSection items={sellerFAQs} title="Seller FAQ" />
+        <FadeInOnScroll>
+          <FAQSection items={sellerFAQs} title="Seller FAQ" />
+        </FadeInOnScroll>
       </main>
 
       <Footer />

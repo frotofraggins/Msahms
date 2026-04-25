@@ -173,8 +173,8 @@ export default function LeadDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Contact info */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-text">Contact Details</h2>
+        <div className="rounded-xl bg-paper p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-charcoal">Contact Details</h2>
           <div className="space-y-3">
             <div className="flex items-center gap-3 text-sm">
               <Mail className="h-4 w-4 text-text-light" />
@@ -230,8 +230,8 @@ export default function LeadDetailPage() {
         </div>
 
         {/* Tool data */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-text">Tool Source &amp; Data</h2>
+        <div className="rounded-xl bg-paper p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-charcoal">Tool Source &amp; Data</h2>
           <p className="mb-2 text-sm text-text-light">
             Source: <span className="font-medium text-text">{lead.toolSource}</span>
           </p>
@@ -252,8 +252,8 @@ export default function LeadDetailPage() {
 
       {/* Path history */}
       {lead.pathHistory && lead.pathHistory.length > 0 && (
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-text">Path History</h2>
+        <div className="rounded-xl bg-paper p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-charcoal">Path History</h2>
           <div className="flex flex-wrap items-center gap-2">
             {lead.pathHistory.map((step, i) => (
               <div key={i} className="flex items-center gap-2">
@@ -269,13 +269,13 @@ export default function LeadDetailPage() {
       )}
 
       {/* Notes */}
-      <div className="rounded-xl bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-text">Notes</h2>
+      <div className="rounded-xl bg-paper p-6 shadow-sm">
+        <h2 className="mb-4 text-lg font-semibold text-charcoal">Notes</h2>
 
         {(lead.notes ?? []).length > 0 ? (
           <div className="mb-4 space-y-2">
             {lead.notes.map((note, i) => (
-              <div key={i} className="rounded-lg bg-surface p-3 text-sm text-text">
+              <div key={i} className="rounded-lg bg-warm-beige p-3 text-sm text-charcoal">
                 {note}
               </div>
             ))}

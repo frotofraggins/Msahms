@@ -186,10 +186,10 @@ export function ListingGeneratorClient() {
             onClick={handleGenerate}
             disabled={generating}
             className={cn(
-              'flex w-full items-center justify-center gap-2 rounded-lg py-3 text-sm font-semibold text-white transition-colors',
+              'flex w-full items-center justify-center gap-2 rounded-lg py-3 text-sm font-semibold text-white transition-all duration-100',
               generating
                 ? 'cursor-not-allowed bg-gray-400'
-                : 'bg-secondary hover:bg-secondary-dark',
+                : 'bg-secondary hover:bg-secondary-dark active:scale-[0.98]',
             )}
           >
             <Sparkles className="h-4 w-4" />
