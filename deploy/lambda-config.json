@@ -1,0 +1,170 @@
+{
+  "region": "us-west-2",
+  "functions": {
+    "mesahomes-leads-capture": {
+      "source": "lambdas/leads-capture",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 256,
+      "timeout": 10,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main"
+      }
+    },
+    "mesahomes-tools-calculator": {
+      "source": "lambdas/tools-calculator",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 256,
+      "timeout": 10,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main"
+      }
+    },
+    "mesahomes-property-lookup": {
+      "source": "lambdas/property-lookup",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 512,
+      "timeout": 30,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main",
+        "GOOGLE_MAPS_SECRET": "mesahomes/google-maps-api-key"
+      }
+    },
+    "mesahomes-market-data": {
+      "source": "lambdas/market-data",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 256,
+      "timeout": 5,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main"
+      }
+    },
+    "mesahomes-content-api": {
+      "source": "lambdas/content-api",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 256,
+      "timeout": 5,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main"
+      }
+    },
+    "mesahomes-ai-proxy": {
+      "source": "lambdas/ai-proxy",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 512,
+      "timeout": 30,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main"
+      }
+    },
+    "mesahomes-listing-service": {
+      "source": "lambdas/listing-service",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 256,
+      "timeout": 15,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main",
+        "LISTINGS_PAYMENT_ENABLED": "false",
+        "FSBO_LAUNCH_MODE": "lead-only"
+      }
+    },
+    "mesahomes-auth-api": {
+      "source": "lambdas/auth-api",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 256,
+      "timeout": 10,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main",
+        "COGNITO_USER_POOL_ID": "",
+        "COGNITO_CLIENT_ID": ""
+      }
+    },
+    "mesahomes-dashboard-leads": {
+      "source": "lambdas/dashboard-leads",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 256,
+      "timeout": 10,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main"
+      }
+    },
+    "mesahomes-dashboard-team": {
+      "source": "lambdas/dashboard-team",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 256,
+      "timeout": 10,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main"
+      }
+    },
+    "mesahomes-dashboard-notifications": {
+      "source": "lambdas/dashboard-notifications",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 256,
+      "timeout": 10,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main"
+      }
+    },
+    "mesahomes-dashboard-listings": {
+      "source": "lambdas/dashboard-listings",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 256,
+      "timeout": 10,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main"
+      }
+    },
+    "mesahomes-data-pipeline": {
+      "source": "lambdas/data-pipeline",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 1024,
+      "timeout": 300,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main",
+        "S3_DATA_BUCKET": "mesahomes-data"
+      },
+      "trigger": "EventBridge cron(0 6 17 * ? *)"
+    },
+    "mesahomes-notification-worker": {
+      "source": "lambdas/notification-worker",
+      "handler": "index.handler",
+      "runtime": "nodejs20.x",
+      "memorySize": 256,
+      "timeout": 10,
+      "environment": {
+        "AWS_REGION": "us-west-2",
+        "MESAHOMES_TABLE": "mesahomes-main",
+        "NOTIFICATION_FROM_ADDRESS": "notifications@mesahomes.com",
+        "NOTIFICATION_REPLY_TO": "sales@mesahomes.com",
+        "OWNER_NOTIFICATION_ADDRESS": "sales@mesahomes.com"
+      },
+      "trigger": "DynamoDB Streams (mesahomes-main)"
+    }
+  }
+}

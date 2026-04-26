@@ -33,16 +33,16 @@ export interface DynamoDBItem {
   GSI2PK?: string;
   /** GSI2 sort key */
   GSI2SK?: string;
-  /** Discriminator identifying the entity type */
-  entityType: EntityType;
+  /** Discriminator identifying the entity type (required at runtime, optional in type for putItem callers) */
+  entityType?: EntityType;
   /** Entity-specific payload */
   data: Record<string, unknown>;
   /** TTL epoch seconds (for cache entries, optional) */
   ttl?: number;
-  /** ISO 8601 creation timestamp */
-  createdAt: string;
-  /** ISO 8601 last-updated timestamp */
-  updatedAt: string;
+  /** ISO 8601 creation timestamp (auto-filled by putItem if omitted) */
+  createdAt?: string;
+  /** ISO 8601 last-updated timestamp (auto-filled by putItem on every write) */
+  updatedAt?: string;
 }
 
 /** Options for query operations. */

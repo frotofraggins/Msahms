@@ -750,3 +750,316 @@ Static: Safety resources page
   → Links to all official lookup tools
   → Updated quarterly
 ```
+
+
+---
+
+## APPENDIX — HOUSING LAW & REGULATORY CHANGE TRACKING
+
+_Added 2026-04-24 by Kiro A. Research sources verified during write-up._
+
+This appendix defines every **federal, state, and local regulatory source** the
+daily AI content pipeline polls to catch law changes that affect Arizona
+housing. When a change is detected, the pipeline generates a draft explainer
+post (plain English, with citation + link to primary source) and queues it for
+human review before publishing.
+
+### Why this matters for MesaHomes
+
+Buyers and sellers search for "<new rule> Arizona" the day it hits the news.
+Ranking for those queries same-day is how the blog compounds SEO authority.
+Every major 2024-2026 rule change (NAR settlement, ADRE rule revisions,
+FinCEN reporting, HUD fair housing reset, FHFA loan limits) was a traffic
+opportunity for sites that moved fast.
+
+### Categorization
+
+Each source maps to one of five bucket tags. The content pipeline routes by
+bucket:
+
+| Bucket | Who cares | Example queries |
+|--------|-----------|-----------------|
+| `consumer-transaction` | Every buyer and seller | "buyer broker agreement Arizona", "seller net sheet 2026" |
+| `agent-practice` | Licensed agents (agent dashboard feed) | "ADRE rule revision December 2025" |
+| `finance-mortgage` | Buyers with financing | "FHA loan limit 2026 Arizona" |
+| `hoa-community` | Condo + planned community owners | "AZ HOA bill 2026" |
+| `local-zoning` | Mesa metro homeowners + investors | "Mesa ADU rezoning", "Gilbert starter homes" |
+
+---
+
+### 1. Federal sources
+
+#### 1.1 HUD (Housing and Urban Development)
+- **HUD RSS Hub:** `https://www.hud.gov/rss` — multiple feeds (Press Releases,
+  HUDclips Notices, Fair Housing, FHA).
+- **FHA Connection Mortgagee Letters:** `https://www.hud.gov/program_offices/administration/hudclips/letters/mortgagee`
+- **Fair Housing Enforcement:** `https://www.hud.gov/fairhousing`
+- **Primary source:** Federal Register HUD postings —
+  `https://www.federalregister.gov/agencies/housing-and-urban-development-department` (has RSS + JSON API).
+- **What to watch in 2026:** HUD's fair-housing guidance withdrawal
+  (see April 2026 Federal News Network coverage — reshapes landlord compliance
+  even when the underlying law is unchanged). AFFH rule status. LIHTC and
+  HOTMA rollout.
+- **Bucket:** `consumer-transaction`, `agent-practice`
+
+#### 1.2 CFPB (Consumer Financial Protection Bureau)
+- **Activity Log (authoritative):** `https://www.consumerfinance.gov/activity-log/`
+  (has RSS filter by topic, e.g. `?topic=mortgages`).
+- **Rulemaking RSS:** `https://www.consumerfinance.gov/rules-policy/rules-under-development/`
+- **2026 watch:** Townstone settlement vacatur, disparate-impact enforcement
+  scope, RESPA/TRID updates, servicing rules.
+- **Bucket:** `finance-mortgage`, `consumer-transaction`
+
+#### 1.3 FHFA (Federal Housing Finance Agency)
+- **News release RSS:** `https://www.fhfa.gov/news/news-releases`
+- **Federal Register postings:** `https://www.fhfa.gov/regulation/federal-register`
+- **Conforming Loan Limits (annual, critical):** 2026 baseline $832,750 for
+  one-unit properties. Maricopa County conforming limit sits at baseline.
+- **2026 watch:** 2026-2028 Enterprise Housing Goals (published Dec 2025),
+  GSE Special Purpose Credit Program rules, crypto-backed mortgage pilots
+  (Fannie + Better + Coinbase, Mar 2026).
+- **Bucket:** `finance-mortgage`
+
+#### 1.4 IRS (tax rules that affect homeowners)
+- **IRS Newsroom RSS:** `https://www.irs.gov/newsroom/news-releases-for-current-month`
+- **Pub 523 (sale of home):** changes rarely but worth monitoring.
+- **SALT cap status, mortgage interest deduction, home-office deduction, 1031
+  exchange eligibility:** tracked via IRS news releases + Federal Register.
+- **Bucket:** `consumer-transaction`, `finance-mortgage`
+
+#### 1.5 Fannie Mae + Freddie Mac
+- **Fannie Mae Selling Guide updates:** `https://singlefamily.fanniemae.com/media/news-announcements`
+- **Freddie Mac Single-Family Seller/Servicer Guide bulletins:**
+  `https://sf.freddiemac.com/news-events`
+- **Why:** GSEs define what "conforming" means. Any selling-guide change ripples
+  through which homes qualify for conventional financing.
+- **Bucket:** `finance-mortgage`
+
+#### 1.6 FinCEN (financial crime / real estate reporting)
+- **Geographic Targeting Orders + beneficial ownership rules:**
+  `https://www.fincen.gov/news-room`
+- **2024-2026 Residential Real Estate Reporting Rule:** active, affects
+  all-cash purchases by legal entities. AAR published guidance. Impacts cash
+  buyer transactions in AZ.
+- **Bucket:** `agent-practice`, `consumer-transaction`
+
+#### 1.7 NAR (National Association of Realtors — industry changes)
+- **NAR.realtor news:** `https://www.nar.realtor/newsroom`
+- **NAR settlement / commission rules tracker:** Core practice changes were
+  effective Aug 17, 2024. Continues to generate sub-rule changes at local MLS
+  levels. Watch every quarter for ongoing clarification.
+- **Bucket:** `agent-practice`, `consumer-transaction`
+
+---
+
+### 2. Arizona state-level sources
+
+#### 2.1 Arizona Department of Real Estate (ADRE)
+- **Main site:** `https://azre.gov/`
+- **Substantive Policy Statements:** `https://azre.gov/document-category/substantive-policy-statements`
+- **Recorded Documents (disclosures to public):** `https://azre.gov/all-adre-resources/recorded-documents`
+- **ADRE Bulletin (PDF quarterly):** `https://azre.gov/news-events/bulletins`
+- **2025-2026 watch:** ADRE Administrative Code rule revisions effective
+  December 13, 2025 — shorter reporting deadlines, expanded disclosure duties,
+  increased broker accountability. This is the biggest AZ agent-side change
+  in years.
+- **Bucket:** `agent-practice`
+
+#### 2.2 Arizona Association of Realtors (AAR)
+- **Forms release announcements:** `https://www.aaronline.com/manage-risk/sample-forms/`
+- **Legislative updates:** `https://www.aaronline.com/legislative/`
+- **Legal Hotline contracts posts:** `https://www.aaronline.com/category/manage-risk/legal-hotline/contracts-hotline/general/`
+- **Form release cadence:** February annual, with mid-year revisions possible.
+  February 2026 release already published (see aaronline.com/2026/01/23).
+- **2026 watch:** Compensation Agreement Between Brokers (CABB) form updates,
+  post-NAR-settlement form evolution.
+- **Bucket:** `agent-practice`, `consumer-transaction`
+
+#### 2.3 Arizona Legislature
+- **Bill search (primary):** `https://www.azleg.gov/billsearch/` — filter by
+  session and committee. Current is "57th Legislature – 2nd Regular Session
+  (2026)".
+- **Real-time tracking:** `https://trackbill.com/arizona/` (has RSS per bill).
+- **Industry-filtered trackers:**
+  - AAED (Arizona Association for Economic Development): `https://aaed.com/legistion-tracking/`
+  - AZ Multihousing Association: `https://www.azmultihousing.org/news/2026-legislative-focus`
+  - NAIOP Arizona (commercial): `https://www.naiopaz.org/advocacy`
+  - Mulcahy Law Firm HOA/Community summary: `https://www.mulcahylawfirm.com/2026-pending-legislation-summary/`
+- **2026 key bills to watch:** Starter Homes Act, ADU expansion, commercial-to-
+  residential conversions, HB2486 (real estate license definitions),
+  newspaper notice reform.
+- **Bucket:** `local-zoning`, `consumer-transaction`, `hoa-community`
+
+#### 2.4 Arizona Department of Housing
+- **Programs + news:** `https://housing.az.gov/`
+- **Down payment assistance program (DPA) updates:** critical for buyer
+  affordability content.
+- **Bucket:** `finance-mortgage`, `consumer-transaction`
+
+#### 2.5 Arizona Department of Revenue (property tax)
+- **Forms + valuation notices:** `https://azdor.gov/business/property-tax`
+- **Annual property valuation cycle:** Notices of Value mailed in February;
+  appeal deadlines matter for content.
+- **Bucket:** `consumer-transaction`
+
+#### 2.6 Arizona Corporation Commission (community association oversight)
+- **HOA + condo complaint filings:** `https://www.azcc.gov/`
+- **Bucket:** `hoa-community`
+
+---
+
+### 3. Mesa + Maricopa + Pinal local sources
+
+#### 3.1 Mesa Legistar (already covered above in §1)
+Check weekly for:
+- City Council (body 138) zoning cases
+- Planning & Zoning Board (body 153) public hearings
+- Design Review Board outcomes
+- Planning Hearing Officer (body 215) variances
+
+#### 3.2 Mesa Development Services announcements
+- **GovDelivery newsletter archive:** `https://content.govdelivery.com/accounts/AZMESA/bulletins`
+- **Code adoption tracking:** 2024 International Building and Fire Code
+  adopted in Mesa (2026). ADU expansions. Adaptive reuse ordinances.
+- **Bucket:** `local-zoning`
+
+#### 3.3 Maricopa County Recorder
+- **Office:** `https://recorder.maricopa.gov/`
+- **Document Search (last 2 years full text):** `https://recorder.maricopa.gov/recording/document-search.aspx`
+- **Why:** Deed recordings confirm sales our GIS pipeline might miss; notices
+  of lis pendens and trustee deeds flag foreclosure/short-sale activity
+  relevant to content.
+- **Bucket:** `consumer-transaction`
+
+#### 3.4 Pinal County Recorder
+- **Office:** `https://www.pinalcountyaz.gov/recorder`
+- Same functional role as Maricopa for the Pinal service-area ZIPs.
+
+#### 3.5 Maricopa County Assessor (policy + appeals)
+- **News:** `https://mcassessor.maricopa.gov/news`
+- **Annual valuation change dates and appeal windows** are publishable content.
+
+#### 3.6 Gilbert / Chandler / Queen Creek / San Tan Valley / Apache Junction
+Each has its own council and planning cycles. Minimum daily check:
+- Gilbert: `https://www.gilbertaz.gov/agenda-center`
+- Chandler: `https://www.chandleraz.gov/government/city-clerk/agendas-minutes`
+- Queen Creek: `https://www.queencreekaz.gov/government/agendas-minutes-live-streams`
+- Apache Junction: `https://www.ajcity.net/AgendaCenter`
+- San Tan Valley is unincorporated — Pinal County BOS governs: `https://www.pinalcountyaz.gov/bos`
+
+---
+
+### 4. Courts + case-law sources
+
+#### 4.1 Arizona Supreme Court + Court of Appeals
+- **Recent opinions RSS:** `https://www.azcourts.gov/rss`
+- Real estate case law — restrictive covenants, easements, broker duties,
+  HOA disputes — gets posted here. Typically high-value SEO when paired with
+  plain-English summaries.
+- **Bucket:** All
+
+#### 4.2 Ninth Circuit (federal appeals covering Arizona)
+- **Opinions:** `https://www.ca9.uscourts.gov/opinions/`
+- Fair housing and lending cases that set AZ precedent.
+- **Bucket:** `consumer-transaction`, `finance-mortgage`
+
+#### 4.3 NAR antitrust + commission litigation trackers
+- **Real Estate News tracker:** `https://www.realestatenews.com/`
+- **HousingWire:** `https://www.housingwire.com/` (has topic RSS)
+- **Inman (paid, premium):** monitor headlines only via search alerts.
+- **Bucket:** `agent-practice`, `consumer-transaction`
+
+---
+
+### 5. Daily polling strategy
+
+| Frequency | Sources | Why that cadence |
+|-----------|---------|------------------|
+| **Daily (07:00 MST)** | Federal Register (HUD/FHFA/CFPB), AZ Legislature bill search, Mesa Legistar, NAR news RSS, AAR forms feed | Fast-moving; missing a day loses SEO race |
+| **Weekly** | ADRE bulletin, AZ Courts opinions, county recorder delta, East Valley city councils (Gilbert/Chandler/QC/AJ), HousingWire topic RSS | Slower moving; daily would produce noise |
+| **Monthly** | IRS, FHFA loan-limit announcements, Fannie/Freddie selling guide bulletins, AZ DOR valuation cycle, Maricopa Assessor | Predictable cycles |
+| **Event-driven** | Emergency rules, governor executive orders, state-of-emergency housing orders | Triggered when AZ Legislature bill tracker hits "enrolled" or governor's office RSS posts |
+
+All polling runs from the **local RTX 4090 via MCP** — no per-request cloud
+cost. Results written to `s3://mesahomes-data/content-ingest/{source}/{YYYY-MM-DD}/`
+for auditability.
+
+### 6. Content generation pipeline
+
+```
+Daily 07:00 MST:
+  1. Poll every "daily" source → diff vs yesterday's snapshot
+  2. For each new item → local AI classifies into bucket
+  3. For buckets of interest → draft 300-600 word plain-English explainer
+     - First paragraph: what changed in one sentence
+     - Middle: what it means for MesaHomes readers, by bucket
+     - End: "What to do next" with CTA to relevant tool or consultation
+     - Footer: primary-source citation + link
+  4. Run compliance filter (Fair Housing terms, no UPL)
+  5. Queue in DynamoDB with status=pending-review
+  6. Notify human via SES: "N new drafts pending review"
+
+Human review (via dashboard):
+  - Approve + publish → content-api
+  - Edit + publish
+  - Reject (low-value or duplicate)
+
+Post-publish:
+  - Add to sitemap.xml
+  - Cross-link from relevant city page and tool page
+  - Schedule social post
+```
+
+### 7. Compliance guardrails for auto-generated content
+
+Every generated post MUST:
+
+1. **Cite a primary source URL.** No secondary aggregators.
+2. **Include a disclaimer:** "educational only, not legal advice."
+3. **Pass the Fair Housing compliance filter** (see
+   `lambdas/ai-proxy/compliance-filter.ts`). Hard-block on prohibited terms.
+4. **Avoid unauthorized practice of law (UPL).** No specific legal advice, no
+   "you should do X in your case." Route complex questions to a licensed
+   agent/attorney CTA.
+5. **Include a published date AND a "last verified" date.** Laws change;
+   published date alone misleads. Re-verification triggers at 90 days.
+6. **Never auto-publish.** Human review is mandatory until content-signoff
+   metrics show <5% edit-rate over a trailing 30-day window.
+
+### 8. Implementation notes (for Kiro B when this moves from spec to code)
+
+Proposed Lambda additions (not yet scoped as a task — file under "Phase 1B
+content automation"):
+
+- `lambdas/content-ingest/` — orchestrates daily polling. EventBridge cron
+  `0 14 * * ? *` (07:00 MST = 14:00 UTC).
+- `lambdas/content-diff/` — compares current snapshot to previous; emits
+  change events.
+- `lambdas/content-drafter/` — calls AI MCP endpoint to generate explainer,
+  runs compliance filter, writes draft to DynamoDB.
+- `lib/content-sources.ts` — registry of sources (name, URL, bucket, cadence,
+  parser type). Single source of truth, matches this appendix.
+- Dashboard UI addition: draft review queue with approve/edit/reject.
+
+DynamoDB keys for this Phase 1B work:
+- `CONTENT#DRAFT#{id}` / `DRAFT#{createdAt}` — pending review
+- `CONTENT#SOURCE#{sourceId}` / `SNAPSHOT#{date}` — ingest audit trail
+- `CONTENT#BLOG#{slug}` — already defined for published posts
+
+Risks to flag up front:
+
+- **Robots.txt respect.** Some sources (IRS, some AZ agencies) prohibit
+  automated scraping or require delay. Use RSS + official APIs whenever
+  possible. Fall back to HTML only when nothing else exists, and honor
+  robots.txt + conservative rate limiting.
+- **Primary source drift.** Government sites restructure URLs every few
+  years. The source registry in `lib/content-sources.ts` should have a
+  `lastVerified` timestamp, and the ingest Lambda should alert on 404s.
+- **Hallucination in explainer generation.** Every claim in the AI-generated
+  draft must be traceable to the source document. Enforce with a "citation
+  density" check — at least one quoted phrase or section reference per
+  paragraph.
+- **Competitive copying.** Zillow, Redfin, and Orchard also crawl these
+  sources. Our moat is Mesa-specific local framing + flat-fee business
+  context, not being first to report national changes. Lean into that in
+  every post.

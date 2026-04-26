@@ -4,10 +4,10 @@
  * API: mesahomes-api
  * - Region: us-west-2
  * - Base path: /api/v1
- * - 18 public routes (no auth required)
+ * - 20 public routes (no auth required)
  * - 11 authenticated dashboard routes (Cognito JWT required)
  * - 3 auth routes (login, refresh, register — public)
- * - 32 total routes
+ * - 34 total routes
  *
  * This module exports typed route definitions as arrays that can be used
  * with AWS CDK, CloudFormation, or the AWS SDK APIs.
@@ -25,7 +25,10 @@ export type LambdaTarget =
   | 'content-api'
   | 'ai-proxy'
   | 'listing-service'
-  | 'dashboard-api'
+  | 'dashboard-leads'
+  | 'dashboard-team'
+  | 'dashboard-notifications'
+  | 'dashboard-listings'
   | 'auth-api';
 
 /** A single API Gateway route definition. */
@@ -89,6 +92,10 @@ export const publicRoutes: readonly RouteDefinition[] = [
   // Flat-fee listing
   { method: 'POST', path: '/api/v1/listing/start', lambdaTarget: 'listing-service', authRequired: false },
   { method: 'POST', path: '/api/v1/listing/payment', lambdaTarget: 'listing-service', authRequired: false },
+
+  // FSBO Stripe handoff (Blocker 1 — Approach A)
+  { method: 'POST', path: '/api/v1/listing/fsbo/intake', lambdaTarget: 'listing-service', authRequired: false },
+  { method: 'POST', path: '/api/v1/listing/fsbo/vhz-webhook', lambdaTarget: 'listing-service', authRequired: false },
 ] as const;
 
 /**
@@ -99,23 +106,23 @@ export const publicRoutes: readonly RouteDefinition[] = [
  */
 export const authenticatedRoutes: readonly RouteDefinition[] = [
   // Dashboard — leads
-  { method: 'GET', path: '/api/v1/dashboard/leads', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'GET', path: '/api/v1/dashboard/leads/{id}', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'PATCH', path: '/api/v1/dashboard/leads/{id}', lambdaTarget: 'dashboard-api', authRequired: true },
+  { method: 'GET', path: '/api/v1/dashboard/leads', lambdaTarget: 'dashboard-leads', authRequired: true },
+  { method: 'GET', path: '/api/v1/dashboard/leads/{id}', lambdaTarget: 'dashboard-leads', authRequired: true },
+  { method: 'PATCH', path: '/api/v1/dashboard/leads/{id}', lambdaTarget: 'dashboard-leads', authRequired: true },
 
   // Dashboard — team
-  { method: 'GET', path: '/api/v1/dashboard/team', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'POST', path: '/api/v1/dashboard/team/invite', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'PATCH', path: '/api/v1/dashboard/team/{agentId}', lambdaTarget: 'dashboard-api', authRequired: true },
+  { method: 'GET', path: '/api/v1/dashboard/team', lambdaTarget: 'dashboard-team', authRequired: true },
+  { method: 'POST', path: '/api/v1/dashboard/team/invite', lambdaTarget: 'dashboard-team', authRequired: true },
+  { method: 'PATCH', path: '/api/v1/dashboard/team/{agentId}', lambdaTarget: 'dashboard-team', authRequired: true },
 
   // Dashboard — performance & listings
-  { method: 'GET', path: '/api/v1/dashboard/performance', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'GET', path: '/api/v1/dashboard/listings', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'PATCH', path: '/api/v1/dashboard/listings/{id}', lambdaTarget: 'dashboard-api', authRequired: true },
+  { method: 'GET', path: '/api/v1/dashboard/performance', lambdaTarget: 'dashboard-leads', authRequired: true },
+  { method: 'GET', path: '/api/v1/dashboard/listings', lambdaTarget: 'dashboard-listings', authRequired: true },
+  { method: 'PATCH', path: '/api/v1/dashboard/listings/{id}', lambdaTarget: 'dashboard-listings', authRequired: true },
 
   // Dashboard — notifications
-  { method: 'GET', path: '/api/v1/dashboard/notifications/settings', lambdaTarget: 'dashboard-api', authRequired: true },
-  { method: 'PUT', path: '/api/v1/dashboard/notifications/settings', lambdaTarget: 'dashboard-api', authRequired: true },
+  { method: 'GET', path: '/api/v1/dashboard/notifications/settings', lambdaTarget: 'dashboard-notifications', authRequired: true },
+  { method: 'PUT', path: '/api/v1/dashboard/notifications/settings', lambdaTarget: 'dashboard-notifications', authRequired: true },
 ] as const;
 
 /**
@@ -133,10 +140,10 @@ export const authRoutes: readonly RouteDefinition[] = [
 /**
  * All routes combined — the complete API surface.
  *
- * - 18 public routes (consumer tools, lead capture, content, AI, listing flow)
+ * - 20 public routes (consumer tools, lead capture, content, AI, listing flow)
  * - 11 authenticated dashboard routes (Cognito JWT required)
  * - 3 auth routes (login, refresh, register — public)
- * - 32 total routes
+ * - 34 total routes
  */
 export const allRoutes: readonly RouteDefinition[] = [
   ...publicRoutes,

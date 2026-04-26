@@ -25,8 +25,8 @@ describe('API Gateway configuration', () => {
 });
 
 describe('Route definitions', () => {
-  it('should define 18 public routes', () => {
-    expect(publicRoutes).toHaveLength(18);
+  it('should define 20 public routes', () => {
+    expect(publicRoutes).toHaveLength(20);
   });
 
   it('should define 11 authenticated dashboard routes', () => {
@@ -37,8 +37,8 @@ describe('Route definitions', () => {
     expect(authRoutes).toHaveLength(3);
   });
 
-  it('should define 32 total routes', () => {
-    expect(allRoutes).toHaveLength(32);
+  it('should define 34 total routes', () => {
+    expect(allRoutes).toHaveLength(34);
   });
 
   it('should have all paths start with /api/v1', () => {
@@ -167,6 +167,20 @@ describe('Public routes', () => {
       expect(route!.lambdaTarget).toBe('listing-service');
     }
   });
+
+  it('should include FSBO Stripe handoff routes targeting listing-service', () => {
+    const fsboPaths = [
+      '/api/v1/listing/fsbo/intake',
+      '/api/v1/listing/fsbo/vhz-webhook',
+    ];
+    for (const path of fsboPaths) {
+      const route = publicRoutes.find((r) => r.path === path);
+      expect(route, path).toBeDefined();
+      expect(route!.method).toBe('POST');
+      expect(route!.lambdaTarget).toBe('listing-service');
+      expect(route!.authRequired).toBe(false);
+    }
+  });
 });
 
 describe('Authenticated dashboard routes', () => {
@@ -176,9 +190,23 @@ describe('Authenticated dashboard routes', () => {
     }
   });
 
-  it('should target dashboard-api Lambda for all dashboard routes', () => {
+  it('should target the correct dashboard Lambda for each route group', () => {
+    const expectedTargets: Record<string, string> = {
+      '/api/v1/dashboard/leads': 'dashboard-leads',
+      '/api/v1/dashboard/leads/{id}': 'dashboard-leads',
+      '/api/v1/dashboard/performance': 'dashboard-leads',
+      '/api/v1/dashboard/team': 'dashboard-team',
+      '/api/v1/dashboard/team/invite': 'dashboard-team',
+      '/api/v1/dashboard/team/{agentId}': 'dashboard-team',
+      '/api/v1/dashboard/listings': 'dashboard-listings',
+      '/api/v1/dashboard/listings/{id}': 'dashboard-listings',
+      '/api/v1/dashboard/notifications/settings': 'dashboard-notifications',
+    };
     for (const route of authenticatedRoutes) {
-      expect(route.lambdaTarget, `${route.method} ${route.path}`).toBe('dashboard-api');
+      const expected = expectedTargets[route.path];
+      if (expected) {
+        expect(route.lambdaTarget, `${route.method} ${route.path}`).toBe(expected);
+      }
     }
   });
 
