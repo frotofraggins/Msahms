@@ -27,6 +27,8 @@ import {
   PRE_LAUNCH_LISTING_MESSAGE,
 } from '../../lib/brokerage.js';
 import { signHandoff, verifyVhzWebhook } from '../../lib/listing-webhooks.js';
+import { sendUserEmail } from '../../lib/email-sender.js';
+import { fsboIntakeTemplate } from '../../lib/email-templates/index.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -374,6 +376,16 @@ async function handleFsboIntake(
 
   // In lead-only mode, skip the signed handoff URL — just return the listing/lead IDs
   if (launchMode === 'lead-only') {
+    sendUserEmail(email!, fsboIntakeTemplate, {
+      name: name ?? '',
+      packageType: packageType!,
+      propertyAddress: propertyAddress!,
+      listingId,
+      launchMode: 'lead-only',
+    }).catch((err) =>
+      console.error('[listing-service] fsbo intake email failed:', err),
+    );
+
     return {
       statusCode: 201,
       headers: CORS_HEADERS,

@@ -18,13 +18,13 @@ import { cn } from '@/lib/utils';
 import { api, ApiRequestError } from '@/lib/api';
 
 interface Lead {
-  id: string;
+  leadId: string;
   name: string;
   email: string;
   leadType: string;
   toolSource: string;
   timeframe: string;
-  status: string;
+  leadStatus: string;
   createdAt: string;
 }
 
@@ -93,7 +93,7 @@ export default function LeadsPage() {
 
       // Client-side filtering
       if (statusFilter !== 'all') {
-        filtered = filtered.filter((l) => l.status === statusFilter);
+        filtered = filtered.filter((l) => l.leadStatus === statusFilter);
       }
       if (typeFilter !== 'all') {
         filtered = filtered.filter((l) => l.leadType === typeFilter);
@@ -118,8 +118,8 @@ export default function LeadsPage() {
         closed: 0,
       };
       for (const lead of data.leads ?? []) {
-        if (counts[lead.status] !== undefined) {
-          counts[lead.status]++;
+        if (counts[lead.leadStatus] !== undefined) {
+          counts[lead.leadStatus]++;
         }
       }
       setStatusCounts(counts);
@@ -246,10 +246,10 @@ export default function LeadsPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {leads.map((lead) => (
-                <tr key={lead.id} className="hover:bg-gray-50">
+                <tr key={lead.leadId} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <Link
-                      href={`/dashboard/leads/${lead.id}`}
+                      href={`/dashboard/leads/${lead.leadId}`}
                       className="font-medium text-primary hover:underline"
                     >
                       {lead.name}
@@ -262,10 +262,10 @@ export default function LeadsPage() {
                     <span
                       className={cn(
                         'inline-block rounded-full px-2 py-0.5 text-xs font-medium',
-                        statusConfig[lead.status]?.color ?? 'bg-gray-100 text-gray-700',
+                        statusConfig[lead.leadStatus]?.color ?? 'bg-gray-100 text-gray-700',
                       )}
                     >
-                      {statusConfig[lead.status]?.label ?? lead.status}
+                      {statusConfig[lead.leadStatus]?.label ?? lead.leadStatus}
                     </span>
                   </td>
                 </tr>
