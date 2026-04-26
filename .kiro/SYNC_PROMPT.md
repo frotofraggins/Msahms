@@ -85,20 +85,41 @@ This tells you:
 Do not proceed until you've read it. If it's empty or missing, note that in
 your reply and ask the user what the other agent has been doing.
 
-## Step 6 — Read the spec
-```
-cat .kiro/specs/*/tasks.md | head -100   # or use your file-read tool
-```
-Identify the next unchecked task that:
-- No other agent claims in their AGENTS.md Active Work table
-- Has no unresolved handoff blocking it
+## Step 6 — Read STEERING.md (MANDATORY every session)
 
-**Also read `.kiro/STEERING.md` if you haven't in the past hour.** It's the
-project's north star — product goals, architecture rules, naming conventions,
-quality bars. Any change you make must be consistent with it. If you believe
-STEERING.md is wrong, stop and raise it with the human — don't just deviate.
+```
+cat .kiro/STEERING.md
+```
 
-## Step 7 — Claim your task
+STEERING is the canonical source of truth for:
+- **Current production state** — what's deployed and live
+- **Current priorities** (ordered) — the actual next-task list
+- **Product north star + moat** — what we build and what we don't
+- **Tech stack + architecture rules** — naming conventions, quality bars
+- **Open questions** — decisions still pending
+
+**This is more current than any individual spec file.** Specs are
+proposals; STEERING records decisions + what's deployed. If STEERING
+conflicts with a spec, STEERING wins.
+
+Before picking a task, check STEERING's "Current priorities" section.
+If what you were about to work on isn't there, either add it or pick
+something that is.
+
+If STEERING is out of date relative to reality, update it as part
+of your commit. Don't let it drift.
+
+## Step 7 — Read the spec for your specific task
+```
+ls .kiro/specs/
+cat .kiro/specs/<relevant-spec>.md
+```
+
+STEERING tells you WHAT to work on. The spec tells you HOW. If there's
+no spec for what you're about to do, you're probably about to do the
+wrong thing — stop and ask.
+
+## Step 8 — Claim your task
 On your own branch (never on main, never on the other agent's branch):
 1. Update `.kiro/AGENTS.md` Active Work table with your agent name, task ID,
    files you expect to touch, timestamp, and status.
@@ -108,7 +129,7 @@ On your own branch (never on main, never on the other agent's branch):
 The other agent reads your pushed AGENTS.md before they start. If you don't
 push your claim, they can't see it.
 
-## Step 8 — Work
+## Step 9 — Work
 Rules while working:
 - Only edit files listed in your claim.
 - **Research first.** Before implementing any non-trivial algorithm, scoring
@@ -133,7 +154,7 @@ Rules while working:
 - Test mock objects must satisfy the real interface. If `DynamoDBItem` requires
   `entityType`, `createdAt`, `updatedAt`, your mocks need them.
 
-## Step 9 — Finish
+## Step 10 — Finish
 When the task is done:
 1. Check the box in `tasks.md` (only for tasks YOU completed).
 2. Remove your row from Active Work in AGENTS.md.
@@ -143,7 +164,7 @@ When the task is done:
 5. If this completes a numbered section (e.g. all of Task 8), ask the human to
    merge your branch to main. Never merge to main yourself.
 
-## Step 10 — If you get stuck
+## Step 11 — If you get stuck
 Stop and tell the human. Specifically flag:
 - Tests that fail and you don't know why
 - Type errors you can't resolve
