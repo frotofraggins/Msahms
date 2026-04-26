@@ -1,0 +1,45 @@
+<!--
+  MesaHomes logo — full horizontal lockup
+  Icon: mesa silhouette with a simple home roof notched on top
+  Colors: deep forest green (primary) + charcoal text
+  Font: serif display, fallback chain
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" width="340" height="80" role="img" aria-label="MesaHomes logo">
+  <title>MesaHomes</title>
+
+  <!-- Icon group: a mesa with a small home roof peak breaking its flat top -->
+  <g transform="translate(8, 10)">
+    <!-- Mesa base -->
+    <path
+      d="M 2 56
+         L 8 32
+         L 20 28
+         L 28 18
+         L 34 18
+         L 40 12
+         L 48 12
+         L 54 18
+         L 60 18
+         L 66 28
+         L 72 28
+         L 78 56 Z"
+      fill="#1B4D3E"
+    />
+    <!-- Inner horizon line — suggests layered sedimentary rock, subtle -->
+    <line x1="8" y1="40" x2="74" y2="40" stroke="#FDFCF9" stroke-width="0.8" opacity="0.4" />
+    <line x1="10" y1="46" x2="72" y2="46" stroke="#FDFCF9" stroke-width="0.6" opacity="0.3" />
+  </g>
+
+  <!-- Wordmark -->
+  <text
+    x="102"
+    y="52"
+    font-family="'Fraunces', 'Playfair Display', Georgia, serif"
+    font-size="36"
+    font-weight="600"
+    fill="#1F1F1F"
+    letter-spacing="-0.5"
+  >
+    Mesa<tspan font-weight="400" fill="#1B4D3E">Homes</tspan>
+  </text>
+</svg>
