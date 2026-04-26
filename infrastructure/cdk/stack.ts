@@ -33,7 +33,7 @@ const REPO_ROOT = path.join(__dirname, '..', '..');
 const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: number; env?: Record<string, string> }> = {
   'leads-capture': { source: 'leads-capture', memory: 256, timeout: 10 },
   'tools-calculator': { source: 'tools-calculator', memory: 256, timeout: 10 },
-  'property-lookup': { source: 'property-lookup', memory: 512, timeout: 30, env: { GOOGLE_MAPS_SECRET: 'mesahomes/live/google-maps-api-key' } },
+  'property-lookup': { source: 'property-lookup', memory: 512, timeout: 30, env: { GOOGLE_MAPS_API_KEY_SECRET: 'mesahomes/live/google-maps-api-key' } },
   'market-data': { source: 'market-data', memory: 256, timeout: 5 },
   'content-api': { source: 'content-api', memory: 256, timeout: 5 },
   'ai-proxy': { source: 'ai-proxy', memory: 512, timeout: 30 },

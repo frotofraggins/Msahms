@@ -23,8 +23,20 @@ import {
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Secrets Manager path for the Google Maps API key. */
-const GOOGLE_API_KEY_SECRET = 'mesahomes/google-maps-api-key';
+/**
+ * Secrets Manager path for the Google Maps API key.
+ *
+ * Resolution order:
+ *   1. `GOOGLE_MAPS_API_KEY_SECRET` env var (set by CDK stack per-environment)
+ *   2. Hard default `mesahomes/live/google-maps-api-key`
+ *
+ * The env-var-based override lets us point sandbox or staging Lambdas at a
+ * different key without code changes, and insulates against future secret
+ * renames (the earlier `mesahomes/google-maps-api-key` path silently broke
+ * this Lambda when we namespaced to `mesahomes/live/*`).
+ */
+const GOOGLE_API_KEY_SECRET =
+  process.env['GOOGLE_MAPS_API_KEY_SECRET'] ?? 'mesahomes/live/google-maps-api-key';
 
 /** Street View Static API metadata endpoint. */
 const METADATA_URL = 'https://maps.googleapis.com/maps/api/streetview/metadata';
