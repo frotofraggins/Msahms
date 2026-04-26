@@ -15,9 +15,18 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? '/api/v1';
 // Token management
 // ---------------------------------------------------------------------------
 
-function getAccessToken(): string | null {
+/**
+ * Get the Cognito ID token for API Gateway authorizer.
+ *
+ * API Gateway's Cognito User Pool authorizer validates the ID token's
+ * audience against the App Client ID. Access tokens don't include the
+ * `aud` claim so they're rejected. Use ID tokens for Authorization
+ * headers; use the access token only for direct Cognito API calls
+ * (get/update user attributes).
+ */
+function getIdToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('mesahomes_access_token');
+  return localStorage.getItem('mesahomes_id_token');
 }
 
 function getRefreshToken(): string | null {
@@ -99,7 +108,7 @@ export async function apiRequest<T>(
   };
 
   if (auth) {
-    const token = getAccessToken();
+    const token = getIdToken();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -115,7 +124,7 @@ export async function apiRequest<T>(
   if (res.status === 401 && auth) {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
-      const newToken = getAccessToken();
+      const newToken = getIdToken();
       if (newToken) {
         headers['Authorization'] = `Bearer ${newToken}`;
       }
