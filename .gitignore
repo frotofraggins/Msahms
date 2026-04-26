@@ -39,3 +39,17 @@ cdk.out/
 frontend/node_modules/
 frontend/.next/
 frontend/out/
+
+# Local-only secrets files — never commit
+.stripe-keys.env.local
+.stripe-keys.local.json
+*.keys.local
+*.keys.env.local
+
+# Google Cloud service account JSON keys — never commit
+*-service-account*.json
+*-service_account*.json
+stackpro-*.json
+mesahomes-*.json
+*.gcp-key.json
+google-credentials*.json
