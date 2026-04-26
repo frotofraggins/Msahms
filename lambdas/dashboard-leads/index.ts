@@ -101,7 +101,7 @@ async function handleListLeads(
       }
 
       // Also get unassigned leads
-      const unassigned = await queryGSI1('AGENT#unassigned', {
+      const unassigned = await queryGSI1('AGENT#UNASSIGNED', {
         skCondition: { operator: 'begins_with', value: 'LEAD#' },
         limit: 100,
         scanForward,
