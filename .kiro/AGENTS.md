@@ -33,8 +33,12 @@ the human reviews. Neither agent pushes directly to `main`.
 
 | Agent | Branch | Role |
 |-------|--------|------|
-| Kiro A (review/fixes) | `agent/kiro-nflos-review` | TypeScript hygiene, spec review, cross-cutting concerns, differentiator features |
-| Kiro B (implementation) | `agent/kiro-b-implementation` | Main task list execution (tasks 1-8 done, 9+ in progress) |
+| Kiro A (review/fixes) | `agent/kiro-nflos-review` | TypeScript hygiene, spec review, cross-cutting concerns, differentiator features, post-launch enrichment specs |
+| Kiro B (implementation) | `agent/kiro-b-implementation` | MVP task list complete (20/20); now implements Phase 1B features (content pipeline, public data enrichment) |
+
+**Main branch** (`main`) is the live-production branch. Deployed to
+https://mesahomes.com via CDK stack MesaHomesStack. Both agent branches
+merge to main after human review.
 
 ### Rules
 
