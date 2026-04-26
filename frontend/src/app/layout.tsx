@@ -17,14 +17,14 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: {
     template: '%s | MesaHomes',
-    default: 'MesaHomes — Flat-Fee Real Estate for Mesa, AZ',
+    default: 'MesaHomes — Mesa, AZ Real Estate, Market Data & Neighborhood Insights',
   },
   description:
-    'Save thousands selling your home in Mesa, Gilbert, Chandler, Queen Creek, and San Tan Valley. Free tools, county-verified data, and flat-fee MLS listing for $999.',
+    'Your local source for Mesa, Arizona real estate. Live market data, home values, neighborhood news, HOA updates, city meetings, and flat-fee MLS listings. Covering Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, and Apache Junction.',
   openGraph: {
-    title: 'MesaHomes — Flat-Fee Real Estate for Mesa, AZ',
+    title: 'MesaHomes — Mesa, AZ Real Estate & Community Hub',
     description:
-      'Save thousands selling your home. Free seller net sheet, buyer affordability calculator, AI listing generator, and more.',
+      'The hyper-local source for Mesa-area home values, market trends, HOA news, and flat-fee listings. Know your neighborhood before you buy or sell.',
     url: 'https://mesahomes.com',
     siteName: 'MesaHomes',
     locale: 'en_US',

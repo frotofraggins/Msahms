@@ -10,16 +10,16 @@ import { FadeInOnScroll } from '@/components/FadeInOnScroll';
 import { Home, Key, FileText, DollarSign, TrendingUp, Calculator, BarChart3, Sparkles } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Flat-Fee Real Estate for Mesa, AZ',
+  title: 'Mesa, AZ Real Estate, Market Data & Neighborhood Insights',
   description:
-    'Save thousands selling your home in Mesa, Gilbert, Chandler, Queen Creek, and San Tan Valley. Free tools, county-verified data, and flat-fee MLS listing for $999.',
+    'Your local source for Mesa, Arizona real estate. Live market data, home values, neighborhood news, HOA updates, city meetings, and flat-fee MLS listings. Covering Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, and Apache Junction.',
   alternates: {
     canonical: 'https://mesahomes.com',
   },
   openGraph: {
-    title: 'Flat-Fee Real Estate for Mesa, AZ',
+    title: 'MesaHomes — Mesa, AZ Real Estate & Community Hub',
     description:
-      'Save thousands selling your home. Free seller net sheet, buyer affordability calculator, AI listing generator, and more.',
+      'Hyper-local home values, market trends, HOA news, and flat-fee listings for the East Valley. Know your neighborhood before you buy or sell.',
     url: 'https://mesahomes.com',
     siteName: 'MesaHomes',
     locale: 'en_US',
@@ -27,9 +27,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Flat-Fee Real Estate for Mesa, AZ',
+    title: 'MesaHomes — Mesa, AZ Real Estate & Community Hub',
     description:
-      'Save thousands selling your home in Mesa, AZ with flat-fee MLS listing.',
+      'Hyper-local real estate data, neighborhood news, and flat-fee listings for Mesa and the East Valley.',
   },
 };
 
