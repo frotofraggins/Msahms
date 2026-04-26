@@ -41,21 +41,62 @@ If that returns a stack, skip. Otherwise:
 npx cdk bootstrap aws://304052673868/us-west-2 --profile Msahms
 ```
 
+### 1.3.5 API Gateway CloudWatch Logs role (one-time, account-level)
+
+Already done (2026-04-26). If ever recreating the account:
+
+```bash
+cat > /tmp/apig-trust.json <<'EOF'
+{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"apigateway.amazonaws.com"},"Action":"sts:AssumeRole"}]}
+EOF
+aws iam create-role --role-name APIGatewayCloudWatchLogsRole \
+  --assume-role-policy-document file:///tmp/apig-trust.json --profile Msahms
+aws iam attach-role-policy --role-name APIGatewayCloudWatchLogsRole \
+  --policy-arn arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs \
+  --profile Msahms
+sleep 20  # IAM propagation
+aws apigateway update-account \
+  --patch-operations op=replace,path=/cloudwatchRoleArn,value=arn:aws:iam::304052673868:role/APIGatewayCloudWatchLogsRole \
+  --profile Msahms --region us-west-2
+rm /tmp/apig-trust.json
+```
+
 ### 1.4 Deploy backend infrastructure
 ```bash
 bash infrastructure/cdk/package-lambdas.sh
 npx cdk diff --profile Msahms    # review what will be created
 npx cdk deploy --profile Msahms  # ~10 minutes first run
 ```
+
+**If this is a fresh retry after a failed deploy**, see
+`.kiro/DEPLOY_RECOVERY.md` first. Orphaned DynamoDB/S3/Cognito resources
+from prior attempts must be cleaned up or imported before CDK succeeds.
 Creates: DynamoDB table, Cognito pool, 2 S3 buckets, 14 Lambdas,
-API Gateway with 32 routes, 7 Secrets Manager entries (empty),
-EventBridge cron, DynamoDB Streams trigger, SES domain identity
-+ DKIM/SPF/DMARC records in Route 53.
+API Gateway with 32 routes, IAM roles for Lambda SES send,
+EventBridge cron, DynamoDB Streams trigger.
+
+**NOT created by CDK** (managed manually via Google Workspace + Route 53):
+- SES domain identity + DKIM records (Google Workspace handles DKIM signing
+  from sales@mesahomes.com and nick@virtualhomezone.com for inbound + sent)
+- SPF + DMARC TXT records (set up manually earlier; include both Google and
+  amazonses.com)
+- 9 Secrets Manager entries (pre-populated before first cdk deploy —
+  CDK imports them by name)
+
+To enable outbound SES from Lambdas (for transactional notifications like
+"new lead captured"), you'll still need to verify mesahomes.com as a
+domain identity in SES Console AFTER deploy — this is a few clicks,
+takes 2 min, can wait until post-launch.
 
 Save the outputs printed at the end — you'll need ApiUrl,
 UserPoolId, UserPoolClientId for step 1.8.
 
-### 1.5 Populate Secrets Manager (replace placeholders)
+### 1.5 Populate Secrets Manager (BEFORE first cdk deploy)
+
+Do this BEFORE running `cdk deploy`. Our CDK stack imports existing
+secrets (`Secret.fromSecretNameV2`) rather than creating new ones, so
+all 9 secrets must already exist in AWS Secrets Manager before the
+stack is synthesized.
 
 Generate the two HMAC secrets for VHZ handoff (write these down,
 you'll need both on the VHZ side too):

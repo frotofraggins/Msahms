@@ -30,6 +30,43 @@ If it returns a stack, you're bootstrapped. If not:
 npx cdk bootstrap aws://304052673868/us-west-2 --profile Msahms
 ```
 
+## Pre-deploy prerequisites (one-time, account-level)
+
+### 1. API Gateway CloudWatch Logs role
+
+API Gateway won't create new REST APIs with stage logging unless the
+account has a CloudWatch Logs role configured. Already done; see
+`OWNER-LAUNCH-CHECKLIST.md` section 1.3.5 for the commands if you need
+to recreate in another account.
+
+### 2. Secrets Manager secrets pre-populated
+
+The CDK stack imports existing secrets by name using
+`Secret.fromSecretNameV2()` rather than creating them. All 9 secrets
+in `SECRET_NAMES` must already exist in Secrets Manager before deploy.
+
+See `OWNER-LAUNCH-CHECKLIST.md` section 1.5 for the 9 secrets and
+population commands. The 3 Stripe secrets hold real keys; the 2 VHZ
+HMAC secrets are generated via `openssl rand -hex 32`; the rest
+(Google Maps, webhook secret, RentCast, SES SMTP) can be populated
+with placeholder values and updated later.
+
+### 3. Email DNS (SES intentionally NOT managed by CDK)
+
+Because Google Workspace is set up for both mesahomes.com and
+virtualhomezone.com, the SES domain-identity construct was removed from
+the CDK stack. It would conflict with Google's MX + DKIM records. Instead:
+
+- Google Workspace handles inbound + outbound email via Gmail
+- MesaHomes Lambdas send transactional email via `SES.SendEmail` API
+  directly; they just need `ses:SendEmail` permission (granted by the
+  stack to 4 Lambdas: notification-worker, listing-service, leads-capture,
+  auth-api)
+- mesahomes.com is NOT yet verified as a sender identity in SES. Verify
+  it post-deploy via the SES Console (2 min) if you want the Lambdas
+  to actually send outbound mail, otherwise the notification-worker
+  will log-and-skip.
+
 ## Deploy — 3 commands
 
 ```bash
@@ -45,9 +82,10 @@ npx cdk deploy --profile Msahms
 
 Takes ~10 minutes on first deploy. After that, only changed resources update.
 
-## Post-deploy: populate secrets
+## Post-deploy: populate missing secret values
 
-The stack creates 7 empty secrets. Populate them before invoking any Lambda:
+The stack imports 9 existing Secrets Manager secrets. Most are already
+populated (Stripe keys + VHZ HMACs). The remaining placeholders:
 
 ```bash
 aws secretsmanager put-secret-value --secret-id mesahomes/live/google-maps-api-key --secret-string "YOUR_GOOGLE_MAPS_KEY" --profile Msahms

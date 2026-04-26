@@ -53,7 +53,9 @@ async function sendNotification(payload: NotificationPayload): Promise<void> {
         },
       },
     },
-    ConfigurationSetName: process.env['SES_CONFIG_SET'] ?? 'mesahomes-default',
+    // ConfigurationSetName removed — CDK no longer creates a config set
+    // because Google Workspace manages email DNS. Add back if/when we
+    // set up a MesaHomes-specific SES config set for bounce handling.
   }));
 
   console.log(`[notification-worker] Sent ${payload.type} notification to ${toAddress}`);

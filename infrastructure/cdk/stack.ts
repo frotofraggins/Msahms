@@ -162,15 +162,13 @@ export class MesaHomesStack extends Stack {
       preventUserExistenceErrors: true,
     });
 
-    // Secrets (empty placeholders)
-    const secrets: Record<string, sm.Secret> = {};
+    // Secrets — all pre-existing. Import by name rather than create.
+    // Owner populated these manually before first cdk deploy to avoid
+    // ordering issues with the VHZ handoff HMACs and Stripe keys.
+    const secrets: Record<string, sm.ISecret> = {};
     for (const name of SECRET_NAMES) {
       const id = name.replace(/[^a-zA-Z0-9]/g, '');
-      secrets[name] = new sm.Secret(this, `Secret-${id}`, {
-        secretName: name,
-        description: `MesaHomes secret: ${name}. Populate via put-secret-value after deploy.`,
-        removalPolicy: RemovalPolicy.RETAIN,
-      });
+      secrets[name] = sm.Secret.fromSecretNameV2(this, `Secret-${id}`, name);
     }
 
     // Lambda functions
@@ -254,21 +252,24 @@ export class MesaHomesStack extends Stack {
       });
     }
 
-    // SES — transactional email for notifications and lead alerts
-    // Imports the existing mesahomes.com hosted zone (DNS already delegated)
-    const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-      hostedZoneId: 'Z10182223SPYFYDHCGZH7',
-      zoneName: 'mesahomes.com',
-    });
-    new MesaHomesSesConstruct(this, 'Ses', {
-      hostedZone,
-      senderLambdas: [
-        fns['notification-worker']!,
-        fns['listing-service']!,
-        fns['leads-capture']!,
-        fns['auth-api']!,
-      ],
-    });
+    // SES — domain identity + DNS records set up manually before deploy
+    // (Google Workspace MX + DKIM + owner's SPF/DMARC records already
+    // exist in mesahomes.com hosted zone). CDK would conflict trying
+    // to create duplicates. Instead, just grant Lambdas ses:SendEmail
+    // permission. The domain identity + config set will be created
+    // manually or via a follow-up CDK stack once manual DNS is settled.
+    const sesSenders = [
+      fns['notification-worker']!,
+      fns['listing-service']!,
+      fns['leads-capture']!,
+      fns['auth-api']!,
+    ];
+    for (const fn of sesSenders) {
+      fn.role!.addToPrincipalPolicy(new iam.PolicyStatement({
+        actions: ['ses:SendEmail', 'ses:SendRawEmail', 'ses:SendTemplatedEmail'],
+        resources: ['*'], // scope down to verified identity after domain is registered
+      }));
+    }
 
     // Outputs
     new CfnOutput(this, 'ApiUrl', { value: api.url, description: 'API Gateway invoke URL' });
