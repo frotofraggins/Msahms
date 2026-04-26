@@ -36,6 +36,29 @@ coverage/
 # AWS
 .aws-sam/
 cdk.out/
+.build/
 frontend/node_modules/
 frontend/.next/
 frontend/out/
+
+# Reference materials — never tracked
+# (AAR forms, executed transaction docs, anything with PII)
+Real estate contracts/
+.kiro/reference/
+*.docx
+*.pdf
+
+# Local-only secrets files (never commit)
+.stripe-keys.local.json
+.stripe-keys.env.local
+*.local.json
+*.keys.local
+*.keys.env.local
+
+# Google Cloud service account JSON keys — never commit
+*-service-account*.json
+*-service_account*.json
+stackpro-*.json
+mesahomes-*.json
+*.gcp-key.json
+google-credentials*.json

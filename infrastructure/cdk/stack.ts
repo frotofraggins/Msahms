@@ -33,7 +33,7 @@ const REPO_ROOT = path.join(__dirname, '..', '..');
 const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: number; env?: Record<string, string> }> = {
   'leads-capture': { source: 'leads-capture', memory: 256, timeout: 10 },
   'tools-calculator': { source: 'tools-calculator', memory: 256, timeout: 10 },
-  'property-lookup': { source: 'property-lookup', memory: 512, timeout: 30, env: { GOOGLE_MAPS_SECRET: 'mesahomes/google-maps-api-key' } },
+  'property-lookup': { source: 'property-lookup', memory: 512, timeout: 30, env: { GOOGLE_MAPS_SECRET: 'mesahomes/live/google-maps-api-key' } },
   'market-data': { source: 'market-data', memory: 256, timeout: 5 },
   'content-api': { source: 'content-api', memory: 256, timeout: 5 },
   'ai-proxy': { source: 'ai-proxy', memory: 512, timeout: 30 },
@@ -48,13 +48,15 @@ const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: 
 };
 
 const SECRET_NAMES = [
-  'mesahomes/google-maps-api-key',
-  'mesahomes/stripe-secret-key',
-  'mesahomes/stripe-webhook-secret',
-  'mesahomes/rentcast-api-key',
-  'mesahomes/ses-smtp-credentials',
-  'mesahomes/vhz-handoff-secret',
-  'mesahomes/vhz-webhook-secret',
+  'mesahomes/live/google-maps-api-key',
+  'mesahomes/live/stripe-secret-key',
+  'mesahomes/live/stripe-publishable-key',
+  'mesahomes/live/stripe-webhook-secret',
+  'mesahomes/live/vhz-stripe-secret-key',
+  'mesahomes/live/rentcast-api-key',
+  'mesahomes/live/ses-smtp-credentials',
+  'mesahomes/live/vhz-handoff-secret',
+  'mesahomes/live/vhz-webhook-secret',
 ];
 
 // Route definitions — mirrors infrastructure/api-gateway.ts
