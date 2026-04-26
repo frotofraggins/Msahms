@@ -8,6 +8,14 @@ Last updated: 2026-04-26 by Kiro A.
 **Current status**: Live in production at https://mesahomes.com.
 Deployed 2026-04-26. 874 tests passing, 0 TS errors.
 
+**Naming convention** (as of 2026-04-26):
+- Product tier in UI: **"Mesa Listing Service"** (was: "Flat-Fee MLS")
+- Category term for SEO/legal/pricing-mechanism: **"flat-fee MLS"** — kept
+  in URL slugs, `<title>` tags, blog H2s, FAQ questions, event-tracking
+  tags, legal contracts, compliance docs
+- Full tier family: **MesaHomes FSBO / Mesa Listing Service / Mesa Full Service**
+- Research memo: `.kiro/specs/middle-tier-rebrand-research.md`
+
 ## How to use this doc (read before every session)
 
 1. **Start here** — check "Current priorities" section for ordered
@@ -77,8 +85,9 @@ These are the things no direct competitor can copy cheaply:
    Marketing asset: "Fair-Housing-verified descriptions."
 6. **Progressive disclosure with honest teasers**. Show the number before
    asking for email. Most of the industry does the opposite.
-7. **Flat-fee with an honest Full-Service Upgrade banner**. Not "flat-fee
-   lite" pretending to be full service. Explicit escape hatch on every page.
+7. **Mesa Listing Service tier with an honest Full-Service Upgrade banner**.
+   Not "flat-fee lite" pretending to be full service. Explicit escape hatch
+   on every page.
 8. **Local Hydra AI (post-launch)** for content generation. Owner's RTX 4090
    via Cloudflare Tunnel. Zero per-token cost for hyper-local blog posts
    once Phase 2 is wired. Bedrock Claude Haiku is current baseline.
@@ -262,7 +271,7 @@ What to work on next, in order. Update this every significant session.
 
 ### 🔴 Owner-blocked (can't proceed without action)
 
-8. **Broker-of-record partnership signed**. Unblocks Flat-Fee and
+8. **Broker-of-record partnership signed**. Unblocks Mesa Listing Service and
    Full-Service tiers (currently gated by `LISTINGS_PAYMENT_ENABLED=false`).
    Without this, tiers 2+3 are locked. Legal reason: ARS § 32-2155.
 9. **ADRE salesperson license reactivation**. Owner-side. Required before
@@ -485,7 +494,7 @@ Content is generated/summarized by the local RTX 4090 AI via MCP, then stored in
 | Broker transaction fee | $400 | At listing start |
 | Full-service upgrade | Standard commission | When seller opts for full agent |
 
-The flat-fee model is the primary differentiator. Every page has a Full Service Upgrade banner — we're honest about the option, not hiding it.
+The Mesa Listing Service tier (and the flat-fee pricing mechanism behind it) is the primary seller differentiator. Every page has a Full Service Upgrade banner — we're honest about the option, not hiding it.
 
 ## AWS account details
 

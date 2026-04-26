@@ -83,7 +83,7 @@ and we have nothing for it.
 ├── Phase 7: Close
 │   - Walk through escrow, title, funding
 ├── FSBO vs flat-fee vs agent (comparison table)
-│   Headings: DIY FSBO ($299) | Flat-Fee MLS ($999) | Full Service (3%)
+│   Headings: DIY FSBO ($299) | Mesa Listing Service ($999) | Full Service (3%)
 │   Body: time commitment, MLS access, support level, total cost on $500K home
 ├── Common objections answered
 │   "I don't have time" → We have tools that do 80% of the work in 4 hours
@@ -153,7 +153,7 @@ Current `/compare/flat-fee-vs-traditional-agent` exists. Missing:
 
 Three-column comparison:
 
-| | FSBO ($299) | Flat-Fee MLS ($999) | Full Service (3%) |
+| | FSBO ($299) | Mesa Listing Service ($999) | Full Service (3%) |
 |---|---|---|---|
 | Time commitment | 15-25 hrs | 8-12 hrs | 2-4 hrs |
 | MLS on Zillow/Realtor | ❌ | ✅ | ✅ |
