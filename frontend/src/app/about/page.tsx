@@ -61,16 +61,15 @@ export default function AboutPage() {
             </h2>
             <p>
               MesaHomes is run by Nick Flournoy, a licensed Arizona real
-              estate salesperson (license reactivation in progress, 2026)
-              and operator of Virtual Home Zone, a real estate media services
-              company serving the Phoenix metro area since 2017.
+              estate salesperson (license reactivation in progress, 2026).
             </p>
             <p>
               For the Flat-Fee MLS and Full-Service tiers, MesaHomes partners
               with a designated Arizona broker of record (partnership in
               finalization). The FSBO tier requires no broker — it's a
               self-directed package of photography, listing services, and
-              AI-powered tools from Virtual Home Zone.
+              AI-powered tools delivered through our partnership with a
+              professional real estate media provider.
             </p>
 
             <h2 className="font-display text-3xl text-charcoal mt-12 mb-4">

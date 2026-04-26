@@ -40,11 +40,11 @@ export function Header() {
         {/* Desktop CTA */}
         <div className="hidden items-center gap-4 md:flex">
           <a
-            href="tel:+14805551234"
+            href="tel:+14802690502"
             className="flex items-center gap-1 text-sm font-medium text-primary"
           >
             <Phone className="h-4 w-4" />
-            (480) 555-1234
+            (480) 269-0502
           </a>
           <Link
             href="/booking"

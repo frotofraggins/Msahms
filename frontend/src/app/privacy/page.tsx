@@ -81,7 +81,7 @@ export default function PrivacyPage() {
             <li><strong>Amazon Web Services (AWS):</strong> hosting, database, email</li>
             <li><strong>Google:</strong> Google Workspace for email, Google Maps for property visualization, Google Analytics for usage data (if enabled)</li>
             <li><strong>Stripe:</strong> payment processing when you purchase a FSBO package or flat-fee listing service</li>
-            <li><strong>Virtual Home Zone:</strong> our photography and media services partner (operated by the same owner)</li>
+            <li><strong>Virtual Home Zone:</strong> our professional real estate photography and media services partner</li>
             <li><strong>Our broker of record:</strong> when you purchase a Flat-Fee MLS or Full-Service tier (required for us to legally handle the transaction)</li>
             <li><strong>MLS and syndication portals:</strong> when you list with our Flat-Fee MLS tier, your listing data and photos go to ARMLS, Zillow, Realtor.com, Redfin, Trulia, and Homes.com</li>
           </ul>
