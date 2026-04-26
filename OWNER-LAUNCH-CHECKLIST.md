@@ -68,15 +68,15 @@ echo "Webhook HMAC: $VHZ_WEBHOOK_HMAC"
 
 Populate all 7 secrets:
 ```bash
-aws secretsmanager put-secret-value --secret-id mesahomes/vhz-handoff-secret --secret-string "$VHZ_HANDOFF_HMAC" --profile Msahms --region us-west-2
-aws secretsmanager put-secret-value --secret-id mesahomes/vhz-webhook-secret --secret-string "$VHZ_WEBHOOK_HMAC" --profile Msahms --region us-west-2
+aws secretsmanager put-secret-value --secret-id mesahomes/live/vhz-handoff-secret --secret-string "$VHZ_HANDOFF_HMAC" --profile Msahms --region us-west-2
+aws secretsmanager put-secret-value --secret-id mesahomes/live/vhz-webhook-secret --secret-string "$VHZ_WEBHOOK_HMAC" --profile Msahms --region us-west-2
 
 # These you need to obtain separately — see Track 2 for Stripe, Track 4 for SES:
-aws secretsmanager put-secret-value --secret-id mesahomes/google-maps-api-key --secret-string "YOUR_GOOGLE_MAPS_KEY" --profile Msahms --region us-west-2
-aws secretsmanager put-secret-value --secret-id mesahomes/stripe-secret-key --secret-string "PLACEHOLDER" --profile Msahms --region us-west-2
-aws secretsmanager put-secret-value --secret-id mesahomes/stripe-webhook-secret --secret-string "PLACEHOLDER" --profile Msahms --region us-west-2
-aws secretsmanager put-secret-value --secret-id mesahomes/rentcast-api-key --secret-string "YOUR_RENTCAST_KEY_OR_PLACEHOLDER" --profile Msahms --region us-west-2
-aws secretsmanager put-secret-value --secret-id mesahomes/ses-smtp-credentials --secret-string '{"username":"","password":""}' --profile Msahms --region us-west-2
+aws secretsmanager put-secret-value --secret-id mesahomes/live/google-maps-api-key --secret-string "YOUR_GOOGLE_MAPS_KEY" --profile Msahms --region us-west-2
+aws secretsmanager put-secret-value --secret-id mesahomes/live/stripe-secret-key --secret-string "PLACEHOLDER" --profile Msahms --region us-west-2
+aws secretsmanager put-secret-value --secret-id mesahomes/live/stripe-webhook-secret --secret-string "PLACEHOLDER" --profile Msahms --region us-west-2
+aws secretsmanager put-secret-value --secret-id mesahomes/live/rentcast-api-key --secret-string "YOUR_RENTCAST_KEY_OR_PLACEHOLDER" --profile Msahms --region us-west-2
+aws secretsmanager put-secret-value --secret-id mesahomes/live/ses-smtp-credentials --secret-string '{"username":"","password":""}' --profile Msahms --region us-west-2
 ```
 
 **Google Maps API key**: create at console.cloud.google.com → APIs →

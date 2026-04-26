@@ -50,13 +50,13 @@ Takes ~10 minutes on first deploy. After that, only changed resources update.
 The stack creates 7 empty secrets. Populate them before invoking any Lambda:
 
 ```bash
-aws secretsmanager put-secret-value --secret-id mesahomes/google-maps-api-key --secret-string "YOUR_GOOGLE_MAPS_KEY" --profile Msahms
-aws secretsmanager put-secret-value --secret-id mesahomes/stripe-secret-key --secret-string "sk_test_YOUR_KEY" --profile Msahms
-aws secretsmanager put-secret-value --secret-id mesahomes/stripe-webhook-secret --secret-string "whsec_YOUR_SECRET" --profile Msahms
-aws secretsmanager put-secret-value --secret-id mesahomes/rentcast-api-key --secret-string "YOUR_RENTCAST_KEY" --profile Msahms
-aws secretsmanager put-secret-value --secret-id mesahomes/ses-smtp-credentials --secret-string '{"username":"...","password":"..."}' --profile Msahms
-aws secretsmanager put-secret-value --secret-id mesahomes/vhz-handoff-secret --secret-string "$(openssl rand -hex 32)" --profile Msahms
-aws secretsmanager put-secret-value --secret-id mesahomes/vhz-webhook-secret --secret-string "$(openssl rand -hex 32)" --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/google-maps-api-key --secret-string "YOUR_GOOGLE_MAPS_KEY" --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/stripe-secret-key --secret-string "sk_test_YOUR_KEY" --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/stripe-webhook-secret --secret-string "whsec_YOUR_SECRET" --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/rentcast-api-key --secret-string "YOUR_RENTCAST_KEY" --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/ses-smtp-credentials --secret-string '{"username":"...","password":"..."}' --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/vhz-handoff-secret --secret-string "$(openssl rand -hex 32)" --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/vhz-webhook-secret --secret-string "$(openssl rand -hex 32)" --profile Msahms
 ```
 
 The last two (`vhz-*`) are for the VHZ Stripe handoff; use the SAME values on virtualhomezone.com.
