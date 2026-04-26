@@ -20,12 +20,12 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-warm-border bg-paper">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         {/* Logo */}
-        <Link href="/" className="flex items-center" aria-label="MesaHomes home">
+        <Link href="/" className="flex items-center" aria-label="MesaHomes — Mesa AZ real estate">
           <img
-            src="/logo.svg"
-            alt="MesaHomes"
-            width={170}
-            height={40}
+            src="/brand/mesahomes-logo-primary.webp"
+            alt="MesaHomes — Mesa AZ real estate brand"
+            width={180}
+            height={48}
             className="h-10 w-auto"
           />
         </Link>

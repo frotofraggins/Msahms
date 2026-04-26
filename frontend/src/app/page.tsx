@@ -145,7 +145,7 @@ export default function HomePage() {
           className="relative overflow-hidden px-4 py-20 md:py-32"
           style={{
             backgroundImage:
-              'linear-gradient(135deg, rgba(253,252,249,0.92) 0%, rgba(245,242,236,0.86) 40%, rgba(217,211,198,0.78) 100%), url(/photos/mesa-home-01.webp)',
+              'linear-gradient(135deg, rgba(253,252,249,0.88) 0%, rgba(245,242,236,0.82) 40%, rgba(217,211,198,0.74) 100%), url(/photos/mesa-desert-golden-hour.webp)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
