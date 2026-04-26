@@ -22,7 +22,7 @@ export function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center" aria-label="MesaHomes — Mesa AZ real estate">
           <img
-            src="/brand/mesahomes-logo-primary.webp"
+            src="/brand/mesahomes-logo-minimalist.webp"
             alt="MesaHomes — Mesa AZ real estate brand"
             width={180}
             height={48}
