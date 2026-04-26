@@ -99,9 +99,23 @@ export interface TrackingEvent {
 /** In-memory event buffer — flushed to API or console in MVP. */
 const eventBuffer: TrackingEvent[] = [];
 
+declare global {
+  interface Window {
+    gtag?: (command: string, target: string, params?: Record<string, unknown>) => void;
+    clarity?: (command: string, ...args: unknown[]) => void;
+  }
+}
+
 /**
- * Track an event. In MVP, logs to console. In production, would batch-send
- * to an analytics endpoint or CloudWatch.
+ * Track an event. Fans out to:
+ *   1. In-memory buffer (for debugging + future batch flushing)
+ *   2. Google Analytics 4 (if loaded) via gtag('event', ...)
+ *   3. Microsoft Clarity custom tag (if loaded)
+ *   4. Console (development only)
+ *
+ * GA4 / Clarity are no-ops when their scripts haven't loaded — so this
+ * function is safe to call from any component regardless of whether
+ * analytics is configured.
  */
 export function trackEvent(
   type: TrackingEventType,
@@ -119,7 +133,22 @@ export function trackEvent(
 
   eventBuffer.push(event);
 
-  // MVP: log to console. Production: batch to API.
+  // GA4
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', type, {
+      event_category: 'engagement',
+      event_label: source,
+      ...(metadata ?? {}),
+    });
+  }
+
+  // Microsoft Clarity — tag the session with the event type so we can
+  // filter session recordings by "lead_capture" etc.
+  if (typeof window !== 'undefined' && window.clarity) {
+    window.clarity('set', type, source);
+  }
+
+  // Dev-only console log
   if (process.env.NODE_ENV === 'development') {
     console.log('[tracking]', event.type, event.source, event.metadata);
   }
