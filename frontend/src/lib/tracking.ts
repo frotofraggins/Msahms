@@ -135,17 +135,25 @@ export function trackEvent(
 
   // GA4
   if (typeof window !== 'undefined' && window.gtag) {
-    window.gtag('event', type, {
-      event_category: 'engagement',
-      event_label: source,
-      ...(metadata ?? {}),
-    });
+    try {
+      window.gtag('event', type, {
+        event_category: 'engagement',
+        event_label: source,
+        ...(metadata ?? {}),
+      });
+    } catch (e) {
+      // Never let analytics break the caller
+    }
   }
 
   // Microsoft Clarity — tag the session with the event type so we can
   // filter session recordings by "lead_capture" etc.
   if (typeof window !== 'undefined' && window.clarity) {
-    window.clarity('set', type, source);
+    try {
+      window.clarity('set', type, source);
+    } catch (e) {
+      // Clarity may be blocked (DNS, ad-blocker); swallow silently
+    }
   }
 
   // Dev-only console log

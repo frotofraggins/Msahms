@@ -40,8 +40,12 @@ export function Analytics() {
         </>
       )}
       {clarityId && (
-        <Script id="clarity" strategy="afterInteractive">
-          {`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y)})(window,document,"clarity","script","${clarityId}");`}
+        <Script
+          id="clarity"
+          strategy="afterInteractive"
+          onError={(e) => console.warn('[Analytics] Clarity blocked:', e)}
+        >
+          {`try{(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;t.onerror=function(){};y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y)})(window,document,"clarity","script","${clarityId}");}catch(e){}`}
         </Script>
       )}
     </>
