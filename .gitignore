@@ -45,3 +45,9 @@ Real estate contracts/
 *.pdf
 cdk.out/
 .build/
+
+# Local-only secrets files (never commit)
+.stripe-keys.local.json
+*.local.json
+*.keys.local
+.env.local
