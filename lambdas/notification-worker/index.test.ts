@@ -5,12 +5,14 @@
  * email formatting, and end-to-end handler processing.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   handler,
   shouldNotify,
   buildNotification,
   formatEmailBody,
+  buildSubject,
+  htmlEscape,
   processRecord,
   type StreamRecord,
   type NotificationPayload,
@@ -27,6 +29,16 @@ vi.mock('../../lib/dynamodb.js', () => ({
 vi.mock('../../lib/retry.js', () => ({
   withRetry: vi.fn((fn: () => unknown) => fn()),
   SES_RETRY: { maxRetries: 3, baseDelayMs: 1000, strategy: 'exponential' },
+}));
+
+const { mockSend } = vi.hoisted(() => {
+  const mockSend = vi.fn().mockResolvedValue({});
+  return { mockSend };
+});
+
+vi.mock('@aws-sdk/client-sesv2', () => ({
+  SESv2Client: vi.fn(() => ({ send: mockSend })),
+  SendEmailCommand: vi.fn((params: unknown) => params),
 }));
 
 import { getItem } from '../../lib/dynamodb.js';
@@ -311,5 +323,170 @@ describe('handler', () => {
     const result = await handler({ Records: [] });
     expect(result.processed).toBe(0);
     expect(result.errors).toBe(0);
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// buildSubject tests
+// ---------------------------------------------------------------------------
+
+describe('buildSubject', () => {
+  it('should build new_lead subject with visitor name', () => {
+    const payload: NotificationPayload = {
+      type: 'new_lead',
+      agentId: 'agent-1',
+      leadId: 'lead-1',
+      leadType: 'Seller',
+      visitorName: 'Jane Doe',
+      contactMethod: 'jane@example.com',
+      city: 'Mesa',
+      timeframe: 'now',
+      toolSource: 'net-sheet',
+      summary: 'test',
+    };
+    expect(buildSubject(payload)).toBe('New MesaHomes Lead: Jane Doe');
+  });
+
+  it('should build status_change subject with visitor name', () => {
+    const payload: NotificationPayload = {
+      type: 'status_change',
+      agentId: 'agent-1',
+      leadId: 'lead-1',
+      leadType: 'Buyer',
+      visitorName: 'John Smith',
+      contactMethod: 'john@example.com',
+      city: 'Gilbert',
+      timeframe: '30d',
+      toolSource: 'affordability',
+      summary: 'test',
+      oldStatus: 'New',
+      newStatus: 'Contacted',
+    };
+    expect(buildSubject(payload)).toBe('Lead Status Updated: John Smith');
+  });
+
+  it('should fall back to Unknown for empty visitor name on new_lead', () => {
+    const payload: NotificationPayload = {
+      type: 'new_lead',
+      agentId: 'agent-1',
+      leadId: 'lead-1',
+      leadType: 'Seller',
+      visitorName: '',
+      contactMethod: 'none',
+      city: 'Mesa',
+      timeframe: 'now',
+      toolSource: 'net-sheet',
+      summary: 'test',
+    };
+    expect(buildSubject(payload)).toBe('New MesaHomes Lead: Unknown');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// htmlEscape tests
+// ---------------------------------------------------------------------------
+
+describe('htmlEscape', () => {
+  it('should escape ampersands', () => {
+    expect(htmlEscape('A & B')).toBe('A &amp; B');
+  });
+
+  it('should escape angle brackets', () => {
+    expect(htmlEscape('<script>alert("xss")</script>')).toBe(
+      '&lt;script&gt;alert("xss")&lt;/script&gt;',
+    );
+  });
+
+  it('should handle strings with no special characters', () => {
+    expect(htmlEscape('Hello World')).toBe('Hello World');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// SES send tests
+// ---------------------------------------------------------------------------
+
+describe('SES email sending', () => {
+  const originalFrom = process.env['NOTIFICATION_FROM_ADDRESS'];
+  const originalTo = process.env['OWNER_NOTIFICATION_ADDRESS'];
+  const originalReplyTo = process.env['NOTIFICATION_REPLY_TO'];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env['NOTIFICATION_FROM_ADDRESS'] = 'notifications@mesahomes.com';
+    process.env['OWNER_NOTIFICATION_ADDRESS'] = 'sales@mesahomes.com';
+    process.env['NOTIFICATION_REPLY_TO'] = 'sales@mesahomes.com';
+  });
+
+  afterEach(() => {
+    if (originalFrom === undefined) delete process.env['NOTIFICATION_FROM_ADDRESS'];
+    else process.env['NOTIFICATION_FROM_ADDRESS'] = originalFrom;
+    if (originalTo === undefined) delete process.env['OWNER_NOTIFICATION_ADDRESS'];
+    else process.env['OWNER_NOTIFICATION_ADDRESS'] = originalTo;
+    if (originalReplyTo === undefined) delete process.env['NOTIFICATION_REPLY_TO'];
+    else process.env['NOTIFICATION_REPLY_TO'] = originalReplyTo;
+  });
+
+  it('should call SES SendEmailCommand for new lead notification', async () => {
+    mockGetItem.mockResolvedValue(undefined);
+
+    const result = await processRecord(makeLeadInsertRecord());
+    expect(result.processed).toBe(true);
+    expect(mockSend).toHaveBeenCalledTimes(1);
+
+    const sentCommand = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(sentCommand.FromEmailAddress).toBe('notifications@mesahomes.com');
+    expect(sentCommand.Destination).toEqual({ ToAddresses: ['sales@mesahomes.com'] });
+    expect(sentCommand.ReplyToAddresses).toEqual(['sales@mesahomes.com']);
+  });
+
+  it('should include correct subject for new_lead', async () => {
+    mockGetItem.mockResolvedValue(undefined);
+
+    await processRecord(makeLeadInsertRecord());
+
+    const sentCommand = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    const content = sentCommand.Content as Record<string, unknown>;
+    const simple = content.Simple as Record<string, unknown>;
+    const subject = simple.Subject as Record<string, unknown>;
+    expect(subject.Data).toBe('New MesaHomes Lead: Jane Doe');
+  });
+
+  it('should include text and HTML body', async () => {
+    mockGetItem.mockResolvedValue(undefined);
+
+    await processRecord(makeLeadInsertRecord());
+
+    const sentCommand = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    const content = sentCommand.Content as Record<string, unknown>;
+    const simple = content.Simple as Record<string, unknown>;
+    const body = simple.Body as Record<string, unknown>;
+    const text = body.Text as Record<string, unknown>;
+    const html = body.Html as Record<string, unknown>;
+    expect(text.Data).toContain('Jane Doe');
+    expect(html.Data).toContain('Jane Doe');
+    expect(html.Data).toContain('<br>');
+  });
+
+  it('should NOT call SES when email preference is none', async () => {
+    mockGetItem.mockResolvedValue({
+      PK: 'AGENT#agent-1',
+      SK: 'NOTIF_PREFS',
+      data: { newLead: 'none' },
+    });
+
+    await processRecord(makeLeadInsertRecord());
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+
+  it('should use custom OWNER_NOTIFICATION_ADDRESS', async () => {
+    process.env['OWNER_NOTIFICATION_ADDRESS'] = 'custom@mesahomes.com';
+    mockGetItem.mockResolvedValue(undefined);
+
+    await processRecord(makeLeadInsertRecord());
+
+    const sentCommand = mockSend.mock.calls[0][0] as Record<string, unknown>;
+    expect(sentCommand.Destination).toEqual({ ToAddresses: ['custom@mesahomes.com'] });
   });
 });

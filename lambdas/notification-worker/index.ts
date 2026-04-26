@@ -11,6 +11,7 @@
 
 import { getItem } from '../../lib/dynamodb.js';
 import { withRetry, SES_RETRY } from '../../lib/retry.js';
+import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -57,6 +58,34 @@ export interface ProcessResult {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
+
+const sesClient = new SESv2Client({
+  region: process.env['AWS_REGION'] ?? 'us-west-2',
+});
+
+/**
+ * Build an email subject line from a notification payload.
+ */
+export function buildSubject(payload: NotificationPayload): string {
+  switch (payload.type) {
+    case 'new_lead':
+      return `New MesaHomes Lead: ${payload.visitorName || 'Unknown'}`;
+    case 'status_change':
+      return `Lead Status Updated: ${payload.visitorName || payload.leadId}`;
+    default:
+      return 'MesaHomes Notification';
+  }
+}
+
+/**
+ * Escape HTML special characters for safe email body rendering.
+ */
+export function htmlEscape(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
 
 // ---------------------------------------------------------------------------
 // Stream record processing
@@ -204,10 +233,11 @@ export function formatEmailBody(payload: NotificationPayload): string {
 }
 
 /**
- * Send notification via SES (mock for MVP — logs instead of sending).
+ * Send notification via SES email.
  *
- * In production, this would use @aws-sdk/client-ses to send email
- * and optionally SNS for SMS.
+ * MVP: All notifications route to OWNER_NOTIFICATION_ADDRESS
+ * (sales@mesahomes.com by default) until multi-agent support
+ * is fleshed out in Phase 2.
  */
 export async function sendNotification(
   payload: NotificationPayload,
@@ -228,10 +258,29 @@ export async function sendNotification(
   if (emailPref === 'none') return;
 
   const emailBody = formatEmailBody(payload);
+  const subject = buildSubject(payload);
 
-  // MVP: log the notification. Production: SES send with retry.
-  console.log(`[notification-worker] Sending ${payload.type} notification to agent ${payload.agentId}`);
-  console.log(`[notification-worker] Email body:\n${emailBody}`);
+  // MVP: all notifications to owner address
+  const toAddress = process.env['OWNER_NOTIFICATION_ADDRESS'] ?? 'sales@mesahomes.com';
+  const fromAddress = process.env['NOTIFICATION_FROM_ADDRESS'] ?? 'notifications@mesahomes.com';
+  const replyToAddress = process.env['NOTIFICATION_REPLY_TO'] ?? 'sales@mesahomes.com';
+
+  await sesClient.send(new SendEmailCommand({
+    FromEmailAddress: fromAddress,
+    Destination: { ToAddresses: [toAddress] },
+    ReplyToAddresses: [replyToAddress],
+    Content: {
+      Simple: {
+        Subject: { Data: subject, Charset: 'UTF-8' },
+        Body: {
+          Text: { Data: emailBody, Charset: 'UTF-8' },
+          Html: { Data: htmlEscape(emailBody).replace(/\n/g, '<br>'), Charset: 'UTF-8' },
+        },
+      },
+    },
+  }));
+
+  console.log(`[notification-worker] Sent ${payload.type} notification to ${toAddress}`);
 
   if (emailPref === 'email-sms') {
     console.log(`[notification-worker] SMS would also be sent to agent ${payload.agentId}`);
