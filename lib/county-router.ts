@@ -103,6 +103,27 @@ export const PINAL_COUNTY_ZIPS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Set of all Maricopa County ZIP codes in the MesaHomes service area.
+ * Mesa + surrounding cities: 85201–85216, plus Gilbert, Chandler, etc.
+ */
+export const MARICOPA_SERVICE_ZIPS: ReadonlySet<string> = new Set([
+  '85201', '85202', '85203', '85204', '85205', '85206', '85207', '85208',
+  '85209', '85210', '85211', '85212', '85213', '85214', '85215', '85216',
+  '85233', '85234', '85224', '85225', '85226', '85249',
+  '85286', '85295', '85296', '85297', '85298',
+]);
+
+/**
+ * Full MesaHomes service area = Pinal + Maricopa ZIPs.
+ * Used by lead-capture and other lambdas that can't depend on
+ * data-pipeline Lambda source (each Lambda is packaged separately).
+ */
+export const SERVICE_AREA_ZIPS: ReadonlySet<string> = new Set([
+  ...PINAL_COUNTY_ZIPS,
+  ...MARICOPA_SERVICE_ZIPS,
+]);
+
+/**
  * Determine which county a ZIP code belongs to.
  *
  * Returns `'pinal'` when the ZIP is in {@link PINAL_COUNTY_ZIPS},

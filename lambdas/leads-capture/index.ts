@@ -26,7 +26,7 @@ import {
 import { putItem, getItem } from '../../lib/dynamodb.js';
 import { EntityType } from '../../lib/types/dynamodb.js';
 import { withRetry, DYNAMODB_RETRY } from '../../lib/retry.js';
-import { SERVICE_AREA_ZIPS } from '../data-pipeline/zillow-csv.js';
+import { SERVICE_AREA_ZIPS } from '../../lib/county-router.js';
 
 // ---------------------------------------------------------------------------
 // Types
