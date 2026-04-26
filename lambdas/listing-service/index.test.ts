@@ -5,8 +5,8 @@
  * and error handling.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handler, FLAT_FEE_AMOUNT, BROKER_FEE_AMOUNT } from './index.js';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { handler, FLAT_FEE_AMOUNT, BROKER_FEE_AMOUNT, getFsboLaunchMode } from './index.js';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -533,6 +533,7 @@ describe('POST /api/v1/listing/fsbo/intake', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env['VHZ_CHECKOUT_BASE_URL'] = 'https://virtualhomezone.com/checkout';
+    process.env['FSBO_LAUNCH_MODE'] = 'stripe';
   });
 
   it('should create an FSBO listing and return handoffUrl', async () => {
@@ -763,5 +764,129 @@ describe('POST /api/v1/listing/fsbo/vhz-webhook', () => {
       JSON.stringify(payload),
       sig,
     );
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// FSBO launch mode gate tests
+// ---------------------------------------------------------------------------
+
+describe('getFsboLaunchMode', () => {
+  const originalEnv = process.env['FSBO_LAUNCH_MODE'];
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env['FSBO_LAUNCH_MODE'];
+    } else {
+      process.env['FSBO_LAUNCH_MODE'] = originalEnv;
+    }
+  });
+
+  it('should default to lead-only when env var is not set', () => {
+    delete process.env['FSBO_LAUNCH_MODE'];
+    expect(getFsboLaunchMode()).toBe('lead-only');
+  });
+
+  it('should return stripe when env var is stripe', () => {
+    process.env['FSBO_LAUNCH_MODE'] = 'stripe';
+    expect(getFsboLaunchMode()).toBe('stripe');
+  });
+
+  it('should return lead-only for unknown values', () => {
+    process.env['FSBO_LAUNCH_MODE'] = 'invalid';
+    expect(getFsboLaunchMode()).toBe('lead-only');
+  });
+});
+
+describe('FSBO intake — lead-only mode', () => {
+  const originalEnv = process.env['FSBO_LAUNCH_MODE'];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env['FSBO_LAUNCH_MODE'] = 'lead-only';
+  });
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env['FSBO_LAUNCH_MODE'];
+    } else {
+      process.env['FSBO_LAUNCH_MODE'] = originalEnv;
+    }
+  });
+
+  it('should return status awaiting-vhz-launch without handoffUrl', async () => {
+    mockPutItem.mockResolvedValue(undefined);
+
+    const result = await handler(
+      makeEvent('/api/v1/listing/fsbo/intake', validFsboIntake),
+    );
+    expect(result.statusCode).toBe(201);
+
+    const body = parseBody(result.body);
+    expect(body.listingId).toBeDefined();
+    expect(body.leadId).toBeDefined();
+    expect(body.status).toBe('awaiting-vhz-launch');
+    expect(body.handoffUrl).toBeUndefined();
+  });
+
+  it('should store listing with awaiting-vhz-launch status', async () => {
+    mockPutItem.mockResolvedValue(undefined);
+
+    await handler(makeEvent('/api/v1/listing/fsbo/intake', validFsboIntake));
+
+    const storedItem = mockPutItem.mock.calls[0][0];
+    const data = storedItem.data as Record<string, unknown>;
+    expect(data.status).toBe('awaiting-vhz-launch');
+  });
+
+  it('should NOT call signHandoff in lead-only mode', async () => {
+    mockPutItem.mockResolvedValue(undefined);
+
+    await handler(makeEvent('/api/v1/listing/fsbo/intake', validFsboIntake));
+
+    expect(mockSignHandoff).not.toHaveBeenCalled();
+  });
+});
+
+describe('FSBO intake — stripe mode (regression)', () => {
+  const originalEnv = process.env['FSBO_LAUNCH_MODE'];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env['FSBO_LAUNCH_MODE'] = 'stripe';
+    process.env['VHZ_CHECKOUT_BASE_URL'] = 'https://virtualhomezone.com/checkout';
+  });
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env['FSBO_LAUNCH_MODE'];
+    } else {
+      process.env['FSBO_LAUNCH_MODE'] = originalEnv;
+    }
+  });
+
+  it('should return handoffUrl in stripe mode', async () => {
+    mockPutItem.mockResolvedValue(undefined);
+
+    const result = await handler(
+      makeEvent('/api/v1/listing/fsbo/intake', validFsboIntake),
+    );
+    expect(result.statusCode).toBe(201);
+
+    const body = parseBody(result.body);
+    expect(body.handoffUrl).toBeDefined();
+    expect(typeof body.handoffUrl).toBe('string');
+    expect((body.handoffUrl as string)).toContain('sig=mock-sig-abc123');
+  });
+
+  it('should store listing with awaiting-payment status in stripe mode', async () => {
+    mockPutItem.mockResolvedValue(undefined);
+
+    await handler(makeEvent('/api/v1/listing/fsbo/intake', validFsboIntake));
+
+    const storedItem = mockPutItem.mock.calls[0][0];
+    const data = storedItem.data as Record<string, unknown>;
+    expect(data.status).toBe('awaiting-payment');
   });
 });

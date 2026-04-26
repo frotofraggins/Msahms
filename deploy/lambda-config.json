@@ -77,7 +77,8 @@
       "environment": {
         "AWS_REGION": "us-west-2",
         "MESAHOMES_TABLE": "mesahomes-main",
-        "LISTINGS_PAYMENT_ENABLED": "false"
+        "LISTINGS_PAYMENT_ENABLED": "false",
+        "FSBO_LAUNCH_MODE": "lead-only"
       }
     },
     "mesahomes-auth-api": {
@@ -158,7 +159,10 @@
       "timeout": 10,
       "environment": {
         "AWS_REGION": "us-west-2",
-        "MESAHOMES_TABLE": "mesahomes-main"
+        "MESAHOMES_TABLE": "mesahomes-main",
+        "NOTIFICATION_FROM_ADDRESS": "notifications@mesahomes.com",
+        "NOTIFICATION_REPLY_TO": "sales@mesahomes.com",
+        "OWNER_NOTIFICATION_ADDRESS": "sales@mesahomes.com"
       },
       "trigger": "DynamoDB Streams (mesahomes-main)"
     }

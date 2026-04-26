@@ -36,6 +36,11 @@ BROKER_OF_RECORD_NAME=
 BROKER_OF_RECORD_LICENSE=
 BROKER_OF_RECORD_BROKERAGE=
 
+# FSBO flow mode. Set to "lead-only" until VHZ /checkout is live.
+# Flip to "stripe" when VHZ is ready to receive signed handoffs.
+FSBO_LAUNCH_MODE=lead-only
+NEXT_PUBLIC_FSBO_LAUNCH_MODE=lead-only
+
 # Frontend (NEXT_PUBLIC_ prefix for static export)
 NEXT_PUBLIC_API_BASE=/api/v1
 NEXT_PUBLIC_LISTINGS_PAYMENT_ENABLED=false
@@ -45,6 +50,9 @@ NEXT_PUBLIC_BROKER_OF_RECORD_BROKERAGE=
 
 # SES
 # mesahomes/ses-smtp-credentials in Secrets Manager
+NOTIFICATION_FROM_ADDRESS=notifications@mesahomes.com
+NOTIFICATION_REPLY_TO=sales@mesahomes.com
+OWNER_NOTIFICATION_ADDRESS=sales@mesahomes.com
 
 # RentCast (backup, 50 free calls/month)
 # mesahomes/rentcast-api-key in Secrets Manager

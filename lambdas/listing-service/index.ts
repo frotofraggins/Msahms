@@ -43,6 +43,7 @@ interface APIGatewayEvent {
 /** Flat-fee listing status lifecycle. */
 export type ListingStatus =
   | 'draft'
+  | 'awaiting-vhz-launch'
   | 'awaiting-payment'
   | 'payment-pending'
   | 'paid'
@@ -50,6 +51,15 @@ export type ListingStatus =
   | 'active'
   | 'sold'
   | 'cancelled';
+
+/** FSBO launch mode — controls whether intake redirects to VHZ or captures lead only. */
+export type FsboLaunchMode = 'lead-only' | 'stripe';
+
+/** Read FSBO launch mode from env var. Defaults to 'lead-only'. */
+export function getFsboLaunchMode(): FsboLaunchMode {
+  const mode = process.env['FSBO_LAUNCH_MODE'] ?? 'lead-only';
+  return mode === 'stripe' ? 'stripe' : 'lead-only';
+}
 
 /** Three-tier product model package types. */
 export type PackageType =
@@ -334,7 +344,8 @@ async function handleFsboIntake(
   const listingId = randomUUID();
   const leadId = randomUUID();
   const now = new Date().toISOString();
-  const status: ListingStatus = 'awaiting-payment';
+  const launchMode = getFsboLaunchMode();
+  const status: ListingStatus = launchMode === 'stripe' ? 'awaiting-payment' : 'awaiting-vhz-launch';
 
   const listingData = {
     listingId,
@@ -361,7 +372,20 @@ async function handleFsboIntake(
     data: listingData as unknown as Record<string, unknown>,
   });
 
-  // Build signed handoff URL
+  // In lead-only mode, skip the signed handoff URL — just return the listing/lead IDs
+  if (launchMode === 'lead-only') {
+    return {
+      statusCode: 201,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        listingId,
+        leadId,
+        status,
+      }),
+    };
+  }
+
+  // Stripe mode: build signed handoff URL for VHZ checkout
   const baseUrl =
     process.env['VHZ_CHECKOUT_BASE_URL'] ?? 'https://virtualhomezone.com/checkout';
   const ts = Math.floor(Date.now() / 1000);

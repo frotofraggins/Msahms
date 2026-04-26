@@ -139,10 +139,17 @@ export function FsboClient() {
         email,
         name: contactName,
         phone,
-      }) as { listingId: string; leadId: string; handoffUrl: string };
+      }) as { listingId: string; leadId: string; handoffUrl?: string; status?: string };
 
-      // Redirect to VHZ signed checkout URL
-      window.location.href = result.handoffUrl;
+      const launchMode = process.env['NEXT_PUBLIC_FSBO_LAUNCH_MODE'] ?? 'lead-only';
+
+      if (launchMode === 'stripe' && result.handoffUrl) {
+        // Stripe mode: redirect to VHZ signed checkout URL
+        window.location.href = result.handoffUrl;
+      } else {
+        // Lead-only mode: show confirmation, no redirect
+        setLeadCreated(true);
+      }
     } catch {
       // Fallback: still allow user to proceed
       setLeadCreated(true);
@@ -506,29 +513,32 @@ export function FsboClient() {
                     : 'bg-secondary hover:bg-secondary-dark',
                 )}
               >
-                {submitting ? 'Saving...' : 'Proceed to Payment'}
+                {submitting
+                  ? 'Saving...'
+                  : (process.env['NEXT_PUBLIC_FSBO_LAUNCH_MODE'] ?? 'lead-only') === 'stripe'
+                    ? 'Proceed to Payment'
+                    : 'Submit Listing Request'}
               </button>
               <p className="text-center text-[10px] text-text-light">
-                You&apos;ll be redirected to Virtual Home Zone to complete payment via their
-                existing Stripe checkout.
+                {(process.env['NEXT_PUBLIC_FSBO_LAUNCH_MODE'] ?? 'lead-only') === 'stripe'
+                  ? "You'll be redirected to Virtual Home Zone to complete payment via their existing Stripe checkout."
+                  : "We'll follow up within 24 hours to schedule photography and collect payment."}
               </p>
             </div>
           ) : (
             <div className="space-y-3 text-center">
               <p className="text-sm font-medium text-success">
-                ✓ Your info has been saved
+                ✓ Thanks, your listing is in our queue.
               </p>
-              <a
-                href="https://virtualhomezone.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg bg-secondary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-secondary-dark"
-              >
-                Complete Payment on Virtual Home Zone
-                <ExternalLink className="h-4 w-4" />
-              </a>
-              <p className="text-[10px] text-text-light">
-                Payment is processed by Virtual Home Zone via their existing Stripe account.
+              <p className="text-sm text-text-light">
+                We&apos;ll email you within 24 hours to schedule your photography session
+                with Virtual Home Zone and collect payment for your ${pkg.price} {pkg.name} package.
+              </p>
+              <p className="text-sm text-text-light">
+                Any questions? Reach us at{' '}
+                <a href="mailto:hello@mesahomes.com" className="font-medium text-primary underline hover:no-underline">
+                  hello@mesahomes.com
+                </a>
               </p>
             </div>
           )}
