@@ -47,13 +47,16 @@ export const ZILLOW_CSV_URLS: Record<string, string> = {
 };
 
 /**
- * Metro area name used to filter metro-level CSV rows.
- * Note: MARICOPA_SERVICE_ZIPS and SERVICE_AREA_ZIPS are now defined
- * in lib/county-router.ts to avoid cross-Lambda imports. Each Lambda
- * is packaged separately and can only import from ../../lib, not from
- * other lambdas/ directories.
+ * Metro area identifier in Zillow Research CSVs.
+ *
+ * Zillow uses MSA (Metropolitan Statistical Area) nomenclature for metro
+ * files. The Phoenix MSA spans Maricopa + Pinal counties — our entire
+ * service area — and is labeled simply "Phoenix, AZ" in the CSV
+ * `RegionName` column with `RegionType=msa`. Earlier versions of this
+ * code used "Phoenix-Mesa-Chandler, AZ" (the CSA name), which does not
+ * appear in Zillow metro files and caused zero metro rows to match.
  */
-export const METRO_NAME = 'Phoenix-Mesa-Chandler, AZ';
+export const METRO_NAME = 'Phoenix, AZ';
 
 // ---------------------------------------------------------------------------
 // CSV download

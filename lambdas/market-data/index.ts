@@ -85,16 +85,24 @@ async function handleMarketZip(
  * GET /api/v1/market/metro — Metro-level market metrics.
  *
  * Reads all metro metrics from DynamoDB:
- *   PK: MARKET#METRO#phoenix-mesa, SK begins_with LATEST (multiple records)
+ *   PK: MARKET#METRO#phoenix-mesa
+ *   SK: {metric}#LATEST (e.g., MEDIAN_PRICE#LATEST, DAYS_ON_MARKET#LATEST)
+ *
+ * Also-stored per-month snapshots have SK `{metric}#{YYYY-MM}`; this endpoint
+ * returns only the `#LATEST` pointers.
+ *
+ * Filters SK ends-with '#LATEST' at the application layer because DynamoDB
+ * only supports prefix matching (`begins_with`), not suffix matching.
  */
 async function handleMarketMetro(
   _correlationId: string,
 ): Promise<LambdaProxyResponse> {
-  const result = await queryByPK('MARKET#METRO#phoenix-mesa', {
-    skCondition: { operator: 'begins_with', value: '' },
-  });
+  // Query all items under this PK. No SK filter — we need both the
+  // dated records AND the LATEST pointers in the raw result to then
+  // filter on the suffix below.
+  const result = await queryByPK('MARKET#METRO#phoenix-mesa');
 
-  // Filter to only LATEST records
+  // Keep only the `{metric}#LATEST` pointers.
   const latestMetrics = result.items
     .filter((item) => typeof item.SK === 'string' && item.SK.endsWith('#LATEST'))
     .map((item) => item.data);

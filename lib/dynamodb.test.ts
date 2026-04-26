@@ -265,3 +265,32 @@ describe('batchWrite', () => {
     expect(requests[0].PutRequest.Item.updatedAt).toBeTruthy();
   });
 });
+
+describe('queryByPK skCondition validation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('throws a clear error when skCondition.value is empty string', async () => {
+    await expect(
+      queryByPK('MARKET#METRO#phoenix-mesa', {
+        skCondition: { operator: 'begins_with', value: '' },
+      }),
+    ).rejects.toThrow(/cannot be an empty string/);
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+
+  it('throws when between operator is missing value2', async () => {
+    await expect(
+      queryByPK('MARKET#METRO#phoenix-mesa', {
+        skCondition: { operator: 'between', value: '2026-01' },
+      }),
+    ).rejects.toThrow(/value2 is required/);
+  });
+
+  it('succeeds without skCondition (queries all items under PK)', async () => {
+    mockSend.mockResolvedValueOnce({ Items: [{ PK: 'X', SK: 'Y' }] });
+    const result = await queryByPK('MARKET#METRO#phoenix-mesa');
+    expect(result.items).toHaveLength(1);
+  });
+});

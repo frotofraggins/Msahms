@@ -18,8 +18,8 @@ const ZHVI_ZIP_CSV_HEADER =
   'RegionID,SizeRank,RegionName,RegionType,StateName,State,City,Metro,CountyName,2025-09-30,2025-10-31,2025-11-30,2025-12-31,2026-01-31,2026-02-28,2026-03-31';
 
 const ZHVI_ZIP_CSV_ROWS = [
-  '12345,100,85140,zip,Arizona,AZ,San Tan Valley,"Phoenix-Mesa-Chandler, AZ",Pinal,430000,431000,432000,433000,433500,433401,432201',
-  '12346,200,85201,zip,Arizona,AZ,Mesa,"Phoenix-Mesa-Chandler, AZ",Maricopa,355000,356000,357000,358000,359000,360000,360214',
+  '12345,100,85140,zip,Arizona,AZ,San Tan Valley,"Phoenix, AZ",Pinal,430000,431000,432000,433000,433500,433401,432201',
+  '12346,200,85201,zip,Arizona,AZ,Mesa,"Phoenix, AZ",Maricopa,355000,356000,357000,358000,359000,360000,360214',
   '99999,500,90210,zip,California,CA,Beverly Hills,"Los Angeles-Long Beach-Anaheim, CA",Los Angeles,5000000,5100000,5200000,5300000,5400000,5500000,5600000',
 ];
 
@@ -29,7 +29,7 @@ const METRO_CSV_HEADER =
   'RegionID,SizeRank,RegionName,RegionType,StateName,State,2025-09-30,2025-10-31,2025-11-30,2025-12-31,2026-01-31,2026-02-28,2026-03-31';
 
 const METRO_CSV_ROWS = [
-  '100,1,"Phoenix-Mesa-Chandler, AZ",msa,Arizona,AZ,440000,442000,444000,446000,448000,452000,454000',
+  '100,1,"Phoenix, AZ",msa,Arizona,AZ,440000,442000,444000,446000,448000,452000,454000',
   '200,2,"Los Angeles-Long Beach-Anaheim, CA",msa,California,CA,800000,810000,820000,830000,840000,850000,860000',
 ];
 
@@ -175,7 +175,7 @@ describe('parseMetroCsv', () => {
     const result = parseMetroCsv(SAMPLE_METRO_CSV, 'medianSalePrice');
 
     expect(result).not.toBeNull();
-    expect(result!.metro).toBe('Phoenix-Mesa-Chandler, AZ');
+    expect(result!.metro).toBe('Phoenix, AZ');
     expect(result!.metric).toBe('medianSalePrice');
     expect(result!.value).toBe(454000);
     expect(result!.month).toBe('2026-03');
@@ -239,7 +239,7 @@ describe('generateDynamoDBItems', () => {
   it('should produce correct PK/SK patterns for metro records', () => {
     const metroData = [
       {
-        metro: 'Phoenix-Mesa-Chandler, AZ',
+        metro: 'Phoenix, AZ',
         metric: 'medianSalePrice',
         value: 454000,
         month: '2026-03',
@@ -277,7 +277,7 @@ describe('generateDynamoDBItems', () => {
 
     const metroData = [
       {
-        metro: 'Phoenix-Mesa-Chandler, AZ',
+        metro: 'Phoenix, AZ',
         metric: 'inventory',
         value: 25524,
         month: '2026-03',

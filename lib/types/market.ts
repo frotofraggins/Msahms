@@ -38,7 +38,7 @@ export interface MarketDataZip {
 
 /** Metro-level market metric record. */
 export interface MarketDataMetro {
-  /** Metro area name (e.g. "Phoenix-Mesa-Chandler, AZ") */
+  /** Metro area name (e.g. "Phoenix, AZ") */
   metro: string;
   /** Metric name (e.g. "medianSalePrice", "daysOnMarket") */
   metric: string;
