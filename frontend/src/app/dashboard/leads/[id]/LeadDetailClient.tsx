@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import { api, ApiRequestError } from '@/lib/api';
 
 interface LeadDetail {
-  id: string;
+  leadId: string;
   name: string;
   email: string;
   phone: string;
@@ -30,7 +30,7 @@ interface LeadDetail {
   toolSource: string;
   timeframe: string;
   priceRange?: string;
-  status: string;
+  leadStatus: string;
   notes: string[];
   toolData?: Record<string, unknown>;
   pathHistory?: string[];
@@ -48,7 +48,7 @@ const statusOptions = [
 export default function LeadDetailClient() {
   const pathname = usePathname();
   // Extract lead ID from pathname: /dashboard/leads/{id}
-  const id = pathname.split('/').pop() ?? '';
+  const id = pathname.split('/').filter(Boolean).pop() ?? '';
 
   const [lead, setLead] = useState<LeadDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +57,7 @@ export default function LeadDetailClient() {
   const [statusSaving, setStatusSaving] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [noteSaving, setNoteSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchLead();
@@ -67,9 +68,13 @@ export default function LeadDetailClient() {
     setLoading(true);
     setError(null);
     try {
-      const data = (await api.dashboard.lead(id)) as LeadDetail;
+      const raw = (await api.dashboard.lead(id)) as { lead?: LeadDetail } | LeadDetail;
+      // API wraps in { lead: {...} }; unwrap defensively in case that ever changes.
+      const data = 'lead' in (raw as object) && (raw as { lead?: LeadDetail }).lead
+        ? (raw as { lead: LeadDetail }).lead
+        : (raw as LeadDetail);
       setLead(data);
-      setStatus(data.status);
+      setStatus(data.leadStatus ?? '');
     } catch (err) {
       if (err instanceof ApiRequestError) {
         setError(err.apiError?.message ?? 'Failed to load lead.');
@@ -88,7 +93,7 @@ export default function LeadDetailClient() {
       await api.dashboard.updateLead(id, { status: newStatus });
     } catch {
       // Revert on failure
-      if (lead) setStatus(lead.status);
+      if (lead) setStatus(lead.leadStatus);
     } finally {
       setStatusSaving(false);
     }
@@ -107,6 +112,25 @@ export default function LeadDetailClient() {
       // Silently fail — note stays in input
     } finally {
       setNoteSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!lead) return;
+    const label = lead.name || lead.email || lead.leadId;
+    if (!confirm(`Delete lead "${label}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await api.dashboard.deleteLead(id);
+      // Redirect back to list
+      window.location.href = '/dashboard/leads';
+    } catch (err) {
+      alert(
+        err instanceof ApiRequestError
+          ? err.apiError?.message ?? 'Failed to delete lead.'
+          : 'Network error. Please try again.',
+      );
+      setDeleting(false);
     }
   }
 
@@ -168,6 +192,14 @@ export default function LeadDetailClient() {
             ))}
           </select>
           {statusSaving && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 active:scale-[0.98] transition-all disabled:opacity-50"
+            aria-label="Delete lead"
+          >
+            {deleting ? 'Deleting…' : 'Delete'}
+          </button>
         </div>
       </div>
 

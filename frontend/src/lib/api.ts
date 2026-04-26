@@ -222,6 +222,8 @@ export const api = {
       apiRequest(`/dashboard/leads/${id}`, { auth: true }),
     updateLead: (id: string, body: unknown) =>
       apiRequest(`/dashboard/leads/${id}`, { method: 'PATCH', body, auth: true }),
+    deleteLead: (id: string) =>
+      apiRequest(`/dashboard/leads/${id}`, { method: 'DELETE', auth: true }),
     team: () =>
       apiRequest('/dashboard/team', { auth: true }),
     inviteAgent: (body: unknown) =>
