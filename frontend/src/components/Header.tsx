@@ -18,7 +18,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-warm-border bg-paper">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+      <div className="relative mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         {/* Logo */}
         <Link href="/" className="flex items-center" aria-label="MesaHomes — Mesa AZ real estate">
           <img
@@ -30,8 +30,8 @@ export function Header() {
           />
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-6 md:flex">
+        {/* Desktop nav — absolutely centered on the container, independent of logo/CTA widths */}
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
