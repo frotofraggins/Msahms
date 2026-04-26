@@ -45,6 +45,52 @@ const statusOptions = [
   { value: 'closed', label: 'Closed' },
 ];
 
+/**
+ * Build a Google Calendar "create event" URL pre-filled with the lead's
+ * contact info. Opens a 30-minute slot starting at the next top-of-hour
+ * tomorrow. Owner can then adjust the time and invite the lead directly
+ * from Google Calendar — which handles the actual scheduling, reminders,
+ * and ICS-to-client delivery we'd otherwise have to build.
+ *
+ * Trade-off: we're not owning the scheduling UX (no in-product "pick a
+ * time" widget). That's a deliberate Phase 1 shortcut. Building a real
+ * scheduler is in scope for Phase 1B's "client portal" spec.
+ */
+function buildCalendarLink(lead: LeadDetail): string {
+  // Tomorrow at 10:00 local — cheap default that the user can adjust.
+  const start = new Date();
+  start.setDate(start.getDate() + 1);
+  start.setHours(10, 0, 0, 0);
+  const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+  const fmt = (d: Date): string =>
+    d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+  const title = `MesaHomes follow-up — ${lead.name}`;
+  const details = [
+    `Lead: ${lead.name}`,
+    lead.phone ? `Phone: ${lead.phone}` : null,
+    lead.email ? `Email: ${lead.email}` : null,
+    `Tool: ${lead.toolSource}`,
+    `Lead type: ${lead.leadType}`,
+    `Timeframe: ${lead.timeframe}`,
+    lead.priceRange ? `Price range: ${lead.priceRange}` : null,
+    `Lead ID: ${lead.leadId}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title,
+    dates: `${fmt(start)}/${fmt(end)}`,
+    details,
+    add: lead.email,
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 export default function LeadDetailClient() {
   const pathname = usePathname();
   // Extract lead ID from pathname: /dashboard/leads/{id}
@@ -254,10 +300,15 @@ export default function LeadDetailClient() {
               <Mail className="h-4 w-4" />
               Email
             </a>
-            <button className="flex items-center gap-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-text hover:bg-gray-50">
+            <a
+              href={buildCalendarLink(lead)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-text hover:bg-gray-50"
+            >
               <Calendar className="h-4 w-4" />
               Schedule
-            </button>
+            </a>
           </div>
         </div>
 
