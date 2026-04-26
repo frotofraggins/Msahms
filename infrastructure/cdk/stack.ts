@@ -44,7 +44,16 @@ const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: 
   'dashboard-notifications': { source: 'dashboard-notifications', memory: 256, timeout: 10 },
   'dashboard-listings': { source: 'dashboard-listings', memory: 256, timeout: 10 },
   'data-pipeline': { source: 'data-pipeline', memory: 1024, timeout: 300 },
-  'notification-worker': { source: 'notification-worker', memory: 256, timeout: 10 },
+  'notification-worker': {
+    source: 'notification-worker',
+    memory: 256,
+    timeout: 10,
+    env: {
+      NOTIFICATION_FROM_ADDRESS: 'notifications@mesahomes.com',
+      NOTIFICATION_REPLY_TO: 'sales@mesahomes.com',
+      OWNER_NOTIFICATION_ADDRESS: 'sales@mesahomes.com',
+    },
+  },
 };
 
 const SECRET_NAMES = [
