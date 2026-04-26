@@ -144,7 +144,10 @@ export default function HomePage() {
         <section
           className="relative overflow-hidden px-4 py-20 md:py-32"
           style={{
-            background: 'linear-gradient(135deg, #FDFCF9 0%, #F5F2EC 30%, #E8E2D6 60%, #D9D3C6 100%)',
+            backgroundImage:
+              'linear-gradient(135deg, rgba(253,252,249,0.92) 0%, rgba(245,242,236,0.86) 40%, rgba(217,211,198,0.78) 100%), url(/photos/mesa-home-01.webp)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
           }}
         >
           {/* Decorative mesh circles — purely visual */}
