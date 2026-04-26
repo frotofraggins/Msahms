@@ -64,7 +64,7 @@ export default function AboutPage() {
               estate salesperson (license reactivation in progress, 2026).
             </p>
             <p>
-              For the Flat-Fee MLS and Full-Service tiers, MesaHomes partners
+              For the Mesa Listing Service and Full-Service tiers, MesaHomes partners
               with a designated Arizona broker of record (partnership in
               finalization). The FSBO tier requires no broker — it's a
               self-directed package of photography, listing services, and

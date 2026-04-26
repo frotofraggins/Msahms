@@ -174,7 +174,7 @@ export default function FsboPage() {
                       <th className="px-3 py-3 font-semibold text-charcoal">Feature</th>
                       <th className="px-3 py-3 text-center font-semibold text-primary">FSBO Only</th>
                       <th className="px-3 py-3 text-center font-semibold text-primary">
-                        Flat-Fee MLS
+                        Mesa Listing Service
                         <span className="ml-1 rounded bg-secondary/10 px-1.5 py-0.5 text-[10px] font-semibold text-secondary">
                           Popular
                         </span>

@@ -41,7 +41,7 @@ export default function TermsPage() {
             MesaHomes is a real estate lead generation and service platform
             operated by Nick Flournoy, a licensed Arizona real estate
             salesperson. For services requiring brokerage representation
-            (Flat-Fee MLS listing and Full-Service tiers), MesaHomes
+            (Mesa Listing Service and Full-Service tiers), MesaHomes
             operates under a designated Arizona broker of record per
             Arizona Revised Statutes Title 32, Chapter 20.
           </p>
@@ -58,7 +58,7 @@ export default function TermsPage() {
               handle your own sale as the owner. No MLS listing included.
             </li>
             <li>
-              <strong>Flat-Fee MLS Listing — $999 + $400 at closing</strong>:
+              <strong>Mesa Listing Service — $999 + $400 at closing</strong>:
               Your home is listed on ARMLS (Arizona Regional MLS) and
               syndicated to major portals (Zillow, Realtor.com, Redfin,
               Trulia, Homes.com) by our designated broker of record.
@@ -112,7 +112,7 @@ export default function TermsPage() {
             provided), except as required by Arizona consumer protection law.
           </p>
           <p>
-            For the Flat-Fee MLS tier: the $999 activation fee is non-refundable
+            For the Mesa Listing Service tier: the $999 activation fee is non-refundable
             once the listing goes live on the MLS. The $400 closing fee is
             only due if the home sells through our listing.
           </p>

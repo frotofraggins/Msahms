@@ -32,7 +32,7 @@ export default function PrivacyPage() {
           <p>
             MesaHomes is operated by Nick Flournoy, a licensed Arizona real
             estate salesperson, doing business as MesaHomes ("we," "us,"
-            "our"). Our website is mesahomes.com. For the Flat-Fee MLS and
+            "our"). Our website is mesahomes.com. For the Mesa Listing Service and
             Full-Service tiers, MesaHomes operates under a designated
             Arizona broker of record.
           </p>
@@ -82,8 +82,8 @@ export default function PrivacyPage() {
             <li><strong>Google:</strong> Google Workspace for email, Google Maps for property visualization, Google Analytics for usage data (if enabled)</li>
             <li><strong>Stripe:</strong> payment processing when you purchase a FSBO package or flat-fee listing service</li>
             <li><strong>Virtual Home Zone:</strong> our professional real estate photography and media services partner</li>
-            <li><strong>Our broker of record:</strong> when you purchase a Flat-Fee MLS or Full-Service tier (required for us to legally handle the transaction)</li>
-            <li><strong>MLS and syndication portals:</strong> when you list with our Flat-Fee MLS tier, your listing data and photos go to ARMLS, Zillow, Realtor.com, Redfin, Trulia, and Homes.com</li>
+            <li><strong>Our broker of record:</strong> when you purchase Mesa Listing Service or Full-Service tier (required for us to legally handle the transaction)</li>
+            <li><strong>MLS and syndication portals:</strong> when you list with our Mesa Listing Service tier, your listing data and photos go to ARMLS, Zillow, Realtor.com, Redfin, Trulia, and Homes.com</li>
           </ul>
           <p>
             We may also share information when required by law, to prevent

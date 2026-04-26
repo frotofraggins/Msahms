@@ -173,7 +173,7 @@ export function ListingTierCards() {
           </span>
           <div className="mb-4 flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-bold text-text">Flat-Fee MLS Listing</h2>
+            <h2 className="text-lg font-bold text-text">Mesa Listing Service</h2>
           </div>
           <div className="mb-4">
             <span className="text-2xl font-bold text-primary">$999</span>
@@ -237,7 +237,7 @@ export function ListingTierCards() {
           </p>
           <ul className="mb-6 space-y-2">
             {[
-              'Everything in Flat-Fee MLS',
+              'Everything in Mesa Listing Service',
               'Dedicated licensed agent',
               'Pricing strategy & CMA',
               'Showing coordination',
@@ -268,8 +268,8 @@ export function ListingTierCards() {
         leadType="Seller"
         toolSource="flat-fee-listing"
         tag="flat-fee-waitlist"
-        headline="Join the Flat-Fee MLS Waitlist"
-        subtext="We'll notify you as soon as flat-fee MLS listings go live. No commitment."
+        headline="Join the Mesa Listing Service Waitlist"
+        subtext="We'll notify you as soon as Mesa Listing Service goes live. No commitment."
       />
       <LeadCaptureModal
         open={fullServiceModalOpen}
@@ -319,7 +319,7 @@ export function ComparisonTable() {
                 <th className="px-4 py-3 text-center font-medium text-text">
                   <div className="flex flex-col items-center">
                     <Building2 className="mb-1 h-4 w-4 text-primary" />
-                    Flat-Fee MLS
+                    Mesa Listing Service
                   </div>
                 </th>
                 <th className="px-4 py-3 text-center font-medium text-text">
