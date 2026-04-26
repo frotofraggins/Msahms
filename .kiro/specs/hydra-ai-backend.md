@@ -1,10 +1,38 @@
 # Hydra AI Backend Integration
 
-Status: ready to implement. Est. 2-3 hours local dev (Hydra desktop) + 1-2 hours cloud plumbing (Kiro B or Cline).
+Status: ready to implement. **Scoped down version** — much of the
+scaffolding already exists. Est. 1-1.5 hours total.
+
+## What already exists (verified 2026-04-26)
+
+Kiro B already shipped the AI infrastructure skeleton:
+
+- ✅ `lambdas/ai-proxy/index.ts` — routes `/api/v1/ai/listing-description`
+  and `/api/v1/ai/offer-draft`, handles request validation, error codes,
+  CORS
+- ✅ `lambdas/ai-proxy/compliance-filter.ts` — scans AI output for
+  compliance violations (can't say "great investment," can't give legal
+  advice, fair-housing red flags, etc.). Has property + unit tests.
+- ✅ `lib/ai-prompts/` — 4 prompt templates (listing-description,
+  offer-draft, tool-summary, city-intro) with constants file
+- ✅ Frontend tool pages that call these endpoints and display results
+
+**What the current Lambda does**: accepts requests, validates input,
+builds a prompt via `lib/ai-prompts/`, **returns a mock response**,
+runs the compliance filter over the mock response, returns to user.
+
+Actual comment in the code:
+
+> `/* For MVP: returns mock AI responses. The actual RTX 4090 MCP server
+> integration will be configured at deployment. */`
+
+## What's missing — just the model call
+
+We need to replace the mock-response step with a real call to Hydra
+running on the owner's desktop. Everything else (routing, prompts,
+compliance, error handling) is already in place.
 
 ## Purpose
-
-Route MesaHomes AI inference requests to a local Hydra (Ollama) instance running on the owner's RTX 4090 desktop, instead of calling Amazon Bedrock or OpenAI. Saves $5-50/month at early volume. Upgrade path to hosted Bedrock is a single env-var flip when warranted.
 
 ## Architecture
 
