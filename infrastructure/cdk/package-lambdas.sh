@@ -22,10 +22,11 @@ mkdir -p "$BUILD_DIR"
 
 for name in "${LAMBDAS[@]}"; do
   staging="$BUILD_DIR/stage-$name"
-  mkdir -p "$staging"
-  # Copy compiled lambda code (assumes tsc outputs to dist/)
-  cp -r "$REPO_ROOT/dist/lambdas/$name/"* "$staging/"
-  # Copy shared lib (compiled) — lambdas import @mesahomes/lib/* so place at lib/
+  mkdir -p "$staging/lambdas/$name"
+  # Copy compiled lambda code into lambdas/<name>/ preserving relative paths
+  cp -r "$REPO_ROOT/dist/lambdas/$name/"* "$staging/lambdas/$name/"
+  # Copy shared lib (compiled) — lambdas import ../../lib/*.js so this
+  # must sit at the repo root level inside the zip
   mkdir -p "$staging/lib"
   cp -r "$REPO_ROOT/dist/lib/"* "$staging/lib/"
   # Package.json for type:module resolution

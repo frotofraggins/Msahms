@@ -177,7 +177,7 @@ export class MesaHomesStack extends Stack {
       const fn = new lambda.Function(this, `Fn-${name}`, {
         functionName: `mesahomes-${name}`,
         runtime: lambda.Runtime.NODEJS_20_X,
-        handler: 'index.handler',
+        handler: `lambdas/${cfg.source}/index.handler`,
         // Zip the lambda source + shared lib/ folder. You'll package this before `cdk deploy`.
         // See deploy/README.md for the packaging script.
         code: lambda.Code.fromAsset(path.join(REPO_ROOT, '.build', `${cfg.source}.zip`)),
