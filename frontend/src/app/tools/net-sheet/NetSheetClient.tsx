@@ -301,8 +301,12 @@ export function NetSheetClient() {
         </div>
       )}
 
-      {/* Property Data Card (placeholder when address entered) */}
-      {hasAddress && (
+      {/* Property Data Card — hidden until we have real data from a lookup.
+          Net Sheet is a seller-calculation tool, the comps/property card
+          placeholder was causing user confusion (users thought it was
+          reporting data about THEIR address when it was static sample data).
+          Showing nothing is better than showing fake data. */}
+      {false && hasAddress && (
         <div className="mb-6 space-y-4">
           <PropertyDataCard property={placeholderProperty} />
           <NearbyComps comps={placeholderComps} subdivision="Sunland Village" />
