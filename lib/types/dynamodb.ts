@@ -17,6 +17,7 @@ export enum EntityType {
   NOTIFICATION = 'NOTIFICATION',
   VISITOR_PROFILE = 'VISITOR_PROFILE',
   SAVED_SCENARIO = 'SAVED_SCENARIO',
+  CONTENT_INGEST = 'CONTENT_INGEST',
 }
 
 /** Base interface for every item stored in the mesahomes-main table. */

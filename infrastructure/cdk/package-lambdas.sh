@@ -12,6 +12,7 @@ LAMBDAS=(
   leads-capture tools-calculator property-lookup market-data content-api
   ai-proxy listing-service auth-api dashboard-leads dashboard-team
   dashboard-notifications dashboard-listings data-pipeline notification-worker
+  content-ingest
 )
 
 echo "Compiling TypeScript..."

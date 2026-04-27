@@ -54,6 +54,14 @@ const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: 
       OWNER_NOTIFICATION_ADDRESS: 'sales@mesahomes.com',
     },
   },
+  'content-ingest': {
+    source: 'content-ingest',
+    memory: 512,
+    timeout: 300,
+    env: {
+      CONTENT_INGEST_BUCKET: 'mesahomes-content-ingest',
+    },
+  },
 };
 
 const SECRET_NAMES = [
@@ -148,6 +156,25 @@ export class MesaHomesStack extends Stack {
       cors: [{ allowedOrigins: ['https://mesahomes.com', 'https://www.mesahomes.com'], allowedMethods: [s3.HttpMethods.GET], allowedHeaders: ['*'] }],
     });
 
+    // Content ingest bucket — stores raw fetched items from each source
+    // as audit trail. 90-day Glacier transition keeps costs near zero
+    // while preserving historical data for re-processing.
+    const contentIngestBucket = new s3.Bucket(this, 'ContentIngestBucket', {
+      bucketName: 'mesahomes-content-ingest',
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: RemovalPolicy.RETAIN,
+      lifecycleRules: [
+        {
+          id: 'transition-to-glacier-90-days',
+          enabled: true,
+          transitions: [
+            { storageClass: s3.StorageClass.GLACIER_INSTANT_RETRIEVAL, transitionAfter: Duration.days(90) },
+          ],
+        },
+      ],
+    });
+
     // Cognito
     const userPool = new cognito.UserPool(this, 'UserPool', {
       userPoolName: 'mesahomes-userpool',
@@ -214,6 +241,7 @@ export class MesaHomesStack extends Stack {
     dataBucket.grantReadWrite(fns['data-pipeline']!);
     photosBucket.grantReadWrite(fns['property-lookup']!);
     photosBucket.grantReadWrite(fns['listing-service']!);
+    contentIngestBucket.grantReadWrite(fns['content-ingest']!);
     fns['auth-api']!.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonCognitoPowerUser'));
     fns['dashboard-team']!.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonCognitoPowerUser'));
 
@@ -228,6 +256,25 @@ export class MesaHomesStack extends Stack {
     new events.Rule(this, 'DataPipelineCron', {
       schedule: events.Schedule.cron({ minute: '0', hour: '6', day: '*', month: '*', year: '*' }),
       targets: [new targets.LambdaFunction(fns['data-pipeline']!)],
+    });
+
+    // EventBridge cron -> content-ingest (daily 14:00 UTC = 7am MST)
+    // Runs 'daily' cadence sources; weekly/monthly handled by separate rules.
+    new events.Rule(this, 'ContentIngestDailyCron', {
+      schedule: events.Schedule.cron({ minute: '0', hour: '14', day: '*', month: '*', year: '*' }),
+      targets: [
+        new targets.LambdaFunction(fns['content-ingest']!, {
+          event: events.RuleTargetInput.fromObject({ cadence: 'daily' }),
+        }),
+      ],
+    });
+    new events.Rule(this, 'ContentIngestWeeklyCron', {
+      schedule: events.Schedule.cron({ minute: '0', hour: '14', weekDay: 'MON', month: '*', year: '*' }),
+      targets: [
+        new targets.LambdaFunction(fns['content-ingest']!, {
+          event: events.RuleTargetInput.fromObject({ cadence: 'weekly' }),
+        }),
+      ],
     });
 
     // API Gateway
@@ -286,6 +333,7 @@ export class MesaHomesStack extends Stack {
     new CfnOutput(this, 'UserPoolClientId', { value: userPoolClient.userPoolClientId });
     new CfnOutput(this, 'TableName', { value: table.tableName });
     new CfnOutput(this, 'DataBucketName', { value: dataBucket.bucketName });
+    new CfnOutput(this, 'ContentIngestBucketName', { value: contentIngestBucket.bucketName });
     new CfnOutput(this, 'PhotosBucketName', { value: photosBucket.bucketName });
   }
 }
