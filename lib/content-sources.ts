@@ -9,7 +9,7 @@
  * See .kiro/specs/content-ingest-pipeline.md for architecture rationale.
  */
 
-export type SourceType = 'legistar' | 'socrata' | 'rss' | 'zillow-csv' | 'gis' | 'html';
+export type SourceType = 'legistar' | 'legistar-matters' | 'socrata' | 'rss' | 'zillow-csv' | 'gis' | 'big-sales' | 'html';
 
 export type Topic =
   | 'zoning' // City council, planning & zoning cases, development
@@ -102,18 +102,35 @@ const PHASE_1_SOURCES: ContentSource[] = [
       maxSubdivisions: 2000,
     },
   },
+  {
+    id: 'legistar-matters',
+    name: 'Mesa Legistar — Legislative Matters (Zoning, Rezoning, Ordinances)',
+    type: 'legistar-matters',
+    url: 'https://webapi.legistar.com/v1/mesa/matters',
+    topic: 'zoning',
+    cadence: 'daily',
+    config: {
+      lookbackDays: 60,
+      matterTypes: ['Zoning', 'Rezoning', 'Ordinance', 'Resolution'],
+    },
+  },
+  {
+    id: 'maricopa-big-sales',
+    name: 'Maricopa County — High-Value Residential Sales',
+    type: 'big-sales',
+    url: 'https://gis.mcassessor.maricopa.gov/arcgis/rest/services/Parcels/MapServer/0/query',
+    topic: 'market',
+    cadence: 'weekly',
+    config: {
+      cities: ['MESA', 'GILBERT', 'CHANDLER', 'QUEEN CREEK', 'APACHE JUNCTION'],
+      minPrice: 1500000,
+      limit: 25,
+    },
+  },
 ];
 
 // Phase 2 — to enable after Phase 1 proves the pattern
 const PHASE_2_SOURCES: ContentSource[] = [
-  {
-    id: 'legistar-matters',
-    name: 'Mesa Legistar — Legislative Matters (Zoning Cases)',
-    type: 'legistar',
-    url: 'https://webapi.legistar.com/v1/mesa/matters',
-    topic: 'zoning',
-    cadence: 'daily',
-  },
   {
     id: 'az-legislature-bills',
     name: 'Arizona Legislature — Real Estate Bills',

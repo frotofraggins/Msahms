@@ -25,9 +25,11 @@ import { getItem, putItem } from '../../lib/dynamodb.js';
 import { generateCorrelationId } from '../../lib/errors.js';
 import { EntityType } from '../../lib/types/dynamodb.js';
 import { fetchLegistarEvents } from './parsers/legistar.js';
+import { fetchLegistarMatters } from './parsers/legistar-matters.js';
 import { fetchSocrata } from './parsers/socrata.js';
 import { fetchRss } from './parsers/rss.js';
 import { fetchGis } from './parsers/gis.js';
+import { fetchBigSales } from './parsers/big-sales.js';
 
 const s3 = new S3Client({ region: process.env.AWS_REGION ?? 'us-west-2' });
 const BUCKET = process.env.CONTENT_INGEST_BUCKET ?? 'mesahomes-content-ingest';
@@ -95,12 +97,16 @@ async function fetchForSource(
   switch (source.type) {
     case 'legistar':
       return fetchLegistarEvents(source);
+    case 'legistar-matters':
+      return fetchLegistarMatters(source);
     case 'socrata':
       return fetchSocrata(source);
     case 'rss':
       return fetchRss(source);
     case 'gis':
       return fetchGis(source);
+    case 'big-sales':
+      return fetchBigSales(source);
     default:
       console.warn(`[content-ingest] no parser for type=${source.type}, source=${source.id}`);
       return [];
