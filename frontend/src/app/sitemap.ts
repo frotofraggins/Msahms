@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import publishedBlogs from '@/data/published-blogs.json';
 
 export const dynamic = 'force-static';
 
@@ -72,10 +73,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  // Blog posts (exclude drafts — only published slugs)
-  const blogPages: MetadataRoute.Sitemap = publishedBlogSlugs.map((slug) => ({
+  // Blog posts — union of hardcoded seeds + AI-drafted published posts from DDB
+  const aiSlugs = (publishedBlogs as Array<{ slug: string; publishedAt: string }>).map((p) => ({
+    slug: p.slug,
+    date: new Date(p.publishedAt),
+  }));
+  const hardcodedSlugs = publishedBlogSlugs.map((slug) => ({ slug, date: now }));
+  const blogMap = new Map<string, Date>();
+  for (const b of [...hardcodedSlugs, ...aiSlugs]) blogMap.set(b.slug, b.date);
+
+  const blogPages: MetadataRoute.Sitemap = Array.from(blogMap.entries()).map(([slug, date]) => ({
     url: `${BASE_URL}/blog/${slug}`,
-    lastModified: now,
+    lastModified: date,
     changeFrequency: 'monthly' as const,
     priority: 0.6,
   }));

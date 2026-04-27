@@ -4,6 +4,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { StickyContactBar } from '@/components/StickyContactBar';
 import { FullServiceUpgradeBanner } from '@/components/FullServiceUpgradeBanner';
+import publishedBlogs from '@/data/published-blogs.json';
 
 export const metadata: Metadata = {
   title: 'Blog — Mesa Real Estate News & Guides',
@@ -71,6 +72,25 @@ function formatDate(dateStr: string) {
   });
 }
 
+/** Merge AI-drafted posts (from DDB) with hardcoded seed posts, newest first. */
+const aiPosts = (publishedBlogs as Array<{
+  slug: string;
+  title: string;
+  metaDescription: string;
+  topic: string;
+  publishedAt: string;
+}>).map((p) => ({
+  slug: p.slug,
+  title: p.title,
+  excerpt: p.metaDescription,
+  date: p.publishedAt.slice(0, 10),
+  topic: p.topic,
+}));
+
+const allPosts = [...aiPosts, ...posts].sort(
+  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+);
+
 export default function BlogListPage() {
   return (
     <>
@@ -86,7 +106,7 @@ export default function BlogListPage() {
             </p>
 
             <div className="space-y-6">
-              {posts.map((post) => (
+              {allPosts.map((post) => (
                 <article key={post.slug} className="rounded-xl border border-gray-200 p-5 transition-shadow hover:shadow-md">
                   <Link href={`/blog/${post.slug}`}>
                     <time className="text-xs text-text-light">{formatDate(post.date)}</time>

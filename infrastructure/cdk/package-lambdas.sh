@@ -39,6 +39,16 @@ for name in "${LAMBDAS[@]}"; do
   # Package.json for type:module resolution
   cp "$REPO_ROOT/package.json" "$staging/package.json"
 
+  # dashboard-content needs @aws-sdk/client-codebuild bundled (not in
+  # Lambda runtime default SDK subset).
+  if [ "$name" = "dashboard-content" ]; then
+    mkdir -p "$staging/node_modules"
+    cp -r "$REPO_ROOT/node_modules/@aws-sdk/client-codebuild" "$staging/node_modules/@aws-sdk/" 2>/dev/null || true
+    # client-codebuild has transitive deps — copy the whole @aws-sdk + @smithy trees
+    cp -r "$REPO_ROOT/node_modules/@aws-sdk" "$staging/node_modules/" 2>/dev/null || true
+    cp -r "$REPO_ROOT/node_modules/@smithy" "$staging/node_modules/" 2>/dev/null || true
+  fi
+
   (cd "$staging" && zip -rq "$BUILD_DIR/$name.zip" .)
   rm -rf "$staging"
   echo "  ✔ $name.zip"

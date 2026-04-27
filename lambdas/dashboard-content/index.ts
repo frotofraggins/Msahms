@@ -183,6 +183,17 @@ async function handleApprove(
   }
 
   const now = new Date().toISOString();
+  const publishedData = {
+    slug: d.slug,
+    title: d.title,
+    metaDescription: d.metaDescription,
+    bodyMarkdown: d.bodyMarkdown,
+    topic: d.topic,
+    publishedAt: now,
+    photos: d.photos ?? [],
+    citationSources: d.citationSources ?? [],
+    status: 'published' as const,
+  };
 
   // Publish to content table: PK=CONTENT#BLOG#{slug}
   await putItem({
@@ -191,11 +202,7 @@ async function handleApprove(
     GSI1PK: 'BLOG#PUBLISHED',
     GSI1SK: now,
     entityType: EntityType.CONTENT,
-    data: {
-      ...d,
-      status: 'published',
-      publishedAt: now,
-    },
+    data: publishedData,
     createdAt: d.createdAt,
     updatedAt: now,
   });
@@ -208,6 +215,34 @@ async function handleApprove(
     updatedAt: now,
   });
 
+  // Trigger frontend rebuild so the new post goes live (~3-4 min).
+  const buildProject = process.env['FRONTEND_BUILD_PROJECT'];
+  if (buildProject) {
+    try {
+      const { CodeBuildClient, StartBuildCommand } = await import('@aws-sdk/client-codebuild');
+      const cb = new CodeBuildClient({ region: process.env['AWS_REGION'] ?? 'us-west-2' });
+      const build = await cb.send(new StartBuildCommand({ projectName: buildProject }));
+      console.log(
+        JSON.stringify({
+          correlationId,
+          event: 'frontend-rebuild-triggered',
+          buildId: build.build?.id,
+          slug: d.slug,
+        }),
+      );
+    } catch (err) {
+      console.error(
+        JSON.stringify({
+          correlationId,
+          event: 'frontend-rebuild-failed',
+          error: (err as Error).message,
+          slug: d.slug,
+        }),
+      );
+      // Don't fail the approval — post is in DDB, a manual rebuild picks it up.
+    }
+  }
+
   return {
     statusCode: 200,
     headers: CORS_HEADERS,
@@ -215,6 +250,7 @@ async function handleApprove(
       draftId,
       slug: d.slug,
       publishedUrl: `https://mesahomes.com/blog/${d.slug}`,
+      rebuildTriggered: !!buildProject,
     }),
   };
 }

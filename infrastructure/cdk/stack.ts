@@ -22,6 +22,7 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as eventsources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MesaHomesSesConstruct } from './ses.js';
@@ -402,6 +403,87 @@ export class MesaHomesStack extends Stack {
         resources: ['*'], // scope down to verified identity after domain is registered
       }));
     }
+
+    // Frontend rebuild CodeBuild project — triggered when owner approves an
+    // AI-drafted blog post in the dashboard. Checks out the repo, runs
+    // scripts/fetch-blog-from-ddb.ts (via npm prebuild hook), next build,
+    // syncs to S3, and invalidates CloudFront.
+    //
+    // The S3 hosting bucket + CloudFront distribution predate this CDK
+    // stack, so we reference them by name/ID rather than declaring them.
+    const FRONTEND_BUCKET = 'mesahomes.com';
+    const CLOUDFRONT_DISTRIBUTION_ID = 'E3TBTUT3LJLAAT';
+    const REPO_URL = 'https://github.com/frotofraggins/Msahms.git';
+
+    const frontendBuild = new codebuild.Project(this, 'FrontendRebuild', {
+      projectName: 'mesahomes-frontend-rebuild',
+      description: 'Rebuilds mesahomes.com static site when AI blog drafts are approved',
+      source: codebuild.Source.gitHub({
+        owner: 'frotofraggins',
+        repo: 'Msahms',
+        branchOrRef: 'main',
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+        computeType: codebuild.ComputeType.SMALL,
+      },
+      timeout: Duration.minutes(15),
+      environmentVariables: {
+        FRONTEND_BUCKET: { value: FRONTEND_BUCKET },
+        CLOUDFRONT_DISTRIBUTION_ID: { value: CLOUDFRONT_DISTRIBUTION_ID },
+        AWS_REGION: { value: this.region },
+      },
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          install: {
+            'runtime-versions': { nodejs: '20' },
+            commands: [
+              'node --version',
+              'cd frontend && npm ci',
+            ],
+          },
+          build: {
+            commands: [
+              'cd frontend && npm run build',
+            ],
+          },
+          post_build: {
+            commands: [
+              'aws s3 sync frontend/out/ s3://$FRONTEND_BUCKET/ --delete',
+              'aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"',
+            ],
+          },
+        },
+        artifacts: { files: [] },
+      }),
+    });
+
+    // CodeBuild role needs: read DDB (for fetch-blog-from-ddb), write S3
+    // (for sync to mesahomes.com), invalidate CloudFront.
+    frontendBuild.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['dynamodb:Query', 'dynamodb:GetItem'],
+      resources: [table.tableArn, `${table.tableArn}/index/*`],
+    }));
+    frontendBuild.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['s3:PutObject', 's3:DeleteObject', 's3:GetObject', 's3:ListBucket'],
+      resources: [
+        `arn:aws:s3:::${FRONTEND_BUCKET}`,
+        `arn:aws:s3:::${FRONTEND_BUCKET}/*`,
+      ],
+    }));
+    frontendBuild.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['cloudfront:CreateInvalidation'],
+      resources: [`arn:aws:cloudfront::${this.account}:distribution/${CLOUDFRONT_DISTRIBUTION_ID}`],
+    }));
+
+    // Grant dashboard-content Lambda permission to trigger the rebuild
+    // and expose the project name so the handler can call StartBuild.
+    fns['dashboard-content']!.addEnvironment('FRONTEND_BUILD_PROJECT', frontendBuild.projectName);
+    fns['dashboard-content']!.role!.addToPrincipalPolicy(new iam.PolicyStatement({
+      actions: ['codebuild:StartBuild'],
+      resources: [frontendBuild.projectArn],
+    }));
 
     // Outputs
     new CfnOutput(this, 'ApiUrl', { value: api.url, description: 'API Gateway invoke URL' });
