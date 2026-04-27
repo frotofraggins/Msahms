@@ -43,13 +43,13 @@ Each task has a value estimate and an effort estimate. Pick by ratio.
   - "Recent emails sent" section on lead detail
   - _Value: owner's daily workflow tool_
 
-- [ ] **2. UTM + attribution capture on leads** (2 hr)
+- [x] **2. UTM + attribution capture on leads** (2 hr)
   - Already have UTM in session storage (`lib/tracking.ts`); ensure it flows into `createLead` payload
   - Display "Came from" row on `/dashboard/leads/[id]/` lead detail
   - Filter dropdown on `/dashboard/leads/` by UTM source
   - _Value: ROI math for paid ads, content attribution_
 
-- [ ] **3. Blog `/blog/[slug]` reads DynamoDB, not hardcoded dict** (2 hr)
+- [x] **3. Blog `/blog/[slug]` reads DynamoDB, not hardcoded dict** (2 hr)
   - Already have seeded posts in DDB; frontend just needs to read from `/content/blog/{slug}` instead of hardcoded content dictionary
   - Keep hardcoded fallback if API 404s
   - Owner can now publish new posts via API or dashboard (future) without code deploy
@@ -95,7 +95,7 @@ Each task has a value estimate and an effort estimate. Pick by ratio.
 
 ### 🟡 MEDIUM (month 2)
 
-- [ ] **9. Mesa Legistar daily ingest** (1 day)
+- [x] **9. Mesa Legistar daily ingest** (1 day)
   - Lambda + EventBridge cron `cron(0 14 ? * * *)` (7am MST)
   - Poll `https://webapi.legistar.com/v1/mesa/events` for new items
   - Bedrock Haiku summarizer → DDB `CONTENT#DRAFT#{id}` with status=pending-review
@@ -104,14 +104,14 @@ Each task has a value estimate and an effort estimate. Pick by ratio.
   - Per `content-sources.md` §1
   - _Value: unique Mesa SEO content nobody else has_
 
-- [ ] **10. Mesa PD Socrata safety page** (half day)
+- [x] **10. Mesa PD Socrata safety page** (half day)
   - `/community/safety` standalone page (Fair Housing compliant — aggregate only, links to official registries)
   - Monthly crime statistics from `data.mesaaz.gov/resource/hpbg-2wph.json`
   - Links to AZ DPS sex offender registry, NSOPW national, Mesa Crime Stoppers
   - Per `content-sources.md` §15
   - _Value: trust signal, SEO for safety-related queries_
 
-- [ ] **11. Housing law tracker** (2 days)
+- [x] **11. Housing law tracker** (2 days)
   - Poll HUD, CFPB, FHFA, ADRE, AAR daily
   - Federal Register JSON API for rule changes
   - AZ Legislature bill tracker for 2026 session bills
@@ -119,7 +119,7 @@ Each task has a value estimate and an effort estimate. Pick by ratio.
   - Per `content-sources.md` appendix
   - _Value: same-day SEO on rule changes, SEO authority builder_
 
-- [ ] **12. News RSS ingest** (half day)
+- [x] **12. News RSS ingest** (half day)
   - AZ Central Mesa, East Valley Tribune, Mesa city press releases, AZ Big Media, Phoenix Business Journal
   - Filter for real estate keywords, summarize, queue for review
   - Per `content-sources.md` §4

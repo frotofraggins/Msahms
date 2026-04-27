@@ -172,25 +172,25 @@ I'll start on tasks 1-3 right now. Remainder deferred until owner confirms the P
 - [x] **1.3 Build `lambdas/content-ingest/`** — per-source fetchers dispatched by source id, normalize to a canonical record shape, write to S3 + DDB with content hash for dedup
 - [x] **1.4 EventBridge Scheduler cron** — 7am MST daily trigger
 - [x] **1.5 Initial 3 sources**: Legistar (Mesa city meetings), Mesa PD Socrata (crime stats), Mesa Open Data RSS (press releases). Prove the pattern works.
-- [ ] **1.6 Observability** — CloudWatch alarms on per-source failure, daily summary email with counts
+- [x] **1.6 Observability** — CloudWatch alarms on per-source failure, daily summary email with counts
 
 ### Phase 2 — Topic bundling + draft generation (~1-2 days)
 
-- [ ] **2.1 `lambdas/content-bundler/`** — DDB stream trigger, cluster by topic + date
-- [ ] **2.2 `lambdas/content-drafter/`** — daily 8am MST, Bedrock Haiku with topic bundles as input, writes CONTENT#DRAFT#{id} records
-- [ ] **2.3 Compliance filter pass** — reuse existing Fair Housing filter
-- [ ] **2.4 SES "N drafts ready" email to owner** — fires when drafter finishes
+- [x] **2.1 `lambdas/content-bundler/`** — DDB stream trigger, cluster by topic + date
+- [x] **2.2 `lambdas/content-drafter/`** — daily 8am MST, Bedrock Haiku with topic bundles as input, writes CONTENT#DRAFT#{id} records
+- [x] **2.3 Compliance filter pass** — reuse existing Fair Housing filter
+- [x] **2.4 SES "N drafts ready" email to owner** — fires when drafter finishes
 
 ### Phase 3 — Review UI (~1 day)
 
-- [ ] **3.1 `/dashboard/content/drafts/` page** — list of pending drafts with title, source, topic, created date
-- [ ] **3.2 `/dashboard/content/drafts/[id]/` page** — inline edit, preview, Approve/Edit/Reject buttons
-- [ ] **3.3 Approve flow** — moves draft to CONTENT#BLOG#{slug}, publishes via existing content API, updates sitemap
-- [ ] **3.4 Reject flow** — marks archived, drafter learns (log for future tuning)
+- [x] **3.1 `/dashboard/content/drafts/` page** — list of pending drafts with title, source, topic, created date
+- [x] **3.2 `/dashboard/content/drafts/[id]/` page** — inline edit, preview, Approve/Edit/Reject buttons
+- [x] **3.3 Approve flow** — moves draft to CONTENT#BLOG#{slug}, publishes via existing content API, updates sitemap
+- [x] **3.4 Reject flow** — marks archived, drafter learns (log for future tuning)
 
 ### Phase 4 — Expansion (~1-2 weeks, ongoing)
 
-- [ ] **4.1 Add remaining 12 sources** — one source at a time, with auto-rollback on failures
+- [x] **4.1 Add remaining 12 sources** — one source at a time, with auto-rollback on failures
 - [ ] **4.2 Relocation hub content** — `/moving-to-mesa` seeded from Zillow + BLS + state-tax-API data
 - [ ] **4.3 Housing law tracker** — HUD/CFPB/FHFA/ADRE/AAR Federal Register RSS
 - [ ] **4.4 Social media auto-scheduler** — on approval, also post to Facebook page, LinkedIn, Instagram (via Meta API / Buffer)

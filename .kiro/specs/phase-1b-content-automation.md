@@ -302,17 +302,33 @@ All numbers at ~5 new items/day across 30 sources:
 
 ## Deliverable checklist
 
-When Kiro B (or whoever picks this up) is ready to implement:
+**Status 2026-04-27: spec largely superseded by phase-2 implementation.**
+Actual shipped architecture differs from this draft in two ways:
 
-- [ ] Create source registry `lib/content-sources.ts` from content-sources.md
-- [ ] `lambdas/content-ingest/` with EventBridge cron + ETag caching
-- [ ] `lambdas/content-diff/` with property-tested diff functions
-- [ ] `lambdas/content-drafter/` with MCP call + compliance filter
-- [ ] `lambdas/content-api/` review queue endpoints (additive to existing)
-- [ ] `lambdas/content-publisher/` with CloudFront invalidation
-- [ ] DynamoDB key helpers in `lib/models/keys.ts` for DRAFT, REJECTED
-- [ ] `lib/content-diff.ts` shared library with tests
-- [ ] Dashboard UI: draft review queue page
+1. No separate `content-diff` Lambda — deduplication handled in
+   `content-ingest` via SOURCE#{sourceId}/HASH#{hash} key. Works fine
+   for the 16 live sources. Property-based tests in `lib/content-diff.ts`
+   deferred unless false-positives emerge.
+2. No separate `content-publisher` Lambda — CodeBuild project
+   `mesahomes-frontend-rebuild` handles the publish step. Lambda would
+   have been redundant. Approve handler triggers CodeBuild directly.
+
+See `content-pipeline-phase-2.md` for what actually shipped.
+
+- [x] Create source registry `lib/content-sources.ts` from content-sources.md
+- [x] `lambdas/content-ingest/` with EventBridge cron + ETag caching
+- [~] `lambdas/content-diff/` — superseded by inline dedup in content-ingest
+- [x] `lambdas/content-drafter/` with MCP call + compliance filter
+- [x] `lambdas/content-api/` review queue endpoints (additive to existing)
+      (shipped as `lambdas/dashboard-content/`)
+- [~] `lambdas/content-publisher/` — superseded by CodeBuild project
+      `mesahomes-frontend-rebuild` which does the full npm build + S3 sync +
+      CloudFront invalidation on approve
+- [x] DynamoDB key helpers in `lib/models/keys.ts` for DRAFT, REJECTED
+- [~] `lib/content-diff.ts` shared library with tests — deferred, dedup
+      works via content-ingest hash comparison
+- [x] Dashboard UI: draft review queue page
+      (frontend/src/app/dashboard/content/drafts/)
 - [ ] CloudWatch alarms for SourceFetchSuccess, DraftsRejectedByCompliance,
-      HumanEditRate
-- [ ] Runbook for "a source URL moved / feed format changed"
+      HumanEditRate — still pending, tracked in content-pipeline-phase-2.md
+- [ ] Runbook for "a source URL moved / feed format changed" — still pending

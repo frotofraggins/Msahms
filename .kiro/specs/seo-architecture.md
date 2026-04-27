@@ -237,15 +237,15 @@ After implementation:
 
 When Kiro B starts Task 11 pages:
 
-- [ ] Root `layout.tsx` sets `metadataBase` + default `title.template` + `description`
-- [ ] Each `page.tsx` exports typed `metadata` or `generateMetadata()`
-- [ ] JSON-LD `<script>` in every page's server component with sanitized stringify
+- [x] Root `layout.tsx` sets `metadataBase` + default `title.template` + `description`
+- [x] Each `page.tsx` exports typed `metadata` or `generateMetadata()`
+- [x] JSON-LD `<script>` in every page's server component with sanitized stringify
 - [ ] `schema-dts` installed for typed schemas
-- [ ] `frontend/src/app/robots.ts` with AI-crawler allowlist
-- [ ] `frontend/src/app/sitemap.ts` generating from static routes + content API
-- [ ] Unique `<h1>` per page
-- [ ] All `<Image>` have `alt`
-- [ ] Canonical URL set per page
+- [x] `frontend/src/app/robots.ts` with AI-crawler allowlist
+- [x] `frontend/src/app/sitemap.ts` generating from static routes + content API
+- [x] Unique `<h1>` per page
+- [x] All `<Image>` have `alt`
+- [x] Canonical URL set per page
 - [ ] Rich Results Test passes on every page type before merge
 
 ## References

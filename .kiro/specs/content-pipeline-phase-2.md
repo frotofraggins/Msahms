@@ -87,8 +87,8 @@ SES email to owner
 
 ### Phase 2D — Review Dashboard UI
 
-- [ ] 2D.1 `/dashboard/content/drafts/` list page
-- [ ] 2D.2 `/dashboard/content/drafts/[id]/` edit page with rich-text editor + photo swap
+- [x] 2D.1 `/dashboard/content/drafts/` list page
+- [x] 2D.2 `/dashboard/content/drafts/[id]/` edit page with rich-text editor + photo swap
 - [x] 2D.3 Approve flow: move to `CONTENT#BLOG#{slug}`, hit existing content-api POST
 - [x] 2D.4 Reject flow: archive status, log rejection reason for drafter tuning
 - [ ] 2D.5 Mobile-responsive (owner reviews from phone)
