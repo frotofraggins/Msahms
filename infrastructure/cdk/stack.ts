@@ -69,6 +69,17 @@ const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: 
     memory: 512,
     timeout: 120,
   },
+  'content-drafter': {
+    source: 'content-drafter',
+    memory: 512,
+    timeout: 600,
+    env: {
+      DRAFTER_MODEL_ID: 'us.amazon.nova-micro-v1:0',
+      MAX_BUNDLES_PER_RUN: '5',
+      NOTIFICATION_FROM_ADDRESS: 'notifications@mesahomes.com',
+      OWNER_NOTIFICATION_ADDRESS: 'sales@mesahomes.com',
+    },
+  },
 };
 
 const SECRET_NAMES = [
@@ -308,6 +319,28 @@ export class MesaHomesStack extends Stack {
       schedule: events.Schedule.cron({ minute: '30', hour: '14', day: '*', month: '*', year: '*' }),
       targets: [new targets.LambdaFunction(fns['content-bundler']!)],
     });
+
+    // Drafter runs daily at 15:00 UTC (8am MST), 30 min after bundler.
+    // Bedrock + SES grants scoped to this Lambda
+    new events.Rule(this, 'ContentDrafterCron', {
+      schedule: events.Schedule.cron({ minute: '0', hour: '15', day: '*', month: '*', year: '*' }),
+      targets: [new targets.LambdaFunction(fns['content-drafter']!)],
+    });
+    fns['content-drafter']!.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['bedrock:InvokeModel'],
+      resources: [
+        // Nova Micro via cross-region inference profile
+        `arn:aws:bedrock:*::foundation-model/amazon.nova-micro-v1:0`,
+        `arn:aws:bedrock:*:*:inference-profile/us.amazon.nova-micro-v1:0`,
+        // Claude Haiku 4.5 available as fallback/override
+        `arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0`,
+        `arn:aws:bedrock:*:*:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0`,
+      ],
+    }));
+    fns['content-drafter']!.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['ses:SendEmail', 'sesv2:SendEmail'],
+      resources: ['*'],
+    }));
 
     // API Gateway
     const api = new apigw.RestApi(this, 'Api', {

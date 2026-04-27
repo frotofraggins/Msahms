@@ -73,17 +73,17 @@ SES email to owner
 
 ### Phase 2C — Drafter Lambda
 
-- [ ] 2C.1 Create `lambdas/content-drafter/` structure
-- [ ] 2C.2 Build prompt template with 12 anti-AI-tells rules + compliance rules + citation-density requirement
-- [ ] 2C.3 Bedrock Claude Haiku invocation (invoke_model, us-west-2)
-- [ ] 2C.4 Parse response → extract title, body, meta description
+- [x] 2C.1 Create `lambdas/content-drafter/` structure
+- [x] 2C.2 Build prompt template with 12 anti-AI-tells rules + compliance rules + citation-density requirement
+- [x] 2C.3 Bedrock Claude Haiku invocation (invoke_model, us-west-2)
+- [x] 2C.4 Parse response → extract title, body, meta description
 - [ ] 2C.5 Call compliance filter (reuse `lambdas/ai-proxy/compliance-filter.ts`)
 - [ ] 2C.6 Call photo-finder for hero + supporting images
-- [ ] 2C.7 Write draft to DDB: `PK: CONTENT#DRAFT#{id}`, `SK: v1`, `status: pending-review`
-- [ ] 2C.8 EventBridge cron: daily 8am MST (30 min after bundler)
-- [ ] 2C.9 SES summary email: "N drafts ready, top priority: {title}"
+- [x] 2C.7 Write draft to DDB: `PK: CONTENT#DRAFT#{id}`, `SK: v1`, `status: pending-review`
+- [x] 2C.8 EventBridge cron: daily 8am MST (30 min after bundler)
+- [x] 2C.9 SES summary email: "N drafts ready, top priority: {title}"
 - [ ] 2C.10 Tests — verify prompt doesn't include leaked secrets
-- [ ] 2C.11 5-step verification
+- [x] 2C.11 5-step verification
 
 ### Phase 2D — Review Dashboard UI
 
