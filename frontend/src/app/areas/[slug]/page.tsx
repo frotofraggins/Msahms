@@ -7,6 +7,8 @@ import { StickyContactBar } from '@/components/StickyContactBar';
 import { FullServiceUpgradeBanner } from '@/components/FullServiceUpgradeBanner';
 import { FAQSection } from '@/components/FAQSection';
 import { FadeInOnScroll } from '@/components/FadeInOnScroll';
+import publishedBlogs from '@/data/published-blogs.json';
+import { classify, postsMentioningCity, type PublishedPost } from '@/lib/content-taxonomy';
 
 interface CityData {
   name: string;
@@ -197,6 +199,8 @@ export async function generateMetadata({
   };
 }
 
+const ALL_POSTS = (publishedBlogs as PublishedPost[]).map(classify);
+
 export default async function CityPage({
   params,
 }: {
@@ -205,6 +209,8 @@ export default async function CityPage({
   const { slug } = await params;
   const city = cityData[slug];
   if (!city) notFound();
+
+  const latestPosts = postsMentioningCity(slug, ALL_POSTS, 3);
 
   const placeJsonLd = {
     '@context': 'https://schema.org',
@@ -388,6 +394,42 @@ export default async function CityPage({
             </div>
           </section>
         </FadeInOnScroll>
+
+        {/* Latest posts mentioning this city */}
+        {latestPosts.length > 0 && (
+          <FadeInOnScroll>
+            <section className="bg-white px-4 py-16">
+              <div className="mx-auto max-w-4xl">
+                <h2 className="mb-2 text-2xl font-bold text-text">
+                  Latest from the MesaHomes blog
+                </h2>
+                <p className="mb-6 text-text-light">
+                  Recent news and guides mentioning {city.name}.
+                </p>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {latestPosts.map((p) => (
+                    <Link
+                      key={p.slug}
+                      href={p.url}
+                      className="rounded-xl border border-gray-200 p-4 transition-shadow hover:shadow-md"
+                    >
+                      <span className="inline-block rounded bg-warm-beige px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-primary">
+                        {p.contentType === 'news' ? p.category.title : 'Blog'}
+                      </span>
+                      <h3 className="mt-2 text-sm font-semibold text-text">{p.title}</h3>
+                      <p className="mt-1 text-xs text-text-light line-clamp-2">{p.metaDescription}</p>
+                    </Link>
+                  ))}
+                </div>
+                <div className="mt-4 text-sm">
+                  <Link href="/news/" className="text-primary hover:underline">See all news</Link>
+                  {' • '}
+                  <Link href="/blog/" className="text-primary hover:underline">See all blog posts</Link>
+                </div>
+              </div>
+            </section>
+          </FadeInOnScroll>
+        )}
 
         {/* FAQ */}
         <FadeInOnScroll>

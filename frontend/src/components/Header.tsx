@@ -10,8 +10,8 @@ const navLinks = [
   { href: '/rent', label: 'Rent' },
   { href: '/invest', label: 'Invest' },
   { href: '/areas/mesa', label: 'Areas' },
+  { href: '/news', label: 'News' },
   { href: '/blog', label: 'Blog' },
-  { href: '/reviews', label: 'Reviews' },
 ];
 
 export function Header() {

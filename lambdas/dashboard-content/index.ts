@@ -215,31 +215,54 @@ async function handleApprove(
     updatedAt: now,
   });
 
-  // Trigger frontend rebuild so the new post goes live (~3-4 min).
-  const buildProject = process.env['FRONTEND_BUILD_PROJECT'];
-  if (buildProject) {
+  // Trigger GitHub Actions deploy workflow so the new post goes live (~3-4 min).
+  // Uses the PAT stored in Secrets Manager at GITHUB_PAT_SECRET.
+  const ghOwner = process.env['GITHUB_OWNER'];
+  const ghRepo = process.env['GITHUB_REPO'];
+  const ghWorkflow = process.env['GITHUB_WORKFLOW_FILE'] ?? 'deploy.yml';
+  const patSecret = process.env['GITHUB_PAT_SECRET'];
+  let rebuildTriggered = false;
+
+  if (ghOwner && ghRepo && patSecret) {
     try {
-      const { CodeBuildClient, StartBuildCommand } = await import('@aws-sdk/client-codebuild');
-      const cb = new CodeBuildClient({ region: process.env['AWS_REGION'] ?? 'us-west-2' });
-      const build = await cb.send(new StartBuildCommand({ projectName: buildProject }));
-      console.log(
-        JSON.stringify({
-          correlationId,
-          event: 'frontend-rebuild-triggered',
-          buildId: build.build?.id,
-          slug: d.slug,
+      const { SecretsManagerClient, GetSecretValueCommand } = await import('@aws-sdk/client-secrets-manager');
+      const sm = new SecretsManagerClient({ region: process.env['AWS_REGION'] ?? 'us-west-2' });
+      const secret = await sm.send(new GetSecretValueCommand({ SecretId: patSecret }));
+      const pat = secret.SecretString ?? '';
+
+      const url = `https://api.github.com/repos/${ghOwner}/${ghRepo}/actions/workflows/${ghWorkflow}/dispatches`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/vnd.github+json',
+          'Authorization': `Bearer ${pat}`,
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json',
+          'User-Agent': 'mesahomes-dashboard-content',
+        },
+        body: JSON.stringify({
+          ref: 'main',
+          inputs: { skip_cdk: 'true' }, // frontend-only rebuild, no need to redeploy infra
         }),
-      );
+      });
+
+      if (resp.status === 204) {
+        rebuildTriggered = true;
+        console.log(JSON.stringify({
+          correlationId, event: 'gha-workflow-dispatched', slug: d.slug, ref: 'main',
+        }));
+      } else {
+        const text = await resp.text();
+        throw new Error(`GitHub API ${resp.status}: ${text}`);
+      }
     } catch (err) {
-      console.error(
-        JSON.stringify({
-          correlationId,
-          event: 'frontend-rebuild-failed',
-          error: (err as Error).message,
-          slug: d.slug,
-        }),
-      );
-      // Don't fail the approval — post is in DDB, a manual rebuild picks it up.
+      console.error(JSON.stringify({
+        correlationId,
+        event: 'gha-dispatch-failed',
+        error: (err as Error).message,
+        slug: d.slug,
+      }));
+      // Don't fail the approval — post is in DDB, a manual GHA run picks it up.
     }
   }
 
@@ -250,7 +273,7 @@ async function handleApprove(
       draftId,
       slug: d.slug,
       publishedUrl: `https://mesahomes.com/blog/${d.slug}`,
-      rebuildTriggered: !!buildProject,
+      rebuildTriggered,
     }),
   };
 }

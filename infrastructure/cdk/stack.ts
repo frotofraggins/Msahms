@@ -22,7 +22,6 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as eventsources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as route53 from 'aws-cdk-lib/aws-route53';
-import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MesaHomesSesConstruct } from './ses.js';
@@ -98,6 +97,7 @@ const SECRET_NAMES = [
   'mesahomes/live/vhz-webhook-secret',
   'mesahomes/live/unsplash-access-key',
   'mesahomes/live/unsplash-secret-key',
+  'mesahomes/live/github-pat',
 ];
 
 // Route definitions — mirrors infrastructure/api-gateway.ts
@@ -411,79 +411,65 @@ export class MesaHomesStack extends Stack {
     //
     // The S3 hosting bucket + CloudFront distribution predate this CDK
     // stack, so we reference them by name/ID rather than declaring them.
-    const FRONTEND_BUCKET = 'mesahomes.com';
-    const CLOUDFRONT_DISTRIBUTION_ID = 'E3TBTUT3LJLAAT';
-    const REPO_URL = 'https://github.com/frotofraggins/Msahms.git';
+    // Approve-triggered deploy: dashboard-content Lambda needs to fire a
+    // GitHub Actions workflow_dispatch event. The Lambda reads a GitHub
+    // PAT from Secrets Manager (secret name below) and calls the GitHub
+    // REST API to trigger .github/workflows/deploy.yml.
+    //
+    // Rationale: we migrated off CodeBuild -> GitHub Actions for CI/CD
+    // because GHA gives us push-to-main deploys with test gates at zero
+    // marginal cost (within free tier), while keeping the same approval
+    // UX: owner clicks Approve -> frontend rebuilds in ~3 min.
+    const GITHUB_OWNER = 'frotofraggins';
+    const GITHUB_REPO = 'Msahms';
 
-    const frontendBuild = new codebuild.Project(this, 'FrontendRebuild', {
-      projectName: 'mesahomes-frontend-rebuild',
-      description: 'Rebuilds mesahomes.com static site when AI blog drafts are approved',
-      source: codebuild.Source.gitHub({
-        owner: 'frotofraggins',
-        repo: 'Msahms',
-        branchOrRef: 'main',
-      }),
-      environment: {
-        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
-        computeType: codebuild.ComputeType.SMALL,
-      },
-      timeout: Duration.minutes(15),
-      environmentVariables: {
-        FRONTEND_BUCKET: { value: FRONTEND_BUCKET },
-        CLOUDFRONT_DISTRIBUTION_ID: { value: CLOUDFRONT_DISTRIBUTION_ID },
-        AWS_REGION: { value: this.region },
-      },
-      buildSpec: codebuild.BuildSpec.fromObject({
-        version: '0.2',
-        phases: {
-          install: {
-            'runtime-versions': { nodejs: '20' },
-            commands: [
-              'node --version',
-              'npm ci --prefix frontend',
-            ],
-          },
-          build: {
-            commands: [
-              'npm run build --prefix frontend',
-            ],
-          },
-          post_build: {
-            commands: [
-              'aws s3 sync frontend/out/ s3://$FRONTEND_BUCKET/ --delete',
-              'aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"',
-            ],
-          },
-        },
-        artifacts: { files: [] },
-      }),
+    fns['dashboard-content']!.addEnvironment('GITHUB_OWNER', GITHUB_OWNER);
+    fns['dashboard-content']!.addEnvironment('GITHUB_REPO', GITHUB_REPO);
+    fns['dashboard-content']!.addEnvironment('GITHUB_WORKFLOW_FILE', 'deploy.yml');
+    fns['dashboard-content']!.addEnvironment(
+      'GITHUB_PAT_SECRET',
+      'mesahomes/live/github-pat',
+    );
+
+    // GitHub Actions OIDC provider + deploy role — lets GHA workflows
+    // assume an AWS role without storing long-lived credentials in GitHub.
+    // Ref: https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services
+
+    const githubProvider = new iam.OpenIdConnectProvider(this, 'GitHubOidcProvider', {
+      url: 'https://token.actions.githubusercontent.com',
+      clientIds: ['sts.amazonaws.com'],
     });
 
-    // CodeBuild role needs: read DDB (for fetch-blog-from-ddb), write S3
-    // (for sync to mesahomes.com), invalidate CloudFront.
-    frontendBuild.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['dynamodb:Query', 'dynamodb:GetItem'],
-      resources: [table.tableArn, `${table.tableArn}/index/*`],
-    }));
-    frontendBuild.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['s3:PutObject', 's3:DeleteObject', 's3:GetObject', 's3:ListBucket'],
-      resources: [
-        `arn:aws:s3:::${FRONTEND_BUCKET}`,
-        `arn:aws:s3:::${FRONTEND_BUCKET}/*`,
-      ],
-    }));
-    frontendBuild.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['cloudfront:CreateInvalidation'],
-      resources: [`arn:aws:cloudfront::${this.account}:distribution/${CLOUDFRONT_DISTRIBUTION_ID}`],
-    }));
+    const githubDeployRole = new iam.Role(this, 'GitHubDeployRole', {
+      roleName: 'mesahomes-github-actions-deploy',
+      assumedBy: new iam.FederatedPrincipal(
+        githubProvider.openIdConnectProviderArn,
+        {
+          StringEquals: {
+            'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
+          },
+          StringLike: {
+            'token.actions.githubusercontent.com:sub': `repo:${GITHUB_OWNER}/${GITHUB_REPO}:*`,
+          },
+        },
+        'sts:AssumeRoleWithWebIdentity',
+      ),
+      description: 'Role assumed by GitHub Actions to deploy MesaHomes',
+      maxSessionDuration: Duration.hours(1),
+    });
 
-    // Grant dashboard-content Lambda permission to trigger the rebuild
-    // and expose the project name so the handler can call StartBuild.
-    fns['dashboard-content']!.addEnvironment('FRONTEND_BUILD_PROJECT', frontendBuild.projectName);
-    fns['dashboard-content']!.role!.addToPrincipalPolicy(new iam.PolicyStatement({
-      actions: ['codebuild:StartBuild'],
-      resources: [frontendBuild.projectArn],
-    }));
+    // GHA needs: cdk deploy (broad) + S3 sync + CF invalidate + DDB read
+    // (for frontend prebuild hook) + Lambda StartBuild for manual tests.
+    // Use AdministratorAccess-level perms scoped to this account since CDK
+    // deploy is inherently broad. Alternative: scope to CDK bootstrap role.
+    githubDeployRole.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'),
+    );
+
+    new CfnOutput(this, 'GitHubDeployRoleArn', {
+      value: githubDeployRole.roleArn,
+      description: 'ARN for GitHub Actions to assume via OIDC',
+    });
 
     // Outputs
     new CfnOutput(this, 'ApiUrl', { value: api.url, description: 'API Gateway invoke URL' });

@@ -64,6 +64,19 @@ MesaHomes is the local source for Mesa-area real estate, market data, neighborho
 ## Blog
 
 - [Full blog index](https://mesahomes.com/blog)
+- [Market Updates](https://mesahomes.com/blog/market-updates)
+- [Buying Guides](https://mesahomes.com/blog/buying-guides)
+- [Selling Guides](https://mesahomes.com/blog/selling-guides)
+- [Neighborhood Guides](https://mesahomes.com/blog/neighborhoods)
+- [Legal & Regulatory](https://mesahomes.com/blog/legal-and-regulatory)
+
+## News (daily)
+
+- [News index](https://mesahomes.com/news)
+- [Mesa News](https://mesahomes.com/news/mesa)
+- [Market News](https://mesahomes.com/news/market)
+- [Safety & Community](https://mesahomes.com/news/safety)
+- [Arizona News](https://mesahomes.com/news/arizona)
 
 ## Frequently asked questions
 

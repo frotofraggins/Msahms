@@ -39,18 +39,9 @@ for name in "${LAMBDAS[@]}"; do
   # Package.json for type:module resolution
   cp "$REPO_ROOT/package.json" "$staging/package.json"
 
-  # dashboard-content needs @aws-sdk/client-codebuild bundled (not in
-  # Lambda runtime default SDK subset). Copy the full resolved dep
-  # tree by installing client-codebuild + its transitive deps into a
-  # scratch node_modules using npm install --no-save.
-  if [ "$name" = "dashboard-content" ]; then
-    echo "    bundling @aws-sdk/client-codebuild deps..."
-    (
-      cd "$staging"
-      npm init -y > /dev/null 2>&1
-      npm install --no-save --omit=dev --silent @aws-sdk/client-codebuild > /dev/null 2>&1
-    )
-  fi
+  # dashboard-content uses only built-in SDK clients (secrets-manager is in
+  # the Lambda Node 20 runtime, DynamoDB via shared lib, fetch is native).
+  # No extra bundling required.
 
   (cd "$staging" && zip -rq "$BUILD_DIR/$name.zip" .)
   rm -rf "$staging"

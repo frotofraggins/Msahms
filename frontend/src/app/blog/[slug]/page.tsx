@@ -5,7 +5,6 @@ import { Footer } from '@/components/Footer';
 import { StickyContactBar } from '@/components/StickyContactBar';
 import { FullServiceUpgradeBanner } from '@/components/FullServiceUpgradeBanner';
 import { BlogLeadCapture } from './BlogPostClient';
-import publishedBlogs from '@/data/published-blogs.json';
 
 interface BlogPost {
   slug: string;
@@ -200,34 +199,14 @@ Arizona's landlord-tenant act requires:
 
 const validSlugs = Object.keys(posts);
 
-// Merge AI-drafted posts from DDB into the lookup.
-interface AiPhoto { url: string; attribution: string; alt: string; }
-interface AiPost {
-  slug: string; title: string; metaDescription: string;
-  bodyMarkdown: string; topic: string; publishedAt: string;
-  photos: AiPhoto[]; citationSources: { url: string; attribution: string }[];
-}
-
-const aiPostMap: Record<string, BlogPost & { photos?: AiPhoto[] }> = {};
-for (const p of publishedBlogs as AiPost[]) {
-  aiPostMap[p.slug] = {
-    slug: p.slug,
-    title: p.title,
-    description: p.metaDescription,
-    date: p.publishedAt.slice(0, 10),
-    topic: p.topic,
-    body: p.bodyMarkdown,
-    photos: p.photos,
-  };
-}
-
-function getPost(slug: string): (BlogPost & { photos?: AiPhoto[] }) | undefined {
-  return aiPostMap[slug] ?? posts[slug];
+// Note: AI-drafted posts live at /blog/[category]/[slug]/ (and /news/...).
+// This page only serves the hardcoded seed posts.
+function getPost(slug: string): BlogPost | undefined {
+  return posts[slug];
 }
 
 export function generateStaticParams() {
-  const aiSlugs = Object.keys(aiPostMap);
-  return [...new Set([...validSlugs, ...aiSlugs])].map((slug) => ({ slug }));
+  return validSlugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
@@ -281,9 +260,6 @@ export default async function BlogPostPage({
     headline: post.title,
     description: post.description,
     datePublished: post.date,
-    ...(post.photos && post.photos.length > 0 && {
-      image: post.photos.map((p) => p.url),
-    }),
     author: {
       '@type': 'Organization',
       name: 'MesaHomes',
@@ -321,21 +297,6 @@ export default async function BlogPostPage({
             >
               {post.title}
             </h1>
-
-            {post.photos && post.photos.length > 0 && (
-              <figure className="mb-8 -mx-4 sm:mx-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={post.photos[0].url}
-                  alt={post.photos[0].alt}
-                  className="w-full rounded-lg object-cover"
-                  style={{ maxHeight: '480px' }}
-                />
-                <figcaption className="mt-2 px-4 text-xs text-text-light sm:px-0">
-                  {post.photos[0].attribution}
-                </figcaption>
-              </figure>
-            )}
 
             {/* Rendered markdown body (placeholder — plain text paragraphs) */}
             <div className="prose prose-sm max-w-none text-text-light">

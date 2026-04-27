@@ -1,0 +1,70 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip_cdk:
+        description: 'Skip CDK deploy (frontend-only rebuild)'
+        required: false
+        default: 'false'
+
+concurrency:
+  # Never run two deploys at once. Cancel queued ones since latest push wins.
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root deps
+        run: npm ci
+
+      - name: Install frontend deps
+        run: npm ci --prefix frontend
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Run tests
+        run: npx vitest run
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::304052673868:role/mesahomes-github-actions-deploy
+          aws-region: us-west-2
+
+      - name: Package Lambdas
+        if: github.event.inputs.skip_cdk != 'true'
+        run: bash infrastructure/cdk/package-lambdas.sh
+
+      - name: CDK Deploy
+        if: github.event.inputs.skip_cdk != 'true'
+        run: npx cdk deploy --require-approval never
+
+      - name: Build frontend (reads published blogs from DDB)
+        run: npm run build --prefix frontend
+
+      - name: Sync frontend to S3
+        run: aws s3 sync frontend/out/ s3://mesahomes.com/ --delete
+
+      - name: Invalidate CloudFront
+        run: aws cloudfront create-invalidation --distribution-id E3TBTUT3LJLAAT --paths "/*"
