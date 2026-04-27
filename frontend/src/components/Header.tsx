@@ -26,7 +26,7 @@ export function Header() {
             alt="MesaHomes — Mesa AZ real estate brand"
             width={180}
             height={48}
-            className="h-14 w-auto md:h-16"
+            className="h-8 w-auto md:h-10"
           />
         </Link>
 
