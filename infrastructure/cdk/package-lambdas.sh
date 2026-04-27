@@ -11,8 +11,8 @@ BUILD_DIR="$REPO_ROOT/.build"
 LAMBDAS=(
   leads-capture tools-calculator property-lookup market-data content-api
   ai-proxy listing-service auth-api dashboard-leads dashboard-team
-  dashboard-notifications dashboard-listings data-pipeline notification-worker
-  content-ingest content-bundler content-drafter
+  dashboard-notifications dashboard-listings dashboard-content data-pipeline notification-worker
+  content-ingest content-bundler content-drafter photo-finder
 )
 
 echo "Compiling TypeScript..."
@@ -26,6 +26,12 @@ for name in "${LAMBDAS[@]}"; do
   mkdir -p "$staging/lambdas/$name"
   # Copy compiled lambda code into lambdas/<name>/ preserving relative paths
   cp -r "$REPO_ROOT/dist/lambdas/$name/"* "$staging/lambdas/$name/"
+  # Drafter shares photo-finder code — include it too so ../photo-finder
+  # imports resolve inside the Lambda runtime
+  if [ "$name" = "content-drafter" ]; then
+    mkdir -p "$staging/lambdas/photo-finder"
+    cp -r "$REPO_ROOT/dist/lambdas/photo-finder/"* "$staging/lambdas/photo-finder/"
+  fi
   # Copy shared lib (compiled) — lambdas import ../../lib/*.js so this
   # must sit at the repo root level inside the zip
   mkdir -p "$staging/lib"

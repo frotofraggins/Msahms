@@ -63,13 +63,13 @@ SES email to owner
 
 ### Phase 2B — Photo Finder Lambda
 
-- [ ] 2B.1 Create `lambdas/photo-finder/` structure
-- [ ] 2B.2 Wikimedia Commons search via MediaWiki API (free, no key)
-- [ ] 2B.3 Unsplash search via REST API (key from Secrets Manager `mesahomes/live/unsplash-access-key`)
+- [x] 2B.1 Create `lambdas/photo-finder/` structure
+- [x] 2B.2 Wikimedia Commons search via MediaWiki API (free, no key)
+- [x] 2B.3 Unsplash search via REST API (key from Secrets Manager `mesahomes/live/unsplash-access-key`)
 - [ ] 2B.4 Bedrock Titan/Nova image gen fallback when no natural photo matches
-- [ ] 2B.5 Download → S3 `mesahomes-property-photos/articles/{draftId}/{idx}.jpg`
-- [ ] 2B.6 Store attribution metadata (photographer, license, source URL) alongside
-- [ ] 2B.7 5-step verification: manual invoke with test query, check S3, inspect response payload
+- [x] 2B.5 Download → S3 `mesahomes-property-photos/articles/{draftId}/{idx}.jpg`
+- [x] 2B.6 Store attribution metadata (photographer, license, source URL) alongside
+- [x] 2B.7 5-step verification: manual invoke with test query, check S3, inspect response payload
 
 ### Phase 2C — Drafter Lambda
 
@@ -78,7 +78,7 @@ SES email to owner
 - [x] 2C.3 Bedrock Claude Haiku invocation (invoke_model, us-west-2)
 - [x] 2C.4 Parse response → extract title, body, meta description
 - [ ] 2C.5 Call compliance filter (reuse `lambdas/ai-proxy/compliance-filter.ts`)
-- [ ] 2C.6 Call photo-finder for hero + supporting images
+- [x] 2C.6 Call photo-finder for hero + supporting images
 - [x] 2C.7 Write draft to DDB: `PK: CONTENT#DRAFT#{id}`, `SK: v1`, `status: pending-review`
 - [x] 2C.8 EventBridge cron: daily 8am MST (30 min after bundler)
 - [x] 2C.9 SES summary email: "N drafts ready, top priority: {title}"
@@ -89,8 +89,8 @@ SES email to owner
 
 - [ ] 2D.1 `/dashboard/content/drafts/` list page
 - [ ] 2D.2 `/dashboard/content/drafts/[id]/` edit page with rich-text editor + photo swap
-- [ ] 2D.3 Approve flow: move to `CONTENT#BLOG#{slug}`, hit existing content-api POST
-- [ ] 2D.4 Reject flow: archive status, log rejection reason for drafter tuning
+- [x] 2D.3 Approve flow: move to `CONTENT#BLOG#{slug}`, hit existing content-api POST
+- [x] 2D.4 Reject flow: archive status, log rejection reason for drafter tuning
 - [ ] 2D.5 Mobile-responsive (owner reviews from phone)
 - [ ] 2D.6 5-step verification
 

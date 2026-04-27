@@ -16,6 +16,7 @@ import { randomUUID } from 'crypto';
 import { queryGSI1, putItem } from '../../lib/dynamodb.js';
 import { generateCorrelationId } from '../../lib/errors.js';
 import { EntityType } from '../../lib/types/dynamodb.js';
+import { findPhotos, type PhotoResult } from '../photo-finder/index.js';
 
 const br = new BedrockRuntimeClient({ region: process.env.AWS_REGION ?? 'us-west-2' });
 const ses = new SESv2Client({ region: process.env.AWS_REGION ?? 'us-west-2' });
@@ -61,6 +62,7 @@ interface Draft {
   metaDescription: string;
   bodyMarkdown: string;
   citationSources: Array<{ url: string; attribution: string }>;
+  photos: PhotoResult[];
   createdAt: string;
   status: 'pending-review';
   modelUsed: string;
@@ -231,8 +233,20 @@ async function draftOneBundle(bundle: Bundle, correlationId: string): Promise<Dr
     .filter((c): c is NonNullable<typeof c> => !!c?.url)
     .map((c) => ({ url: c.url, attribution: c.attribution }));
 
+  const draftId = randomUUID();
+
+  // Find photos in parallel with the rest of draft assembly. If this
+  // fails we still ship the draft with no photos — better than
+  // blocking everything.
+  let photos: PhotoResult[] = [];
+  try {
+    photos = await findPhotos(bundle.keywords, draftId, 1);
+  } catch (err) {
+    console.warn(`[drafter] photo-finder failed for draft ${draftId}:`, err);
+  }
+
   const draft: Draft = {
-    draftId: randomUUID(),
+    draftId,
     bundleId: bundle.bundleId,
     topic: bundle.topic,
     title,
@@ -240,6 +254,7 @@ async function draftOneBundle(bundle: Bundle, correlationId: string): Promise<Dr
     metaDescription,
     bodyMarkdown: `${bodyMarkdown}\n\n---\n\n_${disclaimer}_`,
     citationSources,
+    photos,
     createdAt: new Date().toISOString(),
     status: 'pending-review',
     modelUsed: MODEL_ID,

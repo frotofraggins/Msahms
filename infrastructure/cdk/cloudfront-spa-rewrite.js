@@ -37,6 +37,14 @@ function handler(event) {
     }
   }
 
+  // Rule 1b: Content drafts dynamic route
+  if (uri.match(/^\/dashboard\/content\/drafts\/[^/]+\/?$/)) {
+    if (!uri.match(/^\/dashboard\/content\/drafts\/_\/?$/)) {
+      request.uri = '/dashboard/content/drafts/_/index.html';
+      return request;
+    }
+  }
+
   // Rule 2: Append index.html for clean URLs
   if (uri.endsWith('/')) {
     request.uri = uri + 'index.html';

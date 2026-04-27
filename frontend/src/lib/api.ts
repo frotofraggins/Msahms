@@ -236,5 +236,16 @@ export const api = {
       apiRequest('/dashboard/notifications/settings', { auth: true }),
     updateNotificationSettings: (body: unknown) =>
       apiRequest('/dashboard/notifications/settings', { method: 'PUT', body, auth: true }),
+    // Content drafts
+    drafts: () =>
+      apiRequest('/dashboard/content/drafts', { auth: true }),
+    draft: (id: string) =>
+      apiRequest(`/dashboard/content/drafts/${id}`, { auth: true }),
+    updateDraft: (id: string, body: unknown) =>
+      apiRequest(`/dashboard/content/drafts/${id}`, { method: 'PATCH', body, auth: true }),
+    approveDraft: (id: string) =>
+      apiRequest(`/dashboard/content/drafts/${id}/approve`, { method: 'POST', auth: true }),
+    rejectDraft: (id: string) =>
+      apiRequest(`/dashboard/content/drafts/${id}/reject`, { method: 'POST', auth: true }),
   },
 };

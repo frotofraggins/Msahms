@@ -43,6 +43,7 @@ const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: 
   'dashboard-team': { source: 'dashboard-team', memory: 256, timeout: 10 },
   'dashboard-notifications': { source: 'dashboard-notifications', memory: 256, timeout: 10 },
   'dashboard-listings': { source: 'dashboard-listings', memory: 256, timeout: 10 },
+  'dashboard-content': { source: 'dashboard-content', memory: 256, timeout: 15 },
   'data-pipeline': { source: 'data-pipeline', memory: 1024, timeout: 300 },
   'notification-worker': {
     source: 'notification-worker',
@@ -78,6 +79,8 @@ const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: 
       MAX_BUNDLES_PER_RUN: '5',
       NOTIFICATION_FROM_ADDRESS: 'notifications@mesahomes.com',
       OWNER_NOTIFICATION_ADDRESS: 'sales@mesahomes.com',
+      UNSPLASH_KEY_SECRET: 'mesahomes/live/unsplash-access-key',
+      PHOTOS_BUCKET: 'mesahomes-property-photos',
     },
   },
 };
@@ -92,6 +95,8 @@ const SECRET_NAMES = [
   'mesahomes/live/ses-smtp-credentials',
   'mesahomes/live/vhz-handoff-secret',
   'mesahomes/live/vhz-webhook-secret',
+  'mesahomes/live/unsplash-access-key',
+  'mesahomes/live/unsplash-secret-key',
 ];
 
 // Route definitions — mirrors infrastructure/api-gateway.ts
@@ -129,6 +134,11 @@ const ROUTES: Array<{ method: string; path: string; lambda: string; auth: boolea
   { method: 'PATCH', path: '/api/v1/dashboard/listings/{id}', lambda: 'dashboard-listings', auth: true },
   { method: 'GET', path: '/api/v1/dashboard/notifications/settings', lambda: 'dashboard-notifications', auth: true },
   { method: 'PUT', path: '/api/v1/dashboard/notifications/settings', lambda: 'dashboard-notifications', auth: true },
+  { method: 'GET', path: '/api/v1/dashboard/content/drafts', lambda: 'dashboard-content', auth: true },
+  { method: 'GET', path: '/api/v1/dashboard/content/drafts/{id}', lambda: 'dashboard-content', auth: true },
+  { method: 'PATCH', path: '/api/v1/dashboard/content/drafts/{id}', lambda: 'dashboard-content', auth: true },
+  { method: 'POST', path: '/api/v1/dashboard/content/drafts/{id}/approve', lambda: 'dashboard-content', auth: true },
+  { method: 'POST', path: '/api/v1/dashboard/content/drafts/{id}/reject', lambda: 'dashboard-content', auth: true },
 ];
 
 export class MesaHomesStack extends Stack {
@@ -260,6 +270,7 @@ export class MesaHomesStack extends Stack {
     photosBucket.grantReadWrite(fns['property-lookup']!);
     photosBucket.grantReadWrite(fns['listing-service']!);
     contentIngestBucket.grantReadWrite(fns['content-ingest']!);
+    photosBucket.grantReadWrite(fns['content-drafter']!);
     // CloudWatch metrics + SES send for daily summary emails
     fns['content-ingest']!.addToRolePolicy(new iam.PolicyStatement({
       actions: ['cloudwatch:PutMetricData'],
