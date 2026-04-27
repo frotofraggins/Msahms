@@ -440,12 +440,12 @@ export class MesaHomesStack extends Stack {
             'runtime-versions': { nodejs: '20' },
             commands: [
               'node --version',
-              'cd frontend && npm ci',
+              'npm ci --prefix frontend',
             ],
           },
           build: {
             commands: [
-              'cd frontend && npm run build',
+              'npm run build --prefix frontend',
             ],
           },
           post_build: {

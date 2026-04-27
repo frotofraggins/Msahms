@@ -40,13 +40,16 @@ for name in "${LAMBDAS[@]}"; do
   cp "$REPO_ROOT/package.json" "$staging/package.json"
 
   # dashboard-content needs @aws-sdk/client-codebuild bundled (not in
-  # Lambda runtime default SDK subset).
+  # Lambda runtime default SDK subset). Copy the full resolved dep
+  # tree by installing client-codebuild + its transitive deps into a
+  # scratch node_modules using npm install --no-save.
   if [ "$name" = "dashboard-content" ]; then
-    mkdir -p "$staging/node_modules"
-    cp -r "$REPO_ROOT/node_modules/@aws-sdk/client-codebuild" "$staging/node_modules/@aws-sdk/" 2>/dev/null || true
-    # client-codebuild has transitive deps — copy the whole @aws-sdk + @smithy trees
-    cp -r "$REPO_ROOT/node_modules/@aws-sdk" "$staging/node_modules/" 2>/dev/null || true
-    cp -r "$REPO_ROOT/node_modules/@smithy" "$staging/node_modules/" 2>/dev/null || true
+    echo "    bundling @aws-sdk/client-codebuild deps..."
+    (
+      cd "$staging"
+      npm init -y > /dev/null 2>&1
+      npm install --no-save --omit=dev --silent @aws-sdk/client-codebuild > /dev/null 2>&1
+    )
   fi
 
   (cd "$staging" && zip -rq "$BUILD_DIR/$name.zip" .)
