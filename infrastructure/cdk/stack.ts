@@ -43,6 +43,7 @@ const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: 
   'dashboard-team': { source: 'dashboard-team', memory: 256, timeout: 10 },
   'dashboard-notifications': { source: 'dashboard-notifications', memory: 256, timeout: 10 },
   'dashboard-listings': { source: 'dashboard-listings', memory: 256, timeout: 10 },
+  'dashboard-performance': { source: 'dashboard-performance', memory: 256, timeout: 10 },
   'dashboard-content': { source: 'dashboard-content', memory: 256, timeout: 15 },
   'data-pipeline': { source: 'data-pipeline', memory: 1024, timeout: 300 },
   'notification-worker': {
@@ -135,6 +136,7 @@ const ROUTES: Array<{ method: string; path: string; lambda: string; auth: boolea
   { method: 'PATCH', path: '/api/v1/dashboard/listings/{id}', lambda: 'dashboard-listings', auth: true },
   { method: 'GET', path: '/api/v1/dashboard/notifications/settings', lambda: 'dashboard-notifications', auth: true },
   { method: 'PUT', path: '/api/v1/dashboard/notifications/settings', lambda: 'dashboard-notifications', auth: true },
+  { method: 'GET', path: '/api/v1/dashboard/performance', lambda: 'dashboard-performance', auth: true },
   { method: 'GET', path: '/api/v1/dashboard/content/drafts', lambda: 'dashboard-content', auth: true },
   { method: 'GET', path: '/api/v1/dashboard/content/drafts/{id}', lambda: 'dashboard-content', auth: true },
   { method: 'PATCH', path: '/api/v1/dashboard/content/drafts/{id}', lambda: 'dashboard-content', auth: true },

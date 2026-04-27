@@ -11,7 +11,7 @@ BUILD_DIR="$REPO_ROOT/.build"
 LAMBDAS=(
   leads-capture tools-calculator property-lookup market-data content-api
   ai-proxy listing-service auth-api dashboard-leads dashboard-team
-  dashboard-notifications dashboard-listings dashboard-content data-pipeline notification-worker
+  dashboard-notifications dashboard-listings dashboard-content dashboard-performance data-pipeline notification-worker
   content-ingest content-bundler content-drafter photo-finder
 )
 
