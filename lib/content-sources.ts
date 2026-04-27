@@ -173,6 +173,14 @@ const PHASE_1_SOURCES: ContentSource[] = [
       'starter home', 'development',
     ],
   },
+  {
+    id: 'mesa-now-news',
+    name: 'Mesa City Official News (mesanow.org)',
+    type: 'rss',
+    url: 'https://www.mesanow.org/news/feeds/rss?cat=all',
+    topic: 'news',
+    cadence: 'daily',
+  },
 ];
 
 // Phase 2 — to enable after Phase 1 proves the pattern
