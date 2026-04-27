@@ -98,7 +98,7 @@ export function AddressAutocomplete({
             locationBias: {
               circle: {
                 center: { latitude: 33.4152, longitude: -111.8315 },
-                radius: 80000,
+                radius: 50000,
               },
             },
           }),
