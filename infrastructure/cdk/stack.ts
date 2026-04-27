@@ -64,6 +64,11 @@ const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: 
       OWNER_NOTIFICATION_ADDRESS: 'sales@mesahomes.com',
     },
   },
+  'content-bundler': {
+    source: 'content-bundler',
+    memory: 512,
+    timeout: 120,
+  },
 };
 
 const SECRET_NAMES = [
@@ -296,6 +301,12 @@ export class MesaHomesStack extends Stack {
           event: events.RuleTargetInput.fromObject({ cadence: 'monthly' }),
         }),
       ],
+    });
+
+    // Bundler runs daily at 14:30 UTC (7:30am MST), 30 min after daily ingest
+    new events.Rule(this, 'ContentBundlerCron', {
+      schedule: events.Schedule.cron({ minute: '30', hour: '14', day: '*', month: '*', year: '*' }),
+      targets: [new targets.LambdaFunction(fns['content-bundler']!)],
     });
 
     // API Gateway
