@@ -36,6 +36,9 @@ export function HomeValueClient() {
   const [zipRange, setZipRange] = useState<{ low: number; high: number; median: number } | null>(null);
   const [lookingUp, setLookingUp] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
+  const [dataRichness, setDataRichness] = useState<
+    { hasPhoto: boolean; compsCount: number; hasSubdivision: boolean } | null
+  >(null);
 
   const hasAddress = address.trim().length > 0;
   const zip = extractZip(address);
@@ -71,16 +74,38 @@ export function HomeValueClient() {
         }
 
         if (propertyData.status === 'fulfilled') {
-          const p = propertyData.value as {
-            property?: PropertyData;
-          } & PropertyData;
-          // API may wrap in {property: {...}} or return flat — handle both
-          const data = (p.property ?? p) as PropertyData;
-          setProperty(data);
+          // The lookup Lambda returns a rich envelope:
+          //   { property, photo: {url, source}, comps: {subdivision[], zip[]}, market: {zip, metro} }
+          // We pull the property + photo into the PropertyData shape the card expects,
+          // and stash the extras for the comps display below.
+          const resp = propertyData.value as {
+            property?: Record<string, unknown>;
+            photo?: { url: string; source: string };
+            comps?: { subdivision?: unknown[]; zip?: unknown[] };
+          };
+          if (resp.property) {
+            const merged = {
+              ...(resp.property as unknown as PropertyData),
+              photoUrl: resp.photo?.url ?? null,
+            };
+            setProperty(merged);
+            // Count data points we actually have — used for the 'data richness' message
+            const compsCount =
+              (resp.comps?.subdivision?.length ?? 0) +
+              (resp.comps?.zip?.length ?? 0);
+            setDataRichness({
+              hasPhoto: resp.photo?.source === 'streetview',
+              compsCount,
+              hasSubdivision: !!merged.subdivision,
+            });
+          } else {
+            setProperty(null);
+          }
         } else {
           // 404 is expected for many addresses we don't have county data for.
           // Keep the ZIP range shown; just say we couldn't find the specific property.
           setProperty(null);
+          setDataRichness(null);
           const rejectReason = propertyData.reason;
           if (rejectReason instanceof ApiRequestError && rejectReason.status !== 404) {
             setLookupError('Could not look up property details. You can still request an estimate below.');
@@ -182,8 +207,19 @@ export function HomeValueClient() {
 
       {/* Property Data Card — only renders when we actually found real county data */}
       {property && (
-        <div className="mb-6">
+        <div className="mb-6 space-y-2">
           <PropertyDataCard property={property} />
+          {dataRichness && (
+            <p className="text-center text-xs text-text-light">
+              Data sourced from {dataRichness.hasPhoto ? 'Google Street View, ' : ''}
+              county GIS records
+              {dataRichness.compsCount > 0
+                ? `, and ${dataRichness.compsCount} recent nearby comps`
+                : ''}
+              . Property detail varies by what each county indexes — rural and
+              newly-built parcels often have less public data.
+            </p>
+          )}
         </div>
       )}
 
