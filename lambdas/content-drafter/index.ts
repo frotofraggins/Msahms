@@ -75,6 +75,26 @@ interface Draft {
  * density requirement. Prompts used to start with "You are..." style
  * but Nova Micro responds better to direct instruction + bullet lists.
  */
+
+/**
+ * Strip a trailing disclaimer block if the model already appended one
+ * to the body. Models sometimes repeat the `disclaimer` JSON field at
+ * the end of `body_markdown` despite being told not to.
+ */
+function stripTrailingDisclaimer(body: string): string {
+  let trimmed = body.trimEnd();
+  const patterns = [
+    /\n+---\s*\n+_[^_]*educational content[^_]*_\s*$/i,
+    /\n+_[^_]*educational content[^_]*_\s*$/i,
+    /\n+#\s*disclaimer:[^\n]*$/i,
+    /\n+[^\n]*educational content,\s*not legal advice[^\n]*$/i,
+  ];
+  for (const p of patterns) {
+    trimmed = trimmed.replace(p, '');
+  }
+  return trimmed.trimEnd();
+}
+
 function buildPrompt(bundle: Bundle): string {
   const sourceList = bundle.items
     .slice(0, 8) // cap item count so prompt stays under 2K tokens
@@ -89,33 +109,51 @@ function buildPrompt(bundle: Bundle): string {
     .filter((k) => ['mesa', 'gilbert', 'chandler', 'queen', 'apache', 'san', 'tan'].some((c) => k.includes(c)))
     .join(', ');
 
-  return `Write a blog post for MesaHomes.com, a hyper-local Mesa, AZ real estate platform.
+  return `You are writing for MesaHomes.com, a hyper-local Mesa, AZ real estate site run by a licensed Arizona Realtor who actually lives and works in the East Valley. Your job is to write like a knowledgeable local, not like ChatGPT.
 
-HARD RULES (break any one and the output is rejected):
-- NEVER use em-dashes. Use commas or periods instead.
-- NEVER write "whether you're X or Y" pivots.
-- NEVER write "that said," "in today's market," or "navigate the landscape."
-- NEVER use tripartite lists of adjectives (no "modern, sleek, stylish").
-- NEVER use hollow words: leverage, ecosystem, game-changer, unpack.
-- DO use short sentences, contractions, active voice.
-- DO cite at least one primary source in every paragraph using markdown links.
-- DO include specific numbers and place names when the source has them.
-- Length: 500-800 words, excluding the disclaimer.
+VOICE (this is the main thing — get this right):
+- Open with the most important thing. Not "Zoning changes often stir up questions." Open with what actually happened and why a Mesa homeowner should care.
+- Pick ONE angle and commit. If 6 zoning changes happened, one of them matters more than the others. Say which and why.
+- Use specific local knowledge. Name the cross streets, the corridor, the neighboring subdivisions, the nearby schools if relevant. A local knows "Signal Butte and Williams Field" is the Gateway Airport corridor where every big development is landing right now.
+- Take a position. Is this good for property values? Bad? Too early to tell? Say what you think. A human writer has opinions. Hedge where honest: "too early to say for sure, but..." beats no stance.
+- Write like you're explaining this to a neighbor over coffee, not giving a corporate press briefing.
+
+HARD BANS (reject output that does any of these):
+- No em-dashes anywhere. Use commas or periods.
+- No "whether you're X or Y" pivots.
+- No "that said," "in today's market," "navigate the landscape," "ever-evolving," "dynamic," "vibrant," "thriving."
+- No tripartite adjective lists ("modern, sleek, stylish").
+- No hollow business words: leverage, ecosystem, game-changer, unpack, ensure, utilize, streamline, enhance.
+- No paragraphs that all start the same way ("This change / This permit / This move"). Vary your sentence starters.
+- No "Staying informed helps homeowners..." style empty closers. End with a concrete takeaway or a specific question.
+- No repeating the topic name 10 times for SEO. Google caught on to that 15 years ago.
+
+STRUCTURE:
+- Start with ONE sentence that states what happened or what matters. Then a second sentence of context. Then build.
+- Use H2 headings (##) to break up sections. Mix short punchy sections with longer ones.
+- Include at least one "What this means for [Mesa homeowners / buyers / sellers]" passage with specifics, not platitudes.
+- End with a question or a forward-looking statement. Never end with the disclaimer.
+
+CITATIONS:
+- Every factual claim (numbers, case IDs, addresses, dates) must cite a source via markdown link.
+- If the source uses an ID or case number, include it. Don't paraphrase around the specifics.
+
+LENGTH: 800-1200 words excluding disclaimer. Shorter is fine if the topic is narrow. Longer is fine if there's real substance. Do not pad.
 
 TOPIC: ${bundle.topic}
 BUNDLE (${bundle.itemCount} related items, priority ${bundle.priority}):
 
 ${sourceList}
 
-${cityKeywords ? `Keywords to include naturally: ${cityKeywords}` : ''}
+${cityKeywords ? `Place names the article should reference where relevant: ${cityKeywords}` : ''}
 
-Output ONLY a valid JSON object with this exact shape, no preamble:
+Output ONLY a valid JSON object with this exact shape, no preamble, no markdown code fences:
 {
-  "title": "a compelling title under 70 chars optimized for Mesa SEO",
+  "title": "a compelling title under 70 chars. Specific, not generic. Not 'Zoning Changes in Mesa' — try 'Mesa's Gateway Corridor Just Got 125 Acres Closer to Build-Out' or similar.",
   "slug": "url-friendly-slug",
-  "meta_description": "under 160 chars for Google search results",
-  "body_markdown": "the 500-800 word article in markdown with inline [source](url) citations",
-  "disclaimer": "this is educational content, not legal advice. Consult a licensed Arizona Realtor for your specific situation."
+  "meta_description": "under 160 chars. Tell the reader what they'll learn, not what the article is about.",
+  "body_markdown": "the 800-1200 word article in markdown with ## section headings and inline [source](url) citations",
+  "disclaimer": "This is educational content, not legal advice. Consult a licensed Arizona Realtor for your specific situation."
 }`;
 }
 
@@ -133,12 +171,12 @@ async function invokeDrafter(
   if (isNova) {
     body = JSON.stringify({
       messages: [{ role: 'user', content: [{ text: prompt }] }],
-      inferenceConfig: { maxTokens: 2000, temperature: 0.7 },
+      inferenceConfig: { maxTokens: 3500, temperature: 0.7 },
     });
   } else if (isClaude) {
     body = JSON.stringify({
       anthropic_version: 'bedrock-2023-05-31',
-      max_tokens: 2000,
+      max_tokens: 3500,
       temperature: 0.7,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -252,7 +290,10 @@ async function draftOneBundle(bundle: Bundle, correlationId: string): Promise<Dr
     title,
     slug,
     metaDescription,
-    bodyMarkdown: `${bodyMarkdown}\n\n---\n\n_${disclaimer}_`,
+    // Strip any trailing disclaimer the model may have already appended,
+    // then add ours once. Models sometimes repeat the disclaimer field at
+    // the end of the body despite our prompt telling them not to.
+    bodyMarkdown: `${stripTrailingDisclaimer(bodyMarkdown)}\n\n---\n\n_${disclaimer}_`,
     citationSources,
     photos,
     createdAt: new Date().toISOString(),
