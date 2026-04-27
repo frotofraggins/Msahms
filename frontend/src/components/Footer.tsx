@@ -16,6 +16,7 @@ const toolLinks = [
   { href: '/tools/home-value', label: 'Home Value Request' },
   { href: '/tools/listing-generator', label: 'AI Listing Generator' },
   { href: '/compare/flat-fee-vs-traditional-agent', label: 'Flat Fee vs Traditional' },
+  { href: '/blog', label: 'Blog & Market Updates' },
 ];
 
 export function Footer() {
@@ -70,6 +71,7 @@ export function Footer() {
               <li><Link href="/contact" className="text-sm text-text-light hover:text-primary">Contact</Link></li>
               <li><Link href="/privacy" className="text-sm text-text-light hover:text-primary">Privacy Policy</Link></li>
               <li><Link href="/terms" className="text-sm text-text-light hover:text-primary">Terms of Service</Link></li>
+              <li><Link href="/auth/login" className="text-sm text-text-light hover:text-primary">Agent Login</Link></li>
             </ul>
           </div>
         </div>

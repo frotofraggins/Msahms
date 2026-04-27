@@ -10,6 +10,7 @@ const navLinks = [
   { href: '/rent', label: 'Rent' },
   { href: '/invest', label: 'Invest' },
   { href: '/areas/mesa', label: 'Areas' },
+  { href: '/blog', label: 'Blog' },
   { href: '/reviews', label: 'Reviews' },
 ];
 
@@ -45,6 +46,12 @@ export function Header() {
 
         {/* Desktop CTA */}
         <div className="hidden items-center gap-4 md:flex">
+          <Link
+            href="/auth/login"
+            className="text-sm font-medium text-text-light transition-colors hover:text-primary"
+          >
+            Agent Login
+          </Link>
           <a
             href="tel:+14802690502"
             className="flex items-center gap-1 text-sm font-medium text-primary"
@@ -89,6 +96,13 @@ export function Header() {
             onClick={() => setMobileOpen(false)}
           >
             Talk to Agent
+          </Link>
+          <Link
+            href="/auth/login"
+            className="mt-2 block border-t border-warm-border pt-2 text-center text-sm font-medium text-text-light"
+            onClick={() => setMobileOpen(false)}
+          >
+            Agent Login
           </Link>
         </nav>
       )}
