@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, type FormEvent } from 'react';
-import { MapPin, CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PropertyDataCard, type PropertyData } from '@/components/PropertyDataCard';
 import { MarketContextStrip } from '@/components/MarketContextStrip';
 import { CompsTable } from '@/components/CompsTable';
+import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 import { api, ApiRequestError } from '@/lib/api';
 import { trackEvent } from '@/lib/tracking';
 
@@ -180,14 +181,11 @@ export function HomeValueClient() {
           Property Address
         </label>
         <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
-          <input
+          <AddressAutocomplete
             id="address"
-            type="text"
-            placeholder="123 E Main St, Mesa, AZ 85201"
             value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            onChange={setAddress}
+            placeholder="Start typing your address…"
           />
         </div>
       </div>
