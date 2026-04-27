@@ -276,6 +276,15 @@ export class MesaHomesStack extends Stack {
         }),
       ],
     });
+    // Monthly HOA subdivision directory refresh — 17th of month 7am MST
+    new events.Rule(this, 'ContentIngestMonthlyCron', {
+      schedule: events.Schedule.cron({ minute: '0', hour: '14', day: '17', month: '*', year: '*' }),
+      targets: [
+        new targets.LambdaFunction(fns['content-ingest']!, {
+          event: events.RuleTargetInput.fromObject({ cadence: 'monthly' }),
+        }),
+      ],
+    });
 
     // API Gateway
     const api = new apigw.RestApi(this, 'Api', {

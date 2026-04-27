@@ -89,6 +89,19 @@ const PHASE_1_SOURCES: ContentSource[] = [
     // No keyword filter — we want ALL community posts to feed sentiment
     // analysis. The bundler will cluster by topic.
   },
+  {
+    id: 'maricopa-subdivisions',
+    name: 'Maricopa County — Subdivision Directory (HOA hyperlocal)',
+    type: 'gis',
+    url: 'https://gis.mcassessor.maricopa.gov/arcgis/rest/services/Parcels/MapServer/0/query',
+    topic: 'hoa',
+    cadence: 'monthly',
+    config: {
+      distinct: 'SUBNAME',
+      cities: ['MESA', 'GILBERT', 'CHANDLER', 'QUEEN CREEK', 'APACHE JUNCTION'],
+      maxSubdivisions: 2000,
+    },
+  },
 ];
 
 // Phase 2 — to enable after Phase 1 proves the pattern
@@ -150,18 +163,6 @@ const PHASE_2_SOURCES: ContentSource[] = [
     topic: 'housing-law',
     cadence: 'weekly',
     keywords: ['contract', 'disclosure', 'form', 'compliance'],
-  },
-  {
-    id: 'maricopa-subdivisions',
-    name: 'Maricopa County — New Subdivisions',
-    type: 'gis',
-    url: 'https://gis.mcassessor.maricopa.gov/arcgis/rest/services/Parcels/MapServer/0/query',
-    topic: 'hoa',
-    cadence: 'monthly',
-    config: {
-      distinct: 'SUBNAME',
-      cities: ['MESA', 'GILBERT', 'CHANDLER', 'QUEEN CREEK', 'APACHE JUNCTION'],
-    },
   },
   {
     id: 'zillow-zhvi-zip',

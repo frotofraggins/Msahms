@@ -27,6 +27,7 @@ import { EntityType } from '../../lib/types/dynamodb.js';
 import { fetchLegistarEvents } from './parsers/legistar.js';
 import { fetchSocrata } from './parsers/socrata.js';
 import { fetchRss } from './parsers/rss.js';
+import { fetchGis } from './parsers/gis.js';
 
 const s3 = new S3Client({ region: process.env.AWS_REGION ?? 'us-west-2' });
 const BUCKET = process.env.CONTENT_INGEST_BUCKET ?? 'mesahomes-content-ingest';
@@ -98,6 +99,8 @@ async function fetchForSource(
       return fetchSocrata(source);
     case 'rss':
       return fetchRss(source);
+    case 'gis':
+      return fetchGis(source);
     default:
       console.warn(`[content-ingest] no parser for type=${source.type}, source=${source.id}`);
       return [];
