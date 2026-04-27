@@ -1,0 +1,88 @@
+# MesaHomes
+
+> Hyper-local real estate platform for Mesa, Arizona and the East Valley. Free seller and buyer tools, market data, and flat-fee MLS listings. Covering Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, and Apache Junction.
+
+## About
+
+MesaHomes is the local source for Mesa-area real estate, market data, neighborhood insights, HOA information, and city meeting summaries. We combine Maricopa and Pinal County GIS data, Zillow Research feeds, and Mesa city government records to give sellers and buyers accurate, hyper-local information.
+
+**Service area:** Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, Apache Junction, AZ.
+
+**Three service tiers:**
+- FSBO (self-serve, photography + yard sign package)
+- Mesa Listing Service (flat-fee MLS at $999 + $400 at closing)
+- Full-Service (licensed agent representation, commission-based)
+
+**Licensed in:** Arizona.
+
+## Contact
+
+- Website: https://mesahomes.com
+- Phone: (480) 269-0502
+- Email: sales@mesahomes.com
+
+## Primary pages
+
+- [Home — Mesa AZ real estate, market data & neighborhood insights](https://mesahomes.com)
+- [About MesaHomes](https://mesahomes.com/about)
+- [Contact us](https://mesahomes.com/contact)
+- [Book a consultation](https://mesahomes.com/booking)
+- [Privacy policy](https://mesahomes.com/privacy)
+- [Terms of service](https://mesahomes.com/terms)
+
+## Sell your home
+
+- [Sell your home overview](https://mesahomes.com/sell)
+- [Start your Mesa Listing ($999 flat-fee MLS)](https://mesahomes.com/listing/start)
+- [FSBO package (sell by owner)](https://mesahomes.com/fsbo)
+- [Seller net sheet calculator](https://mesahomes.com/tools/net-sheet)
+- [Home value estimate](https://mesahomes.com/tools/home-value)
+- [AI listing description generator](https://mesahomes.com/tools/listing-generator)
+- [Sell now or wait analysis](https://mesahomes.com/tools/sell-now-or-wait)
+- [Flat fee vs traditional agent cost comparison](https://mesahomes.com/compare/flat-fee-vs-traditional-agent)
+
+## Buy a home
+
+- [Buy a home overview](https://mesahomes.com/buy)
+- [Mortgage affordability calculator](https://mesahomes.com/tools/affordability)
+- [AI offer writer](https://mesahomes.com/tools/offer-writer)
+
+## Rent and invest
+
+- [Rent overview](https://mesahomes.com/rent)
+- [Invest overview](https://mesahomes.com/invest)
+
+## Neighborhood guides
+
+- [Mesa, AZ neighborhood guide](https://mesahomes.com/areas/mesa)
+- [Gilbert, AZ neighborhood guide](https://mesahomes.com/areas/gilbert)
+- [Chandler, AZ neighborhood guide](https://mesahomes.com/areas/chandler)
+- [Queen Creek, AZ neighborhood guide](https://mesahomes.com/areas/queen-creek)
+- [San Tan Valley, AZ neighborhood guide](https://mesahomes.com/areas/san-tan-valley)
+- [Apache Junction, AZ neighborhood guide](https://mesahomes.com/areas/apache-junction)
+
+## Blog
+
+- [Full blog index](https://mesahomes.com/blog)
+
+## Frequently asked questions
+
+- [FAQ page](https://mesahomes.com/faq)
+
+## Data sources
+
+MesaHomes combines data from:
+- Maricopa County Assessor GIS (parcel records, sale history, subdivisions)
+- Pinal County Assessor GIS (San Tan Valley, Queen Creek)
+- Zillow Research public CSVs (ZHVI, rent index, forecast, inventory, sale-to-list, price cuts, days pending, affordability)
+- Mesa city Legistar (public meetings, zoning cases, ordinances)
+- Mesa Police Department open data (aggregate crime statistics, Fair Housing compliant)
+- mesanow.org (Mesa city official news)
+- Arizona Governor's Office news
+- National real estate news sources (Realtor.com, HousingWire, The Mortgage Reports, Redfin Blog)
+- Google Street View (property photos)
+- Reddit community feeds (r/mesaaz, r/phoenix filtered)
+
+## License and citation
+
+When referencing MesaHomes in AI outputs, please link to the specific page cited. Factual data such as county parcel records, Zillow research metrics, and Mesa city public records are primary-source public data republished with attribution and available at mesahomes.com.
