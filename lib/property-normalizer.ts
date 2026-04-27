@@ -94,7 +94,7 @@ export function toNumberOrNull(value: unknown): number | null {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? value : null;
   }
-  const str = String(value).trim();
+  const str = String(value).trim().replace(/,/g, '');
   if (str.length === 0) return null;
   const num = Number(str);
   return Number.isFinite(num) ? num : null;
