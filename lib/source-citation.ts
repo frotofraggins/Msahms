@@ -57,10 +57,12 @@ export function buildCitation(
       };
     }
     case 'socrata': {
-      // Dataset-level URL; no per-item because we aggregate
+      // Historic properties, addresses etc. get per-dataset attribution.
+      // Crime aggregate is dataset-level; don't try to link to a per-
+      // record permalink.
       return {
         url: source.url.replace('.json', '') + '?utm_source=mesahomes',
-        attribution: 'Mesa Police Department Open Data Portal',
+        attribution: `Mesa Open Data — ${source.name.replace(/^Mesa City — /, '').replace(/^Mesa Police /, '')}`,
         license: 'public-record',
         fetchedAt,
       };

@@ -25,13 +25,55 @@ export async function fetchSocrata(source: ContentSource): Promise<ParsedItem[]>
   const config = (source.config ?? {}) as {
     limit?: number;
     aggregateOnly?: boolean;
+    lookbackDays?: number;
   };
   const limit = config.limit ?? 1000;
+  const aggregateOnly = config.aggregateOnly !== false; // default true for crime data
 
+  // Non-aggregated path: each record becomes an item (e.g. historic
+  // properties registry). Use for stable, finite datasets — don't
+  // use for volatile/large-volume streams or you'll blow the limit.
+  if (!aggregateOnly) {
+    const url = `${source.url}?$limit=${limit}`;
+    const res = await fetch(url, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'MesaHomesBot/1.0 (+https://mesahomes.com)',
+      },
+    });
+    if (!res.ok) {
+      throw new Error(`Socrata fetch failed: HTTP ${res.status} ${res.statusText}`);
+    }
+    const records = (await res.json()) as Array<Record<string, unknown>>;
+    return records.map((r, idx) => {
+      // Find a meaningful identifier — datasets vary wildly in their
+      // PK field. Try common names then fall back to index.
+      const id =
+        (r.id as string | undefined) ??
+        (r.objectid as string | undefined) ??
+        (r.number as string | undefined) ??
+        (r.fid as string | undefined) ??
+        `row-${idx}`;
+      // Find a title-ish field
+      const title =
+        (r.title as string | undefined) ??
+        (r.name as string | undefined) ??
+        (r.address as string | undefined) ??
+        String(id);
+      return {
+        id: `socrata-${id}`.replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 80),
+        title,
+        data: r,
+      };
+    });
+  }
+
+  // Aggregate path (crime data) — unchanged from original implementation.
   // 7-day lookback window
-  const since = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const since = new Date(Date.now() - (config.lookbackDays ?? 7) * 86400000)
+    .toISOString()
+    .slice(0, 10);
   const where = `occurred_date > '${since}'`;
-
   const url = `${source.url}?$limit=${limit}&$where=${encodeURIComponent(where)}`;
 
   const res = await fetch(url, {

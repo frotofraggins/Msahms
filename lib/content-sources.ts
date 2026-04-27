@@ -127,6 +127,52 @@ const PHASE_1_SOURCES: ContentSource[] = [
       limit: 25,
     },
   },
+  {
+    id: 'mesa-historic-properties',
+    name: 'Mesa City — Historic Properties Registry',
+    type: 'socrata',
+    url: 'https://data.mesaaz.gov/resource/x94t-w43j.json',
+    topic: 'zoning',
+    cadence: 'monthly',
+    config: {
+      aggregateOnly: false,
+      limit: 500,
+    },
+  },
+  {
+    id: 'noaa-maricopa-alerts',
+    name: 'NOAA Weather Alerts — Maricopa County',
+    type: 'rss',
+    url: 'https://api.weather.gov/alerts/active.atom?zone=AZZ550',
+    topic: 'news',
+    cadence: 'daily',
+  },
+  {
+    id: 'reddit-phoenix',
+    name: 'Reddit r/phoenix — Metro Sentiment',
+    type: 'rss',
+    url: 'https://www.reddit.com/r/phoenix/.rss',
+    topic: 'news',
+    cadence: 'daily',
+    keywords: [
+      'mesa', 'gilbert', 'chandler', 'queen creek', 'apache junction',
+      'san tan valley', 'east valley', 'housing', 'rent', 'home',
+      'apartment', 'hoa', 'landlord', 'property tax', 'real estate',
+    ],
+  },
+  {
+    id: 'reddit-arizona',
+    name: 'Reddit r/arizona — State Sentiment (filtered)',
+    type: 'rss',
+    url: 'https://www.reddit.com/r/arizona/.rss',
+    topic: 'news',
+    cadence: 'daily',
+    keywords: [
+      'mesa', 'gilbert', 'chandler', 'phoenix', 'east valley',
+      'housing', 'hoa', 'property tax', 'rent', 'zoning', 'adu',
+      'starter home', 'development',
+    ],
+  },
 ];
 
 // Phase 2 — to enable after Phase 1 proves the pattern
