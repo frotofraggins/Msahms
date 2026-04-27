@@ -181,6 +181,76 @@ const PHASE_1_SOURCES: ContentSource[] = [
     topic: 'news',
     cadence: 'daily',
   },
+  // --- STATE + NATIONAL CONTEXT ---
+  // These filter on keywords to avoid flooding the pipeline with
+  // non-housing content. The bundler can still surface high-priority
+  // items that match multiple sources.
+  {
+    id: 'az-governor-news',
+    name: 'Office of the Arizona Governor — Press Releases',
+    type: 'rss',
+    url: 'https://azgovernor.gov/newsroom/feed',
+    topic: 'housing-law',
+    cadence: 'daily',
+    keywords: [
+      'housing', 'home', 'mortgage', 'rent', 'eviction', 'hoa',
+      'zoning', 'development', 'builder', 'affordable', 'property',
+      'real estate', 'mesa', 'gilbert', 'chandler', 'phoenix',
+      'east valley', 'tax', 'land', 'water', 'utility',
+    ],
+  },
+  {
+    id: 'realtor-com-news',
+    name: 'Realtor.com News',
+    type: 'rss',
+    url: 'https://www.realtor.com/news/feed/',
+    topic: 'market',
+    cadence: 'daily',
+    keywords: [
+      'arizona', 'phoenix', 'mesa', 'mortgage rate', 'home price',
+      'housing market', 'inventory', 'affordability', 'first-time buyer',
+      'rent', 'hoa', 'property tax', 'migrating', 'sunbelt',
+    ],
+  },
+  {
+    id: 'housingwire-news',
+    name: 'HousingWire — Industry News',
+    type: 'rss',
+    url: 'https://www.housingwire.com/feed/',
+    topic: 'housing-law',
+    cadence: 'daily',
+    keywords: [
+      'nar', 'settlement', 'commission', 'arizona', 'phoenix',
+      'mortgage', 'fha', 'fannie mae', 'freddie mac', 'cfpb',
+      'hud', 'fhfa', 'compliance', 'regulation', 'broker',
+    ],
+  },
+  {
+    id: 'mortgage-reports',
+    name: 'The Mortgage Reports',
+    type: 'rss',
+    url: 'https://themortgagereports.com/feed',
+    topic: 'market',
+    cadence: 'daily',
+    keywords: [
+      'first-time', 'buyer', 'interest rate', 'mortgage rate',
+      'down payment', 'fha', 'va loan', 'credit score',
+      'pre-approval', 'closing cost', 'arizona', 'home equity',
+    ],
+  },
+  {
+    id: 'redfin-blog',
+    name: 'Redfin Blog — Home Buying/Selling Tips',
+    type: 'rss',
+    url: 'https://www.redfin.com/blog/feed/',
+    topic: 'market',
+    cadence: 'daily',
+    keywords: [
+      'arizona', 'phoenix', 'mesa', 'home buyer', 'home seller',
+      'open house', 'closing cost', 'staging', 'inspection',
+      'appraisal', 'escrow', 'offer', 'contingency', 'first-time',
+    ],
+  },
 ];
 
 // Phase 2 — to enable after Phase 1 proves the pattern
