@@ -154,13 +154,47 @@ export function AddressAutocomplete({
     };
   }, [value, apiKey]);
 
-  function handleSelect(s: Suggestion) {
+  async function handleSelect(s: Suggestion) {
+    setOpen(false);
+    setHighlighted(-1);
+
+    // Places Autocomplete returns short-form text without ZIP. Call Place
+    // Details to resolve the full formatted address (with ZIP + country)
+    // so downstream code can extract the ZIP and use it for county
+    // routing, ZIP-level market data, and comp queries.
+    try {
+      const res = await fetch(
+        `https://places.googleapis.com/v1/places/${s.placeId}?sessionToken=${sessionToken.current}`,
+        {
+          method: 'GET',
+          headers: {
+            'X-Goog-Api-Key': apiKey ?? '',
+            'X-Goog-FieldMask': 'formattedAddress,addressComponents',
+          },
+        },
+      );
+      if (res.ok) {
+        const data = (await res.json()) as {
+          formattedAddress?: string;
+          addressComponents?: Array<{ types?: string[]; shortText?: string }>;
+        };
+        const zip =
+          data.addressComponents?.find((c) => c.types?.includes('postal_code'))?.shortText;
+        const full = data.formattedAddress ?? s.text;
+        onChange(full);
+        onSelect?.({ ...s, text: full, zip: zip ?? s.zip });
+        sessionToken.current = crypto.randomUUID();
+        setSuggestions([]);
+        return;
+      }
+    } catch {
+      // fall through to the short-form path
+    }
+
+    // Fallback: Place Details failed, use the autocomplete text as-is
     onChange(s.text);
     onSelect?.(s);
-    setOpen(false);
     setSuggestions([]);
-    setHighlighted(-1);
-    // Start a new session for the next search
     sessionToken.current = crypto.randomUUID();
   }
 
