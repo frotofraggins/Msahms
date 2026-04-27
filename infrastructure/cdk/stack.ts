@@ -60,6 +60,8 @@ const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: 
     timeout: 300,
     env: {
       CONTENT_INGEST_BUCKET: 'mesahomes-content-ingest',
+      NOTIFICATION_FROM_ADDRESS: 'notifications@mesahomes.com',
+      OWNER_NOTIFICATION_ADDRESS: 'sales@mesahomes.com',
     },
   },
 };
@@ -242,6 +244,16 @@ export class MesaHomesStack extends Stack {
     photosBucket.grantReadWrite(fns['property-lookup']!);
     photosBucket.grantReadWrite(fns['listing-service']!);
     contentIngestBucket.grantReadWrite(fns['content-ingest']!);
+    // CloudWatch metrics + SES send for daily summary emails
+    fns['content-ingest']!.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['cloudwatch:PutMetricData'],
+      resources: ['*'],
+      conditions: { StringEquals: { 'cloudwatch:namespace': 'MesaHomes/ContentIngest' } },
+    }));
+    fns['content-ingest']!.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['ses:SendEmail', 'sesv2:SendEmail'],
+      resources: ['*'],
+    }));
     fns['auth-api']!.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonCognitoPowerUser'));
     fns['dashboard-team']!.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonCognitoPowerUser'));
 

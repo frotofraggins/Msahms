@@ -14,6 +14,8 @@
  */
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { CloudWatchClient, PutMetricDataCommand } from '@aws-sdk/client-cloudwatch';
+import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 import { createHash } from 'crypto';
 import {
   getSourceById,
@@ -24,6 +26,7 @@ import {
 import { getItem, putItem } from '../../lib/dynamodb.js';
 import { generateCorrelationId } from '../../lib/errors.js';
 import { EntityType } from '../../lib/types/dynamodb.js';
+import { buildCitation } from '../../lib/source-citation.js';
 import { fetchLegistarEvents } from './parsers/legistar.js';
 import { fetchLegistarMatters } from './parsers/legistar-matters.js';
 import { fetchSocrata } from './parsers/socrata.js';
@@ -32,7 +35,11 @@ import { fetchGis } from './parsers/gis.js';
 import { fetchBigSales } from './parsers/big-sales.js';
 
 const s3 = new S3Client({ region: process.env.AWS_REGION ?? 'us-west-2' });
+const cw = new CloudWatchClient({ region: process.env.AWS_REGION ?? 'us-west-2' });
+const ses = new SESv2Client({ region: process.env.AWS_REGION ?? 'us-west-2' });
 const BUCKET = process.env.CONTENT_INGEST_BUCKET ?? 'mesahomes-content-ingest';
+const OWNER_EMAIL = process.env.OWNER_NOTIFICATION_ADDRESS ?? 'sales@mesahomes.com';
+const FROM_EMAIL = process.env.NOTIFICATION_FROM_ADDRESS ?? 'notifications@mesahomes.com';
 
 interface IngestEvent {
   cadence?: Cadence;
@@ -143,6 +150,11 @@ async function ingestSource(source: ContentSource, correlationId: string): Promi
         // Write raw to S3 for audit + future re-processing
         await writeToS3(source.id, date, item.id, item.data);
 
+        // Build primary-source citation so the drafter has a link
+        // to cite. Items without citations can still be indexed for
+        // internal analysis but shouldn't feed published articles.
+        const citation = buildCitation(source, item.id, item.data);
+
         // Write index record to DDB
         // PK: SOURCE#{sourceId} SK: HASH#{hash} for dedup lookup
         // Also indexed by topic via GSI1 for the bundler:
@@ -157,6 +169,7 @@ async function ingestSource(source: ContentSource, correlationId: string): Promi
           data: {
             sourceId: source.id,
             sourceName: source.name,
+            sourceType: source.type,
             topic: source.topic,
             itemId: item.id,
             title: item.title,
@@ -164,6 +177,7 @@ async function ingestSource(source: ContentSource, correlationId: string): Promi
             date,
             s3Key: `${source.id}/${date}/${item.id}.json`,
             rawData: item.data,
+            citation,
           },
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -225,5 +239,113 @@ export async function handler(event: IngestEvent): Promise<{
 
   console.log(`[content-ingest] complete summary=${JSON.stringify(summary)} cid=${correlationId}`);
 
+  // Emit CloudWatch metrics per source + overall. Metrics lets us set
+  // alarms on 'fetched=0' or 'errors>0' per source.
+  await emitMetrics(results).catch((err) =>
+    console.error('[content-ingest] metric emit failed:', err),
+  );
+
+  // Only email summary for cron-triggered runs (has event.cadence),
+  // not for manual single-source invocations. Avoids test runs
+  // spamming the owner inbox.
+  if (event.cadence) {
+    await emailSummary(event.cadence, results, summary).catch((err) =>
+      console.error('[content-ingest] email summary failed:', err),
+    );
+  }
+
   return { statusCode: 200, results };
+}
+
+/**
+ * Emit per-source CloudWatch metrics under namespace MesaHomes/ContentIngest.
+ * Dimensions: SourceId. Metrics: Fetched, New, Duplicates, Errors.
+ * Create alarms (outside this code) on any source with Errors >= 2 over 2 runs.
+ */
+async function emitMetrics(results: IngestResult[]): Promise<void> {
+  const metricData = results.flatMap((r) => [
+    {
+      MetricName: 'Fetched',
+      Dimensions: [{ Name: 'SourceId', Value: r.sourceId }],
+      Value: r.fetched,
+      Unit: 'Count' as const,
+    },
+    {
+      MetricName: 'New',
+      Dimensions: [{ Name: 'SourceId', Value: r.sourceId }],
+      Value: r.new,
+      Unit: 'Count' as const,
+    },
+    {
+      MetricName: 'Duplicates',
+      Dimensions: [{ Name: 'SourceId', Value: r.sourceId }],
+      Value: r.duplicates,
+      Unit: 'Count' as const,
+    },
+    {
+      MetricName: 'Errors',
+      Dimensions: [{ Name: 'SourceId', Value: r.sourceId }],
+      Value: r.errors,
+      Unit: 'Count' as const,
+    },
+  ]);
+
+  // CloudWatch accepts up to 1000 metrics per call; we have <30
+  await cw.send(
+    new PutMetricDataCommand({
+      Namespace: 'MesaHomes/ContentIngest',
+      MetricData: metricData,
+    }),
+  );
+}
+
+/**
+ * Send the owner a summary email after each cron run. Quick visual
+ * check in the morning: "did the pipeline work overnight."
+ */
+async function emailSummary(
+  cadence: string,
+  results: IngestResult[],
+  summary: { fetched: number; new: number; duplicates: number; errors: number },
+): Promise<void> {
+  const rows = results
+    .map(
+      (r) =>
+        `<tr><td>${r.sourceId}</td><td>${r.fetched}</td><td>${r.new}</td><td>${r.duplicates}</td><td style="color:${
+          r.errors > 0 ? '#c00' : '#090'
+        }">${r.errors}</td></tr>`,
+    )
+    .join('');
+
+  const html = `
+    <h3>MesaHomes content ingest — ${cadence} cron</h3>
+    <p><strong>${summary.new} new items</strong> (${summary.fetched} fetched,
+    ${summary.duplicates} duplicates, ${summary.errors} errors).</p>
+    <table border="1" cellpadding="6" style="border-collapse:collapse;font-family:sans-serif;font-size:13px">
+      <thead><tr><th>Source</th><th>Fetched</th><th>New</th><th>Dupes</th><th>Errors</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p style="font-size:11px;color:#666">If Errors &gt; 0 above, check CloudWatch logs:
+    /aws/lambda/mesahomes-content-ingest. Source drift is a real risk —
+    investigate before the data gap widens.</p>
+  `;
+
+  const alertPrefix = summary.errors > 0 ? '[ALERT] ' : '';
+  await ses.send(
+    new SendEmailCommand({
+      FromEmailAddress: FROM_EMAIL,
+      Destination: { ToAddresses: [OWNER_EMAIL] },
+      Content: {
+        Simple: {
+          Subject: {
+            Data: `${alertPrefix}Content ingest ${cadence} — ${summary.new} new, ${summary.errors} errors`,
+            Charset: 'UTF-8',
+          },
+          Body: {
+            Html: { Data: html, Charset: 'UTF-8' },
+          },
+        },
+      },
+    }),
+  );
 }
