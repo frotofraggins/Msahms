@@ -4,6 +4,8 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { MapPin, CheckCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PropertyDataCard, type PropertyData } from '@/components/PropertyDataCard';
+import { MarketContextStrip } from '@/components/MarketContextStrip';
+import { CompsTable } from '@/components/CompsTable';
 import { api, ApiRequestError } from '@/lib/api';
 import { trackEvent } from '@/lib/tracking';
 
@@ -39,6 +41,10 @@ export function HomeValueClient() {
   const [dataRichness, setDataRichness] = useState<
     { hasPhoto: boolean; compsCount: number; hasSubdivision: boolean } | null
   >(null);
+  const [comps, setComps] = useState<{
+    subdivision: Array<{ address?: string | null; salePrice?: number | null; saleDate?: string | null; sqft?: number | null }>;
+    zip: Array<{ address?: string | null; salePrice?: number | null; saleDate?: string | null; sqft?: number | null }>;
+  }>({ subdivision: [], zip: [] });
 
   const hasAddress = address.trim().length > 0;
   const zip = extractZip(address);
@@ -89,7 +95,10 @@ export function HomeValueClient() {
               photoUrl: resp.photo?.url ?? null,
             };
             setProperty(merged);
-            // Count data points we actually have — used for the 'data richness' message
+            setComps({
+              subdivision: (resp.comps?.subdivision ?? []) as typeof comps.subdivision,
+              zip: (resp.comps?.zip ?? []) as typeof comps.zip,
+            });
             const compsCount =
               (resp.comps?.subdivision?.length ?? 0) +
               (resp.comps?.zip?.length ?? 0);
@@ -100,11 +109,13 @@ export function HomeValueClient() {
             });
           } else {
             setProperty(null);
+            setComps({ subdivision: [], zip: [] });
           }
         } else {
           // 404 is expected for many addresses we don't have county data for.
           // Keep the ZIP range shown; just say we couldn't find the specific property.
           setProperty(null);
+          setComps({ subdivision: [], zip: [] });
           setDataRichness(null);
           const rejectReason = propertyData.reason;
           if (rejectReason instanceof ApiRequestError && rejectReason.status !== 404) {
@@ -222,6 +233,22 @@ export function HomeValueClient() {
           )}
         </div>
       )}
+
+      {/* Recent Comps — county GIS sale data, rendered from the Lambda
+          response we were already fetching but not displaying. */}
+      {(comps.subdivision.length > 0 || comps.zip.length > 0) && zip && (
+        <CompsTable
+          subdivisionComps={comps.subdivision}
+          zipComps={comps.zip}
+          subdivision={property?.subdivision ?? null}
+          zip={zip}
+        />
+      )}
+
+      {/* Phoenix-Mesa metro context — surfaces 6 of the 12 Zillow datasets we
+          already ingest monthly. Gives the user a feel for market velocity and
+          price pressure they can't get from ZIP median alone. */}
+      {zip && <MarketContextStrip />}
 
       {lookupError && (
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 text-center text-xs text-text-light">
