@@ -319,7 +319,13 @@ async function draftOneBundle(
   // blocking everything.
   let photos: PhotoResult[] = [];
   try {
-    photos = await findPhotos(bundle.keywords, draftId, 1);
+    // Pass concat of titles+summaries as context so photo-finder can
+    // extract addresses for Street View tier.
+    const bundleContext = bundle.items
+      .slice(0, 10)
+      .map((i) => `${i.title ?? ''} ${i.summary ?? ''}`)
+      .join(' ');
+    photos = await findPhotos(bundle.keywords, draftId, 1, bundleContext);
   } catch (err) {
     console.warn(`[drafter] photo-finder failed for draft ${draftId}:`, err);
   }

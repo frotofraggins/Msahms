@@ -20,6 +20,7 @@ const sm = new SecretsManagerClient({ region: process.env.AWS_REGION ?? 'us-west
 const PHOTOS_BUCKET = process.env.PHOTOS_BUCKET ?? 'mesahomes-property-photos';
 const UNSPLASH_SECRET = process.env.UNSPLASH_KEY_SECRET ?? 'mesahomes/live/unsplash-access-key';
 const PEXELS_SECRET = process.env.PEXELS_KEY_SECRET ?? 'mesahomes/live/pexels-api-key';
+const GOOGLE_SECRET = process.env.GOOGLE_MAPS_API_KEY_SECRET ?? 'mesahomes/live/google-maps-api-key';
 const CDN_BASE =
   process.env.PHOTOS_CDN_BASE ?? 'https://mesahomes-property-photos.s3.us-west-2.amazonaws.com';
 
@@ -66,6 +67,88 @@ async function getPexelsKey(): Promise<string | null> {
     console.warn('[photo-finder] Pexels key not available:', err);
     return null;
   }
+}
+
+let cachedGoogleKey: string | null = null;
+async function getGoogleKey(): Promise<string | null> {
+  if (cachedGoogleKey) return cachedGoogleKey;
+  try {
+    const resp = await sm.send(new GetSecretValueCommand({ SecretId: GOOGLE_SECRET }));
+    cachedGoogleKey = resp.SecretString ?? null;
+    return cachedGoogleKey;
+  } catch (err) {
+    console.warn('[photo-finder] Google Maps key not available:', err);
+    return null;
+  }
+}
+
+/**
+ * Extract a street-address-looking string from a bundle's summary/title.
+ * Matches patterns like:
+ *   - "2038 North Country Club Drive"
+ *   - "245 South Power Road"
+ *   - "5848 South Hassett"
+ * Requires 2+ digit leading street number + directional + street name.
+ * Returns null if no address found.
+ */
+export function extractAddress(text: string): string | null {
+  // Street number + optional direction + 1-4 words + street type
+  const re =
+    /\b(\d{2,5})\s+(North|South|East|West|N|S|E|W)?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+){0,3})\s+(Drive|Dr|Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Way|Circle|Cir|Court|Ct|Place|Pl)\b/;
+  const m = text.match(re);
+  if (!m) return null;
+  return m[0];
+}
+
+/**
+ * Google Street View Static API. When a bundle mentions a specific
+ * property address (common in zoning / big-sales bundles), fetch the
+ * street-level photo of that address. Much more relevant than a
+ * generic stock photo of "Mesa." Costs $0.007/image (first 100k/mo
+ * free on most accounts).
+ */
+async function searchStreetView(address: string): Promise<PhotoResult[]> {
+  const key = await getGoogleKey();
+  if (!key) return [];
+
+  // First check the free metadata endpoint so we don't get billed for
+  // "no imagery" hits.
+  const metaUrl =
+    `https://maps.googleapis.com/maps/api/streetview/metadata?` +
+    new URLSearchParams({ location: address + ', Mesa, AZ', key });
+  try {
+    const metaRes = await fetch(metaUrl);
+    if (!metaRes.ok) return [];
+    const meta = (await metaRes.json()) as { status: string };
+    if (meta.status !== 'OK') {
+      console.log(`[photo-finder] street view metadata for "${address}": ${meta.status}`);
+      return [];
+    }
+  } catch (err) {
+    console.warn('[photo-finder] street view metadata fetch failed:', err);
+    return [];
+  }
+
+  // Metadata says we have imagery. Fetch the actual image.
+  const imageUrl =
+    `https://maps.googleapis.com/maps/api/streetview?` +
+    new URLSearchParams({
+      location: address + ', Mesa, AZ',
+      size: '1200x675',
+      fov: '80',
+      source: 'outdoor',
+      key,
+    });
+
+  return [
+    {
+      url: imageUrl,
+      attribution: 'Google Street View',
+      license: 'Google Maps Terms of Service',
+      sourceUrl: `https://www.google.com/maps?q=${encodeURIComponent(address + ', Mesa, AZ')}`,
+      alt: `Google Street View photo of ${address} in Mesa, Arizona`,
+    },
+  ];
 }
 
 /**
@@ -326,7 +409,22 @@ export async function findPhotos(
   keywords: string[],
   draftId: string,
   count: number = 1,
+  context?: string, // optional free-text (bundle summary) for address extraction
 ): Promise<PhotoResult[]> {
+  // Tier 0: Street View for address-specific bundles.
+  // If the bundle context mentions a concrete street address, that photo
+  // is more relevant than any generic Mesa photo we could find elsewhere.
+  let photos: PhotoResult[] = [];
+  const address = context ? extractAddress(context) : null;
+  if (address) {
+    console.log(`[photo-finder] extracted address from context: "${address}"`);
+    const streetView = await searchStreetView(address);
+    if (streetView.length > 0) {
+      console.log(`[photo-finder] got ${streetView.length} street view photo(s)`);
+      photos = streetView.slice(0, count);
+    }
+  }
+
   // Build a query that always biases toward Arizona. Otherwise "mesa"
   // alone matches Spanish-language pages, mesas-the-landform, Mesa VA,
   // Mesa Verde, etc. We want Mesa the Arizona city.
@@ -337,14 +435,16 @@ export async function findPhotos(
   const query = `${baseKeywords} Mesa Arizona`;
   console.log(`[photo-finder] searching query="${query}" count=${count} draft=${draftId}`);
 
-  // Wikimedia first — free and CC-licensed
-  const wikimediaRaw = await searchWikimedia(query, count * 3);
-  const wikimediaLocal = wikimediaRaw.filter(isLocalToArizona);
-  console.log(
-    `[photo-finder] wikimedia: ${wikimediaRaw.length} raw, ${wikimediaLocal.length} locally relevant`,
-  );
-
-  let photos: PhotoResult[] = wikimediaLocal.slice(0, count);
+  // Wikimedia next — free and CC-licensed
+  if (photos.length < count) {
+    const wikimediaRaw = await searchWikimedia(query, count * 3);
+    const wikimediaLocal = wikimediaRaw.filter(isLocalToArizona);
+    console.log(
+      `[photo-finder] wikimedia: ${wikimediaRaw.length} raw, ${wikimediaLocal.length} locally relevant`,
+    );
+    const needed = count - photos.length;
+    photos = [...photos, ...wikimediaLocal.slice(0, needed)];
+  }
 
   // Pexels fallback. Free tier, generous hit rate for generic topical
   // queries. Still apply the Arizona filter to reject irrelevant hits.
