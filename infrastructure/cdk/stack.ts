@@ -22,6 +22,7 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as eventsources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MesaHomesSesConstruct } from './ses.js';
@@ -129,6 +130,7 @@ const ROUTES: Array<{ method: string; path: string; lambda: string; auth: boolea
   { method: 'GET', path: '/api/v1/dashboard/leads', lambda: 'dashboard-leads', auth: true },
   { method: 'GET', path: '/api/v1/dashboard/leads/{id}', lambda: 'dashboard-leads', auth: true },
   { method: 'PATCH', path: '/api/v1/dashboard/leads/{id}', lambda: 'dashboard-leads', auth: true },
+  { method: 'DELETE', path: '/api/v1/dashboard/leads/{id}', lambda: 'dashboard-leads', auth: true },
   { method: 'GET', path: '/api/v1/dashboard/team', lambda: 'dashboard-team', auth: true },
   { method: 'POST', path: '/api/v1/dashboard/team/invite', lambda: 'dashboard-team', auth: true },
   { method: 'PATCH', path: '/api/v1/dashboard/team/{agentId}', lambda: 'dashboard-team', auth: true },
@@ -266,6 +268,12 @@ export class MesaHomesStack extends Stack {
       for (const secret of Object.values(secrets)) {
         secret.grantRead(fn);
       }
+      // 30-day log retention — keeps storage costs bounded without
+      // losing recent error context. Override per-Lambda if needed.
+      new logs.LogRetention(this, `LogRetention-${name}`, {
+        logGroupName: `/aws/lambda/mesahomes-${name}`,
+        retention: logs.RetentionDays.ONE_MONTH,
+      });
       fns[name] = fn;
     }
     // Additional grants
