@@ -95,7 +95,7 @@ function stripTrailingDisclaimer(body: string): string {
   return trimmed.trimEnd();
 }
 
-function buildPrompt(bundle: Bundle): string {
+function buildPrompt(bundle: Bundle, recentPublished: PublishedRef[] = []): string {
   const sourceList = bundle.items
     .slice(0, 8) // cap item count so prompt stays under 2K tokens
     .map((i, idx) => {
@@ -159,6 +159,20 @@ BUNDLE (${bundle.itemCount} related items, priority ${bundle.priority}):
 ${sourceList}
 
 ${cityKeywords ? `Place names the article should reference where relevant: ${cityKeywords}` : ''}
+
+${
+  recentPublished.length > 0
+    ? `DO NOT DUPLICATE — the following posts already exist on the site.
+If your draft would cover the same angle as one of these, pick a new
+angle (different ZIP, different time frame, different sub-topic, or
+reject this bundle):
+${recentPublished
+  .slice(0, 30)
+  .map((p) => `- "${p.title}" (${p.topic}, published ${p.publishedAt.slice(0, 10)}, /${p.slug})`)
+  .join('\n')}
+`
+    : ''
+}
 
 Output ONLY a valid JSON object with this exact shape, no preamble, no markdown code fences:
 {
@@ -242,8 +256,12 @@ function slugify(s: string): string {
     .slice(0, 80);
 }
 
-async function draftOneBundle(bundle: Bundle, correlationId: string): Promise<Draft | null> {
-  const prompt = buildPrompt(bundle);
+async function draftOneBundle(
+  bundle: Bundle,
+  correlationId: string,
+  recentPublished: PublishedRef[] = [],
+): Promise<Draft | null> {
+  const prompt = buildPrompt(bundle, recentPublished);
 
   console.log(
     `[drafter] drafting bundle=${bundle.bundleId} topic=${bundle.topic} priority=${bundle.priority} items=${bundle.itemCount} cid=${correlationId}`,
@@ -330,6 +348,41 @@ async function draftOneBundle(bundle: Bundle, correlationId: string): Promise<Dr
   return draft;
 }
 
+interface PublishedRef {
+  title: string;
+  slug: string;
+  topic: string;
+  publishedAt: string;
+}
+
+/**
+ * Read recently-published blog posts so the drafter can avoid writing
+ * near-duplicates. Limited to 50 most recent — more than that and the
+ * prompt gets too large without much additional dedup signal.
+ */
+async function readRecentPublished(): Promise<PublishedRef[]> {
+  try {
+    const res = await queryGSI1('BLOG#PUBLISHED', {
+      scanForward: false,
+      limit: 50,
+    });
+    return (res.items ?? [])
+      .map((item) => {
+        const d = (item as unknown as { data?: Record<string, unknown> }).data ?? {};
+        return {
+          title: String(d['title'] ?? ''),
+          slug: String(d['slug'] ?? ''),
+          topic: String(d['topic'] ?? ''),
+          publishedAt: String(d['publishedAt'] ?? ''),
+        };
+      })
+      .filter((p) => p.slug && p.title);
+  } catch (err) {
+    console.warn(`[drafter] readRecentPublished failed (continuing without dedup list):`, err);
+    return [];
+  }
+}
+
 async function readTopBundles(date: string, limit: number): Promise<Bundle[]> {
   // GSI1: BUNDLE#PENDING sorted desc by priority
   const res = await queryGSI1('BUNDLE#PENDING', {
@@ -395,14 +448,15 @@ export async function handler(event: DrafterEvent): Promise<{
   console.log(`[drafter] start date=${date} max=${maxBundles} model=${MODEL_ID} cid=${correlationId}`);
 
   const bundles = await readTopBundles(date, maxBundles);
-  console.log(`[drafter] processing ${bundles.length} bundles`);
+  const recentPublished = await readRecentPublished();
+  console.log(`[drafter] processing ${bundles.length} bundles (${recentPublished.length} published posts loaded for dedup)`);
 
   const drafts: Draft[] = [];
   let errors = 0;
 
   for (const bundle of bundles) {
     try {
-      const draft = await draftOneBundle(bundle, correlationId);
+      const draft = await draftOneBundle(bundle, correlationId, recentPublished);
       if (draft) drafts.push(draft);
     } catch (err) {
       console.error(`[drafter] bundle=${bundle.bundleId} failed:`, err);
