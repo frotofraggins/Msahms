@@ -426,9 +426,72 @@ function ArticleSections() {
         the downside of under-disclosing is a lawsuit.
       </p>
 
-      {/* Continued in next commit: section 6 + CTA + disclaimer */}
-      <p className="my-3 text-sm italic">
-        Final section + what-to-do-next below.
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        What to do next
+      </h2>
+      <p className="my-3">
+        Before committing to any path, run the numbers for your specific
+        home:
+      </p>
+      <ol className="my-3 list-decimal space-y-2 pl-6">
+        <li>
+          <Link href="/tools/home-value" className="text-primary underline">
+            Get a free Mesa home value estimate
+          </Link>
+          . Know your realistic list price before you pick FSBO, flat-fee,
+          or full-service.
+        </li>
+        <li>
+          <Link href="/tools/net-sheet" className="text-primary underline">
+            Run the seller net sheet
+          </Link>
+          . See what you actually walk away with in each scenario.
+          Most FSBO sellers find flat-fee MLS nets them more after
+          accounting for the 5-10% FSBO discount.
+        </li>
+        <li>
+          If pure FSBO still makes sense, use our{' '}
+          <Link href="/listing/fsbo" className="text-primary underline">
+            FSBO package
+          </Link>{' '}
+          for photos + yard sign + paperwork support. If the
+          analysis points to flat-fee,{' '}
+          <Link href="/listing/start" className="text-primary underline">
+            start your $999 listing
+          </Link>
+          . If the sale is complex (septic, solar, major repairs),{' '}
+          <Link href="/booking" className="text-primary underline">
+            book a free 15-minute consultation
+          </Link>
+          .
+        </li>
+      </ol>
+
+      <div className="my-8 rounded-xl border border-primary bg-warm-beige/40 p-6 text-center">
+        <h3 className="mb-2 font-heading text-lg font-semibold text-charcoal">
+          Run FSBO vs flat-fee vs full-service on your numbers
+        </h3>
+        <p className="mb-4 text-sm">
+          Our seller net sheet shows what you actually walk away with
+          in each scenario. 3 minutes, no signup.
+        </p>
+        <Link
+          href="/tools/net-sheet"
+          className="inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark"
+        >
+          Try the Net Sheet Calculator →
+        </Link>
+      </div>
+
+      <hr className="my-8 border-warm-border" />
+
+      <p className="text-xs text-text-light italic">
+        This is educational content, not legal or financial advice. For
+        specific questions about your property, your disclosures, or
+        your contract, consult a licensed Arizona Realtor or Arizona
+        real estate attorney. MesaHomes is licensed in Arizona. Data
+        referenced on Arizona cash-buyer share and days-on-market
+        sourced from the January 2026 iBuyer.com Arizona FSBO guide.
       </p>
     </>
   );
