@@ -48,7 +48,7 @@ export default function DraftDetailClient() {
   const [editingBody, setEditingBody] = useState<string>('');
   const [editingTitle, setEditingTitle] = useState<string>('');
   const [editingMeta, setEditingMeta] = useState<string>('');
-  const [published, setPublished] = useState<{ slug: string; url: string } | null>(null);
+  const [published, setPublished] = useState<{ slug: string; url: string; rebuildTriggered: boolean } | null>(null);
 
   useEffect(() => {
     if (!id || id === '_') return;
@@ -108,8 +108,9 @@ export default function DraftDetailClient() {
       const resp = (await api.dashboard.approveDraft(id)) as {
         slug: string;
         publishedUrl: string;
+        rebuildTriggered?: boolean;
       };
-      setPublished({ slug: resp.slug, url: resp.publishedUrl });
+      setPublished({ slug: resp.slug, url: resp.publishedUrl, rebuildTriggered: resp.rebuildTriggered ?? false });
     } catch (err) {
       alert(err instanceof ApiRequestError ? err.apiError?.message ?? 'Failed' : 'Network error');
     } finally {
@@ -155,13 +156,35 @@ export default function DraftDetailClient() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 text-center">
         <CheckCircle className="mx-auto mb-4 h-16 w-16 text-green-600" />
-        <h1 className="font-display text-3xl font-semibold text-charcoal">Published!</h1>
-        <p className="mt-2 text-text-light">
-          Your article is now live at{' '}
-          <a href={published.url} className="text-primary underline" target="_blank" rel="noopener">
-            {published.url}
-          </a>
-        </p>
+        <h1 className="font-display text-2xl font-semibold text-charcoal sm:text-3xl">
+          {published.rebuildTriggered ? 'Published!' : 'Saved to DDB'}
+        </h1>
+        {published.rebuildTriggered ? (
+          <p className="mt-2 text-text-light">
+            Your article will be live in 3-4 minutes at{' '}
+            <a href={published.url} className="text-primary underline" target="_blank" rel="noopener">
+              {published.url}
+            </a>
+          </p>
+        ) : (
+          <div className="mt-2 space-y-2 text-text-light">
+            <p>
+              The article is saved to the database, but the site rebuild
+              did not trigger. The post will appear on the next scheduled
+              or manual rebuild.
+            </p>
+            <p className="rounded-lg bg-yellow-50 p-3 text-sm text-yellow-900">
+              Check that <code>mesahomes/live/github-pat</code> is set in
+              AWS Secrets Manager.
+            </p>
+            <p>
+              Target URL (will work after rebuild):{' '}
+              <a href={published.url} className="text-primary underline" target="_blank" rel="noopener">
+                {published.url}
+              </a>
+            </p>
+          </div>
+        )}
         <Link
           href="/dashboard/content/drafts/"
           className="mt-6 inline-block rounded-lg bg-primary px-6 py-2 text-sm font-medium text-paper hover:bg-primary-dark"
