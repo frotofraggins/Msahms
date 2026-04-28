@@ -298,9 +298,117 @@ function ArticleSections() {
         sweat it more than you sweat your price.
       </p>
 
-      {/* Continued in next commit: sections 4-5 + CTA + disclaimer */}
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        4. How to price for the 32-day group (not the 106-day group)
+      </h2>
+      <p className="my-3">
+        The #1 reason Mesa homes sit is sellers pricing off 2022-2023
+        comps in a market that doesn&apos;t support those numbers
+        anymore. Four rules to land in the 32-day group:
+      </p>
+      <ul className="my-3 list-disc space-y-2 pl-6">
+        <li>
+          <strong>Use closed sales from the last 60-90 days only</strong>.
+          Not 12 months. Not &quot;what my neighbor got in 2022.&quot;
+          In a shifting market, a 12-month comp misprices your home
+          5-10% high.
+        </li>
+        <li>
+          <strong>Match the ZIP and subdivision, not just the city</strong>.
+          Mesa 85201 (West Mesa) and 85213 (Northeast Mesa) are
+          effectively different markets. Las Sendas comps to other
+          Las Sendas homes, not to generic Mesa. The tighter the
+          comp radius, the more accurate the price.
+        </li>
+        <li>
+          <strong>Adjust for specific features</strong>. Pool adds
+          $15,000-25,000. 3-car vs 2-car garage adds $8,000-12,000.
+          Solar is complicated: owned solar adds $8,000-15,000 but
+          leased solar can subtract $5,000-10,000 due to transfer
+          hassle.
+        </li>
+        <li>
+          <strong>Price at or slightly below the strongest active
+          competitor</strong>. In a 4.4-month supply market, being
+          the second-best-priced home at your feature level gets no
+          offers. Being the best-priced gets showings. Test with
+          early showings; if you have 6+ showings and zero offers
+          in week one, your price is signaling wrong.
+        </li>
+      </ul>
+      <p className="my-3">
+        Our{' '}
+        <Link href="/tools/home-value" className="text-primary underline">
+          free Mesa home value estimate
+        </Link>{' '}
+        pulls from the same ARMLS comp data Realtors use. It&apos;s a
+        good starting point. For a sharper number, get a pre-listing
+        appraisal ($400-500) or have a full-service agent walk the
+        property — the better data matters more in a softer market.
+      </p>
+      <p className="my-3">
+        One counterintuitive tactic that works in 2026: price just
+        below a round number threshold. $449,000 appears in searches
+        filtered &quot;under $450K&quot; — the most common buyer-
+        search cutoff. $450,000 doesn&apos;t. That&apos;s a $1,000
+        price cut that doubles your search visibility. Thresholds
+        at $300K, $400K, $500K, $600K, $750K, $1M all work the same
+        way.
+      </p>
+
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        5. What about waiting for rates to drop?
+      </h2>
+      <p className="my-3">
+        This is the question that haunts Mesa sellers in 2026. If
+        rates drop from 6.39% to 5.5%, more buyers can afford your
+        home. Shouldn&apos;t you wait?
+      </p>
+      <p className="my-3">
+        The math almost always says no. Two reasons:
+      </p>
+      <ul className="my-3 list-disc space-y-2 pl-6">
+        <li>
+          <strong>The Fed has signaled no near-term cuts</strong>. As
+          of April 2026 the Federal Reserve has not committed to
+          reducing rates in 2026. Sellers who waited through 2024
+          and 2025 are still waiting. The &quot;wait for rates&quot;
+          trade has been losing for 18 months.
+        </li>
+        <li>
+          <strong>When rates do drop, your price likely drops
+          too</strong>. Rate cuts bring buyers back, but they also
+          bring sellers who&apos;ve been waiting. Inventory increases,
+          prices settle. A 1% rate drop typically produces 3-8%
+          more buyer demand and 5-12% more new listings. Net: prices
+          stay roughly flat or drop slightly. Your bigger buyer pool
+          is offset by more seller competition.
+        </li>
+      </ul>
+      <p className="my-3">
+        Run the math on your specific situation with our{' '}
+        <Link href="/tools/sell-now-or-wait" className="text-primary underline">
+          sell-now-or-wait tool
+        </Link>
+        . It compares holding costs (mortgage, property tax,
+        utilities, HOA, opportunity cost of equity) against
+        projected rate-cut-driven price changes. Most Mesa
+        sellers are surprised by how much holding costs eat into
+        any theoretical future gain.
+      </p>
+      <p className="my-3">
+        <strong>The only reason to actually wait</strong>: you can&apos;t
+        sell for what you need (underwater mortgage, cash-out refi
+        constraints). If your net proceeds at current market price
+        won&apos;t cover your payoff, waiting makes sense — not
+        because rates will drop, but because time lets you pay down
+        principal. That&apos;s different from &quot;wait for the
+        market to recover.&quot;
+      </p>
+
+      {/* Final commit: CTA + disclaimer */}
       <p className="my-3 text-sm italic">
-        Continued: how to price for a 32-day sale + what to do next.
+        What to do next, below.
       </p>
     </>
   );
