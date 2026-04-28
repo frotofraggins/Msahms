@@ -23,6 +23,7 @@ import * as eventsources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as budgets from 'aws-cdk-lib/aws-budgets';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MesaHomesSesConstruct } from './ses.js';
@@ -479,6 +480,75 @@ export class MesaHomesStack extends Stack {
     new CfnOutput(this, 'GitHubDeployRoleArn', {
       value: githubDeployRole.roleArn,
       description: 'ARN for GitHub Actions to assume via OIDC',
+    });
+
+    // Bedrock cost safety net — $5/day budget on Bedrock spend alone.
+    // If the autonomous content pipeline or ai-proxy Lambda ever goes
+    // haywire, the owner gets an email before the bill runs up.
+    //
+    // AWS Budgets is the right tool here because it handles the daily
+    // reset + multi-dimensional cost aggregation (model, region, etc).
+    // CloudWatch alarms on InvocationCount would require us to estimate
+    // cost from token counts, which is brittle.
+    new budgets.CfnBudget(this, 'BedrockDailyBudget', {
+      budget: {
+        budgetName: 'mesahomes-bedrock-daily',
+        budgetType: 'COST',
+        timeUnit: 'DAILY',
+        budgetLimit: { amount: 5, unit: 'USD' },
+        costFilters: {
+          Service: ['Amazon Bedrock'],
+        },
+      },
+      notificationsWithSubscribers: [
+        {
+          notification: {
+            notificationType: 'ACTUAL',
+            comparisonOperator: 'GREATER_THAN',
+            threshold: 80, // 80% of $5 = $4 actually spent
+            thresholdType: 'PERCENTAGE',
+          },
+          subscribers: [
+            { subscriptionType: 'EMAIL', address: 'sales@mesahomes.com' },
+          ],
+        },
+        {
+          notification: {
+            notificationType: 'FORECASTED',
+            comparisonOperator: 'GREATER_THAN',
+            threshold: 100, // forecasted to exceed $5 today
+            thresholdType: 'PERCENTAGE',
+          },
+          subscribers: [
+            { subscriptionType: 'EMAIL', address: 'sales@mesahomes.com' },
+          ],
+        },
+      ],
+    });
+
+    // Also a monthly total-spend guardrail for the whole AWS account.
+    // MVP traffic + the content pipeline run under \$20/mo in practice;
+    // \$50/mo catches any runaway fast without being noisy.
+    new budgets.CfnBudget(this, 'AccountMonthlyBudget', {
+      budget: {
+        budgetName: 'mesahomes-account-monthly',
+        budgetType: 'COST',
+        timeUnit: 'MONTHLY',
+        budgetLimit: { amount: 50, unit: 'USD' },
+      },
+      notificationsWithSubscribers: [
+        {
+          notification: {
+            notificationType: 'ACTUAL',
+            comparisonOperator: 'GREATER_THAN',
+            threshold: 80,
+            thresholdType: 'PERCENTAGE',
+          },
+          subscribers: [
+            { subscriptionType: 'EMAIL', address: 'sales@mesahomes.com' },
+          ],
+        },
+      ],
     });
 
     // Outputs
