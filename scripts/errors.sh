@@ -33,11 +33,13 @@ for lg in $LOG_GROUPS; do
     continue
   fi
 
-  # Grab events matching common error patterns
+  # Grab events matching common error patterns.
+  # Only ERROR-level + truly fatal patterns — skip INFO summaries
+  # that happen to contain the word "error" (e.g. "errors": 0).
   events=$(aws logs filter-log-events \
     --log-group-name "$lg" \
     --start-time "$START_MS" \
-    --filter-pattern '?"ERROR" ?"error" ?"Error " ?"failed" ?"timeout" ?"rejected"' \
+    --filter-pattern '?"ERROR" ?"Uncaught" ?"Unhandled"' \
     --profile Msahms --region us-west-2 \
     --query 'events[].[timestamp,message]' \
     --output json 2>/dev/null || echo '[]')

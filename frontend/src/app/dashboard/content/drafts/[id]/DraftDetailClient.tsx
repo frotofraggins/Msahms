@@ -173,7 +173,7 @@ export default function DraftDetailClient() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8 pb-24 sm:pb-8">
       <Link
         href="/dashboard/content/drafts/"
         className="mb-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
@@ -202,7 +202,7 @@ export default function DraftDetailClient() {
           <input
             value={editingTitle}
             onChange={(e) => setEditingTitle(e.target.value)}
-            className="w-full rounded-lg border border-warm-border bg-paper p-2 font-display text-2xl font-semibold text-charcoal focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-warm-border bg-paper p-2 font-display text-lg font-semibold text-charcoal focus:border-primary focus:outline-none sm:text-2xl"
           />
         </div>
 
@@ -289,32 +289,34 @@ export default function DraftDetailClient() {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="mt-6 flex items-center justify-end gap-3">
-        <button
-          onClick={reject}
-          disabled={saving || approving}
-          className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
-        >
-          <XCircle className="h-4 w-4" />
-          Reject
-        </button>
-        <button
-          onClick={save}
-          disabled={saving || approving}
-          className="inline-flex items-center gap-1 rounded-lg border border-warm-border bg-white px-4 py-2 text-sm font-medium text-charcoal hover:bg-warm-beige disabled:opacity-50"
-        >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Save changes
-        </button>
-        <button
-          onClick={approve}
-          disabled={saving || approving}
-          className="inline-flex items-center gap-1 rounded-lg bg-primary px-6 py-2 text-sm font-medium text-paper hover:bg-primary-dark disabled:opacity-50"
-        >
-          {approving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-          Approve & Publish
-        </button>
+      {/* Actions — sticky bottom bar on mobile, inline on desktop */}
+      <div className="sticky bottom-0 left-0 right-0 -mx-4 mt-6 border-t border-warm-border bg-paper p-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+        <div className="mx-auto flex max-w-5xl flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+          <button
+            onClick={reject}
+            disabled={saving || approving}
+            className="inline-flex items-center justify-center gap-1 rounded-lg border border-red-200 bg-white px-4 py-3 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 sm:py-2"
+          >
+            <XCircle className="h-4 w-4" />
+            Reject
+          </button>
+          <button
+            onClick={save}
+            disabled={saving || approving}
+            className="inline-flex items-center justify-center gap-1 rounded-lg border border-warm-border bg-white px-4 py-3 text-sm font-medium text-charcoal hover:bg-warm-beige disabled:opacity-50 sm:py-2"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save changes
+          </button>
+          <button
+            onClick={approve}
+            disabled={saving || approving}
+            className="inline-flex items-center justify-center gap-1 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-paper hover:bg-primary-dark disabled:opacity-50 sm:py-2 sm:font-medium"
+          >
+            {approving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+            Approve &amp; Publish
+          </button>
+        </div>
       </div>
     </div>
   );

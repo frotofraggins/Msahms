@@ -53,9 +53,9 @@ export default function DraftsClient() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="mb-6 flex items-end justify-between">
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-charcoal">Content Drafts</h1>
+          <h1 className="font-display text-2xl font-semibold text-charcoal sm:text-3xl">Content Drafts</h1>
           <p className="mt-1 text-sm text-text-light">
             AI-generated articles pending your review. Approve to publish, reject to archive.
           </p>
