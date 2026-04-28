@@ -299,10 +299,136 @@ function ArticleSections() {
         for the full negotiation handling.
       </p>
 
-      {/* Continued in next commit: sections 4-6 + CTA + disclaimer */}
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        4. The Mesa FSBO checklist (step-by-step)
+      </h2>
+      <p className="my-3">
+        If you&apos;ve decided FSBO is right for your situation, here&apos;s
+        the actual sequence. Not generic FSBO advice — Mesa-specific.
+      </p>
+      <ol className="my-3 list-decimal space-y-2 pl-6">
+        <li>
+          <strong>Pull your comps first</strong>. Last 90 days, same
+          ZIP, same subdivision if possible. Start with our{' '}
+          <Link href="/tools/home-value" className="text-primary underline">
+            free home value estimator
+          </Link>
+          . If the number seems off, get a pre-listing appraisal
+          ($400-500). Overpricing kills FSBO listings faster than
+          anything else. The first 10-14 days tell you if your
+          number is right.
+        </li>
+        <li>
+          <strong>Assemble Arizona paperwork early</strong>. The SPDS
+          (Seller Property Disclosure Statement), HOA Status form if
+          applicable, lead-based paint disclosure for pre-1978 homes,
+          ADEQ Form 430 for septic, solar lease transfer docs. Don&apos;t
+          wait for a buyer to ask. Having everything ready signals
+          competence and shortens negotiation.
+        </li>
+        <li>
+          <strong>Get the home photographed professionally</strong>.
+          $200-400 buys you a Mesa real estate photographer. Phone
+          photos kill FSBO listings. Arizona&apos;s harsh midday
+          sunlight destroys amateur photos — shoot early morning or
+          golden hour.
+        </li>
+        <li>
+          <strong>List where Arizona buyers actually look</strong>.
+          Zillow FSBO (free), Facebook Marketplace (free, strong
+          Mesa local traffic), Nextdoor for your neighborhood. Put
+          a yard sign out with your number. Skip Craigslist unless
+          you want tire-kickers.
+        </li>
+        <li>
+          <strong>Screen showings before you open the door</strong>.
+          Require proof of funds (cash buyers) or a pre-approval
+          letter (financed buyers) before scheduling. Phoenix metro
+          FSBO listings attract a lot of unqualified lookers and
+          investor lowballers.
+        </li>
+        <li>
+          <strong>Use an Arizona real estate attorney for your
+          contract</strong>. $300-500 for a review. Worth every
+          dollar. The AAR standard purchase contract is 10+ pages
+          with buyer contingencies, inspection periods, and addenda.
+          Don&apos;t sign one you haven&apos;t had reviewed.
+        </li>
+        <li>
+          <strong>Pick your title company early</strong>. Mesa title
+          companies close hundreds of FSBO deals a year. They&apos;ll
+          coordinate escrow, documents, recording. Expect $1,600-2,300
+          in title + escrow fees on a median sale. Get quotes from
+          two or three companies — fees vary.
+        </li>
+        <li>
+          <strong>Negotiate inspections transactionally</strong>. When
+          the buyer requests a $600 AC service or $1,200 in roof
+          patches, don&apos;t take it personally. $2,000 in concessions
+          on a $448K sale is 0.4% — trivial compared to killing the
+          deal and starting over.
+        </li>
+      </ol>
+
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        5. Arizona disclosures — what&apos;s required, what actually
+        matters
+      </h2>
+      <p className="my-3">
+        Disclosures are where FSBO deals most often die post-closing.
+        Skip one and you&apos;re liable. The required list:
+      </p>
+      <ul className="my-3 list-disc space-y-2 pl-6">
+        <li>
+          <strong>SPDS (Seller Property Disclosure Statement)</strong>.
+          Mandatory in Arizona. 6+ pages. Answer every question
+          honestly. &quot;I don&apos;t know&quot; is a valid answer.
+          Guessing is not. Buyers who discover misrepresented
+          disclosure items can sue years after closing.
+        </li>
+        <li>
+          <strong>Lead-based paint disclosure</strong>. Federal
+          requirement for homes built before 1978. Applies to a
+          meaningful chunk of older Mesa stock (parts of 85201,
+          85203, 85204).
+        </li>
+        <li>
+          <strong>HOA Status form</strong>. Required if your home is
+          in an HOA. Most Mesa subdivisions built after 1990 have
+          one. Form covers current dues, transfer fees, upcoming
+          assessments, governing documents. Request it from your HOA
+          management company the week you list.
+        </li>
+        <li>
+          <strong>ADEQ Form 430</strong>. Required within 6 months
+          of closing for septic-system properties. Budget $200-400
+          for the inspection.
+        </li>
+        <li>
+          <strong>Solar lease transfer documents</strong>. Required
+          for buyer to assume the lease. Work with your solar
+          provider early — transfer approval takes 2-4 weeks.
+        </li>
+        <li>
+          <strong>Insurance claims history</strong> (not legally
+          required but strongly advised). Share any water damage,
+          fire, roof, or HVAC claims from the last 5 years. Hiding
+          this is the #1 cause of post-sale litigation in Arizona.
+          A CLUE report ($20) pulls your claims history for you.
+        </li>
+      </ul>
+      <p className="my-3">
+        <strong>What trips FSBO sellers up most</strong>: the SPDS
+        &quot;have you had any water intrusion&quot; question. A
+        roof leak you fixed in 2019 still gets disclosed. An old
+        washing machine overflow gets disclosed. When in doubt,
+        disclose — the downside of over-disclosing is negligible,
+        the downside of under-disclosing is a lawsuit.
+      </p>
+
+      {/* Continued in next commit: section 6 + CTA + disclaimer */}
       <p className="my-3 text-sm italic">
-        Continued below: the FSBO checklist, Arizona disclosures, and
-        what to do next.
+        Final section + what-to-do-next below.
       </p>
     </>
   );
