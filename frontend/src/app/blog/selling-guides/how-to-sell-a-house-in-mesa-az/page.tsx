@@ -410,9 +410,102 @@ function ArticleSections() {
         and be pleasantly surprised if it&apos;s faster.
       </p>
 
-      {/* Continued in final commit: section 7 + CTA + FAQ + disclaimer */}
-      <p className="my-3 text-sm italic">
-        Final section + next-steps CTA continues below.
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        7. The last-mile mistakes that cost Mesa sellers
+      </h2>
+      <p className="my-3">
+        Most Mesa sellers who lose money do it in the last 30 days of the
+        transaction, not the first 30. The expensive ones:
+      </p>
+      <ul className="my-3 list-disc space-y-2 pl-6">
+        <li>
+          <strong>Refusing reasonable inspection requests</strong>. A buyer
+          asking for a $400 roof repair is not trying to nickel-and-dime
+          you — they&apos;re testing whether you&apos;re a reasonable
+          seller. Saying no over small items gets the deal killed.
+          Seller concessions under $2,000 are almost always worth taking.
+        </li>
+        <li>
+          <strong>Ignoring a low appraisal</strong>. If the appraisal comes
+          in $15,000 under contract, your options are: reduce price,
+          challenge the appraisal (works about 10% of the time), or let
+          the deal die. Most sellers reduce price. Budget for this
+          possibility in your net sheet.
+        </li>
+        <li>
+          <strong>Skipping the pre-closing walkthrough</strong>. Buyers
+          find problems here (broken-in-transit washer, damaged floor
+          from moving). If you&apos;re responsible under the contract,
+          you fix or credit.
+        </li>
+        <li>
+          <strong>Forgetting to cancel utilities / HOA / insurance at
+          the right time</strong>. Cancel the day after closing, not the
+          day before. Buyers have blown deals by noticing the power is
+          off during their final walk-through.
+        </li>
+      </ul>
+
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        What to do next
+      </h2>
+      <p className="my-3">
+        Three concrete steps to move from &quot;thinking about selling&quot;
+        to &quot;on market&quot;:
+      </p>
+      <ol className="my-3 list-decimal space-y-2 pl-6">
+        <li>
+          Run{' '}
+          <Link href="/tools/home-value" className="text-primary underline">
+            our free Mesa home value estimate
+          </Link>
+          . Get a realistic price range before you commit to a service tier.
+        </li>
+        <li>
+          Run{' '}
+          <Link href="/tools/net-sheet" className="text-primary underline">
+            the seller net sheet
+          </Link>
+          . See what you actually walk away with across all three service
+          tiers. Most sellers find the flat-fee MLS option is within a
+          few percent of their ideal walkaway, not the 30% hit they
+          feared.
+        </li>
+        <li>
+          When you&apos;re ready, pick your tier:{' '}
+          <Link href="/listing/start" className="text-primary underline">
+            start the $999 Mesa Listing Service
+          </Link>{' '}
+          for flat-fee MLS, or{' '}
+          <Link href="/booking" className="text-primary underline">
+            book a 15-minute full-service consultation
+          </Link>{' '}
+          if your sale is more complex.
+        </li>
+      </ol>
+
+      <div className="my-8 rounded-xl border border-primary bg-warm-beige/40 p-6 text-center">
+        <h3 className="mb-2 font-heading text-lg font-semibold text-charcoal">
+          Ready to run the numbers for your Mesa home?
+        </h3>
+        <p className="mb-4 text-sm">
+          Free home value estimate + net sheet in under 3 minutes. No
+          signup required, no sales call.
+        </p>
+        <Link
+          href="/tools/home-value"
+          className="inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark"
+        >
+          Get Free Home Value Estimate →
+        </Link>
+      </div>
+
+      <hr className="my-8 border-warm-border" />
+
+      <p className="text-xs text-text-light italic">
+        This is educational content, not legal or financial advice. For
+        specific questions about your property or situation, consult a
+        licensed Arizona Realtor. MesaHomes is licensed in Arizona.
       </p>
     </>
   );
