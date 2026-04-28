@@ -272,11 +272,186 @@ function ArticleSections() {
         but worth budgeting for.
       </p>
 
-      {/* Continued in next commit: section 4 (buyer concessions + inspection),
-          total estimate, CTA, disclaimer */}
-      <p className="my-3 text-sm italic">
-        Section 4 and the total-estimate table continue below in the next
-        update.
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        4. Buyer concessions + inspection repairs
+      </h2>
+      <p className="my-3">
+        In a balanced market (which Mesa is in early 2026), buyers
+        typically ask for 1-3% in seller concessions. These are
+        negotiated after the inspection period and can take any of
+        three forms:
+      </p>
+      <ul className="my-3 list-disc space-y-2 pl-6">
+        <li>
+          <strong>Credit toward closing costs</strong>. Most common.
+          You credit the buyer $3,000-12,000 at closing, reducing
+          what they need to bring. No work for you.
+        </li>
+        <li>
+          <strong>Price reduction</strong>. Drop the sale price by
+          the concession amount. Same net effect, different paperwork.
+        </li>
+        <li>
+          <strong>Specific repair credits</strong>. Buyer itemizes
+          inspection findings (roof, HVAC, water heater, pool pump),
+          asks for credit equal to repair cost. You approve, deny, or
+          counter each item.
+        </li>
+      </ul>
+      <p className="my-3">
+        <strong>Mesa-specific risks</strong>: roof age (most Mesa
+        shingle roofs need replacement at year 20-25, repair credits
+        are common for roofs 15+ years old), HVAC age (Arizona AC
+        systems run hard; 10+ year systems may trigger repair
+        requests), sewer scope (older neighborhoods 50+ years have
+        cast-iron lines that fail). Pool pumps in homes with older
+        pools are also a common ask.
+      </p>
+      <p className="my-3">
+        Budget 1-2% in concessions for a reasonably-priced Mesa home
+        in 2026. On a $448K sale, that&apos;s $4,500-9,000. Negotiating
+        these is where a full-service agent earns some of their
+        commission — flat-fee sellers handle this themselves with
+        guidance from the broker.
+      </p>
+
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        Total estimate: what you walk away with
+      </h2>
+      <p className="my-3">
+        Putting it all together. Example: $448,000 Mesa home, current
+        market conditions, no major repair items.
+      </p>
+
+      <div className="my-6 overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-warm-beige">
+              <th className="border border-warm-border p-2 text-left">Line Item</th>
+              <th className="border border-warm-border p-2 text-right">Traditional</th>
+              <th className="border border-warm-border p-2 text-right">Flat-Fee</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="border border-warm-border p-2">Sale price</td>
+              <td className="border border-warm-border p-2 text-right">$448,000</td>
+              <td className="border border-warm-border p-2 text-right">$448,000</td>
+            </tr>
+            <tr>
+              <td className="border border-warm-border p-2">Listing commission</td>
+              <td className="border border-warm-border p-2 text-right">-$12,320</td>
+              <td className="border border-warm-border p-2 text-right">-$1,399</td>
+            </tr>
+            <tr>
+              <td className="border border-warm-border p-2">Buyer-agent commission (2.5%)</td>
+              <td className="border border-warm-border p-2 text-right">-$11,200</td>
+              <td className="border border-warm-border p-2 text-right">-$11,200</td>
+            </tr>
+            <tr>
+              <td className="border border-warm-border p-2">Owner title policy</td>
+              <td className="border border-warm-border p-2 text-right">-$1,600</td>
+              <td className="border border-warm-border p-2 text-right">-$1,600</td>
+            </tr>
+            <tr>
+              <td className="border border-warm-border p-2">Escrow + doc prep + recording</td>
+              <td className="border border-warm-border p-2 text-right">-$700</td>
+              <td className="border border-warm-border p-2 text-right">-$700</td>
+            </tr>
+            <tr>
+              <td className="border border-warm-border p-2">HOA transfer fee</td>
+              <td className="border border-warm-border p-2 text-right">-$400</td>
+              <td className="border border-warm-border p-2 text-right">-$400</td>
+            </tr>
+            <tr>
+              <td className="border border-warm-border p-2">Property tax proration</td>
+              <td className="border border-warm-border p-2 text-right">-$1,400</td>
+              <td className="border border-warm-border p-2 text-right">-$1,400</td>
+            </tr>
+            <tr>
+              <td className="border border-warm-border p-2">Buyer concessions (1.5%)</td>
+              <td className="border border-warm-border p-2 text-right">-$6,720</td>
+              <td className="border border-warm-border p-2 text-right">-$6,720</td>
+            </tr>
+            <tr className="bg-warm-beige font-semibold">
+              <td className="border border-warm-border p-2">Estimated net proceeds</td>
+              <td className="border border-warm-border p-2 text-right">$413,660</td>
+              <td className="border border-warm-border p-2 text-right">$424,581</td>
+            </tr>
+            <tr>
+              <td className="border border-warm-border p-2 text-xs italic">Savings with flat-fee</td>
+              <td className="border border-warm-border p-2 text-right text-xs italic" colSpan={2}>
+                +$10,921
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p className="my-3">
+        Your actual situation will vary. Mortgage payoff gets deducted
+        from proceeds (not a closing cost per se, but reduces what hits
+        your bank). If you&apos;re paying off a HELOC or taking cash
+        out of the sale, run the full sheet.
+      </p>
+
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        What to do next
+      </h2>
+      <ol className="my-3 list-decimal space-y-2 pl-6">
+        <li>
+          Run{' '}
+          <Link href="/tools/net-sheet" className="text-primary underline">
+            the seller net sheet calculator
+          </Link>{' '}
+          for your specific address and mortgage balance. Takes 3
+          minutes, no signup.
+        </li>
+        <li>
+          Compare flat-fee vs full-service side-by-side. Our{' '}
+          <Link href="/compare/flat-fee-vs-traditional-agent" className="text-primary underline">
+            comparison page
+          </Link>{' '}
+          runs both scenarios on your numbers.
+        </li>
+        <li>
+          If the flat-fee numbers work,{' '}
+          <Link href="/listing/start" className="text-primary underline">
+            start your $999 listing
+          </Link>
+          . If the sale is complicated,{' '}
+          <Link href="/booking" className="text-primary underline">
+            book a 15-minute consultation
+          </Link>
+          .
+        </li>
+      </ol>
+
+      <div className="my-8 rounded-xl border border-primary bg-warm-beige/40 p-6 text-center">
+        <h3 className="mb-2 font-heading text-lg font-semibold text-charcoal">
+          See your exact numbers in 3 minutes
+        </h3>
+        <p className="mb-4 text-sm">
+          The seller net sheet asks for your address, mortgage balance,
+          and a few options. Returns your estimated walkaway for
+          flat-fee, FSBO, and full-service side by side.
+        </p>
+        <Link
+          href="/tools/net-sheet"
+          className="inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark"
+        >
+          Try the Net Sheet Calculator →
+        </Link>
+      </div>
+
+      <hr className="my-8 border-warm-border" />
+
+      <p className="text-xs text-text-light italic">
+        This is educational content, not legal or financial advice. For
+        specific questions about your property or situation, consult a
+        licensed Arizona Realtor. Dollar amounts are estimates based on
+        typical 2026 Mesa closings and may not reflect your specific
+        case. MesaHomes is licensed in Arizona.
       </p>
     </>
   );
