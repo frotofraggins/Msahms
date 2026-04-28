@@ -251,6 +251,57 @@ const PHASE_1_SOURCES: ContentSource[] = [
       'appraisal', 'escrow', 'offer', 'contingency', 'first-time',
     ],
   },
+  // --- Phoenix metro local news (added 2026-04-28 to improve
+  // bundle context per STEERING phase-0 content-depth plan) ---
+  {
+    id: 'ktar-news',
+    name: 'KTAR News — Phoenix Metro',
+    type: 'rss',
+    url: 'https://www.ktar.com/feed/',
+    topic: 'news',
+    cadence: 'daily',
+    keywords: [
+      'mesa', 'phoenix', 'east valley', 'gilbert', 'chandler',
+      'queen creek', 'maricopa', 'housing', 'zoning', 'real estate',
+      'development', 'city council',
+    ],
+  },
+  {
+    id: '12news-phoenix',
+    name: '12 News — Phoenix Local',
+    type: 'rss',
+    url: 'https://www.12news.com/feeds/syndication/rss/news/local',
+    topic: 'news',
+    cadence: 'daily',
+    keywords: [
+      'mesa', 'phoenix', 'east valley', 'gilbert', 'chandler',
+      'queen creek', 'housing', 'zoning', 'real estate', 'development',
+    ],
+  },
+  {
+    id: 'azfamily-phoenix',
+    name: 'AZFamily — Phoenix Metro News',
+    type: 'rss',
+    url: 'https://www.azfamily.com/arc/outboundfeeds/rss/?outputType=xml',
+    topic: 'news',
+    cadence: 'daily',
+    keywords: [
+      'mesa', 'phoenix', 'east valley', 'gilbert', 'chandler',
+      'queen creek', 'housing', 'real estate',
+    ],
+  },
+  {
+    id: 'azbigmedia',
+    name: 'AZ Big Media — Arizona Business',
+    type: 'rss',
+    url: 'https://www.azbigmedia.com/feed/',
+    topic: 'market',
+    cadence: 'daily',
+    keywords: [
+      'arizona', 'phoenix', 'mesa', 'real estate', 'commercial',
+      'housing', 'economy', 'development', 'market',
+    ],
+  },
 ];
 
 // Phase 2 — to enable after Phase 1 proves the pattern

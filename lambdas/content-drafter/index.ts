@@ -97,7 +97,7 @@ function stripTrailingDisclaimer(body: string): string {
 
 function buildPrompt(bundle: Bundle, recentPublished: PublishedRef[] = []): string {
   const sourceList = bundle.items
-    .slice(0, 8) // cap item count so prompt stays under 2K tokens
+    .slice(0, 20) // cap at 20 items so the drafter has rich context but prompt stays under ~8K tokens
     .map((i, idx) => {
       const url = i.citation?.url ?? '';
       const attrib = i.citation?.attribution ?? i.sourceId;
