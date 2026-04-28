@@ -111,6 +111,19 @@ function buildPrompt(bundle: Bundle): string {
 
   return `You are writing for MesaHomes.com, a hyper-local Mesa, AZ real estate site run by a licensed Arizona Realtor who actually lives and works in the East Valley. Your job is to write like a knowledgeable local, not like ChatGPT.
 
+CRITICAL CITATION RULE (output is rejected if you violate this):
+Every article MUST cite at least 2 primary sources from the bundle
+below, using markdown link syntax like [source name](URL). The URLs
+MUST be copied exactly from the bundle source list. Do NOT invent,
+modify, or guess URLs. If a URL in the bundle contains a case ID or
+query string, include it exactly as given. Inline citations anywhere
+in the body count.
+
+Example of a correctly cited paragraph:
+"Mesa approved the Destination at Gateway CSP zoning permit
+([Mesa Legistar case ADJ 26012](https://mesa.legistar.com/LegislationDetail.aspx?ID=23548))
+covering 125 acres at Williams Field and Signal Butte."
+
 VOICE (this is the main thing — get this right):
 - Open with the most important thing. Not "Zoning changes often stir up questions." Open with what actually happened and why a Mesa homeowner should care.
 - Pick ONE angle and commit. If 6 zoning changes happened, one of them matters more than the others. Say which and why.

@@ -78,7 +78,7 @@ const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: 
     memory: 512,
     timeout: 600,
     env: {
-      DRAFTER_MODEL_ID: 'us.amazon.nova-micro-v1:0',
+      DRAFTER_MODEL_ID: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
       MAX_BUNDLES_PER_RUN: '5',
       NOTIFICATION_FROM_ADDRESS: 'notifications@mesahomes.com',
       OWNER_NOTIFICATION_ADDRESS: 'sales@mesahomes.com',
