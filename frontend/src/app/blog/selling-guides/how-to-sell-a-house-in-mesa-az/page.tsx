@@ -323,9 +323,96 @@ function ArticleSections() {
       </p>
 
       {/* Article continues in next commit: sections 5-7 + CTA + FAQ + disclaimer */}
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        5. When to list — seasonal timing in Mesa
+      </h2>
+      <p className="my-3">
+        Mesa has a distinct real estate season driven by weather and snowbird
+        migration. Not every week of the year is equal.
+      </p>
+      <ul className="my-3 list-disc space-y-2 pl-6">
+        <li>
+          <strong>Late February through April</strong>: peak buyer traffic.
+          Out-of-state retirees are house-hunting during their Arizona
+          winters. Snowbirds with a 6-month budget window close fast.
+          If you can list in this window, do it.
+        </li>
+        <li>
+          <strong>May through September</strong>: slower. Triple-digit days
+          reduce showing traffic. Families with kids relocating for a July
+          or August school start still drive demand, but tours drop.
+          Price aggressively if you must list in summer.
+        </li>
+        <li>
+          <strong>October through early December</strong>: recovering. Buyers
+          returning to Arizona as temperatures drop. Good time to list if
+          you missed spring and need to close before year-end.
+        </li>
+        <li>
+          <strong>Mid-December through January</strong>: dead. Holidays and
+          pre-tax-year buyer caution. Most sellers wait for February.
+        </li>
+      </ul>
+      <p className="my-3">
+        Current 2026 context: inventory is up about 15% year-over-year,
+        which means buyers have more choice and less urgency. A February
+        listing in 2026 still beats a June listing, but by a smaller
+        margin than in a tight market.{' '}
+        <Link href="/tools/sell-now-or-wait" className="text-primary underline">
+          Our sell-now-or-wait tool
+        </Link>{' '}
+        runs the math for your specific situation.
+      </p>
+
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        6. The 90 to 120 day timeline
+      </h2>
+      <p className="my-3">Typical Mesa sale, start to finish:</p>
+      <ul className="my-3 list-disc space-y-2 pl-6">
+        <li>
+          <strong>Week 1</strong>: Pre-listing prep. Sign listing agreement,
+          shoot photos, draft MLS description, complete SPDS and HOA
+          disclosures. If you&apos;re flat-fee, this is 2-3 days.
+        </li>
+        <li>
+          <strong>Week 1-8</strong>: Active on MLS. Median Mesa days-to-offer
+          is about 45 right now. Expect 4-10 showings in the first week if
+          priced correctly. If you&apos;ve gone 2+ weeks with no offers, the
+          price is the problem — not the photos or the marketing.
+        </li>
+        <li>
+          <strong>Week 8-10</strong>: Offer + negotiation. Budget 3-7 days
+          for counter-offers and addendum negotiation. Most Mesa deals
+          settle within two rounds.
+        </li>
+        <li>
+          <strong>Week 10-12</strong>: Inspection period (10 days standard
+          under the AAR Purchase Contract). Buyer inspects; you negotiate
+          any inspection findings. This is where 30% of deals die.
+          Common killers: roof, HVAC, sewer scope, pool.
+        </li>
+        <li>
+          <strong>Week 12-15</strong>: Financing + appraisal. Usually 21-30
+          days. The big risks: low appraisal (buyer demands price reduction)
+          or loan issues (back to market with a &quot;back on market&quot;
+          stigma).
+        </li>
+        <li>
+          <strong>Week 15-17</strong>: Final walkthrough + closing. 3-5
+          days. Mesa title companies handle escrow; you sign documents
+          at the title company or via mobile notary.
+        </li>
+      </ul>
+      <p className="my-3">
+        Fastest Mesa sales close in 30-45 days (cash buyer, no inspection,
+        no financing). Slowest common cases run 150 days (VA loan, major
+        inspection repairs, multiple contingencies). Plan for 90-120 days
+        and be pleasantly surprised if it&apos;s faster.
+      </p>
+
+      {/* Continued in final commit: section 7 + CTA + FAQ + disclaimer */}
       <p className="my-3 text-sm italic">
-        Continued in section 5 below: when to list, the 90-120 day timeline,
-        and the common last-mile mistakes.
+        Final section + next-steps CTA continues below.
       </p>
     </>
   );
