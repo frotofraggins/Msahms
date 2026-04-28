@@ -142,7 +142,166 @@ function ArticleBody() {
 function ArticleSections() {
   return (
     <>
-      <p className="my-3">Body continues in next commit.</p>
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        1. The 74-day truth most sellers miss
+      </h2>
+      <p className="my-3">
+        Here&apos;s the single most useful statistic for any Mesa
+        seller in 2026. From April 2026 ARMLS data: homes that
+        closed at or above their original asking price did so in a
+        median of 32 days. Homes that closed below asking sat 106
+        days with an average $25,000 price cut along the way. That
+        is a 74-day gap (
+        <a
+          href="https://www.einpresswire.com/article/906179104/april-2026-maricopa-arizona-housing-market-home-sales-drop-36-and-median-days-on-market-hits-117"
+          target="_blank"
+          rel="noopener"
+          className="text-primary underline"
+        >
+          per ARMLS data reported by James Sanson, REAL Broker,
+          23-year Maricopa agent
+        </a>
+        ).
+      </p>
+      <p className="my-3">
+        74 days is more than two months. That is longer than any
+        seasonal sweet spot. It is longer than the typical
+        difference between listing in February versus listing in
+        July. The question isn&apos;t really &quot;when should I
+        list&quot; — it&apos;s &quot;at what price will I list, and
+        am I honest with myself about current buyer demand.&quot;
+      </p>
+      <p className="my-3">
+        That changes the advice. Generic real estate articles tell
+        you to list in May for the spring bounce. Fine. But if your
+        home is priced for 2023 comps in a market where buyers have
+        383 competing listings and rates are 6.39%, it doesn&apos;t
+        matter what month you chose — you are in the 106-day group.
+      </p>
+
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        2. Why 2026 is different from 2022
+      </h2>
+      <p className="my-3">
+        The 2022 Phoenix metro market had 1-month supply, offers
+        within a week, and buyers waiving contingencies. Seasonal
+        timing mattered more because demand was consistent every
+        month and pricing was a secondary lever. The 2026 market
+        is different.
+      </p>
+      <p className="my-3">What has actually changed:</p>
+      <ul className="my-3 list-disc space-y-2 pl-6">
+        <li>
+          <strong>Supply is up</strong>. Phoenix metro now sits at
+          1.59 months of supply. Maricopa-city (the city, not the
+          county) has 4.4 months. Mesa itself runs between these
+          two. Buyers have more choice, more leverage, more
+          patience.
+        </li>
+        <li>
+          <strong>Prices are softening</strong>. Realtor.com&apos;s
+          March 2026 Phoenix report showed median listing price
+          dropped 6.0% year-over-year to $469,838 (
+          <a
+            href="https://www.realtor.com/news/local/phoenix-az/real-estate-market-phoenix-az-march-2026/"
+            target="_blank"
+            rel="noopener"
+            className="text-primary underline"
+          >
+            Realtor.com
+          </a>
+          ). Nearly 30% of active listings have at least one price
+          cut.
+        </li>
+        <li>
+          <strong>Volume is down</strong>. Maricopa-city closed 88
+          homes in a recent ARMLS window versus 137 in the same
+          window a year earlier. That&apos;s a 36% volume drop.
+          Fewer transactions means any single overpriced listing
+          sticks out more, not less.
+        </li>
+        <li>
+          <strong>Rates aren&apos;t coming down soon</strong>.
+          Mortgage rates sit at 6.39%. The Federal Reserve has
+          signaled no near-term cuts. &quot;Waiting for rates to
+          drop&quot; has cost sellers more than it has saved since
+          early 2024.
+        </li>
+      </ul>
+      <p className="my-3">
+        Takeaway: seasonal patterns still exist in Mesa. They are
+        just smaller than pricing strategy. A home listed in the
+        wrong month at the right price beats a home listed in the
+        perfect month at the wrong price almost every time.
+      </p>
+
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        3. The seasonal pattern that does still exist
+      </h2>
+      <p className="my-3">
+        OK. Pricing first, season second. But the season does still
+        matter at the margin. Here&apos;s the Mesa-specific pattern:
+      </p>
+      <ul className="my-3 list-disc space-y-2 pl-6">
+        <li>
+          <strong>February through early May: strongest buyer
+          activity</strong>. Mild weather means more showings.
+          Snowbirds with Arizona winter addresses decide they want
+          to stay and buy. Out-of-state families relocating before
+          summer school transitions are actively shopping. May
+          historically sees the highest sale-to-list ratio in
+          Phoenix metro.
+        </li>
+        <li>
+          <strong>Late May through mid-September: slower</strong>.
+          Triple-digit Mesa summers thin out casual shoppers.
+          Serious buyers (job relocators, military transfers) still
+          tour, but overall traffic drops. Price aggressively if
+          you must list in summer, or plan for longer days on
+          market.
+        </li>
+        <li>
+          <strong>Late September through early December:
+          recovering</strong>. Temperatures drop, snowbirds return,
+          activity rebuilds. September often sees the highest
+          listing prices of the year from sellers (though not
+          necessarily the highest sale prices). Good window if you
+          missed spring.
+        </li>
+        <li>
+          <strong>Mid-December through January: dead</strong>.
+          Holidays plus pre-tax-year buyer caution plus snowbird
+          settling-in period equals minimal activity. Most sellers
+          wait for February.
+        </li>
+      </ul>
+      <p className="my-3">
+        Day-of-week matters too. Per{' '}
+        <a
+          href="https://www.houzeo.com/blog/best-time-to-sell-a-house-in-phoenix-az/"
+          target="_blank"
+          rel="noopener"
+          className="text-primary underline"
+        >
+          Houzeo&apos;s 2026 Phoenix timing analysis
+        </a>
+        , Thursday-evening MLS listings get the most weekend
+        visibility because buyer alerts push new listings into
+        inboxes before Saturday and Sunday tour planning. Monday
+        and Tuesday are the worst listing days — your home is
+        already &quot;old&quot; by the weekend.
+      </p>
+      <p className="my-3">
+        Net advice: Thursday evening in February, March, April, or
+        early May. If you can&apos;t hit that window, list Thursday
+        evening in whatever month you need to move. Don&apos;t
+        sweat it more than you sweat your price.
+      </p>
+
+      {/* Continued in next commit: sections 4-5 + CTA + disclaimer */}
+      <p className="my-3 text-sm italic">
+        Continued: how to price for a 32-day sale + what to do next.
+      </p>
     </>
   );
 }
