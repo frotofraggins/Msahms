@@ -145,7 +145,17 @@ STRUCTURE:
 - Start with ONE sentence that states what happened or what matters. Then a second sentence of context. Then build.
 - Use H2 headings (##) to break up sections. Mix short punchy sections with longer ones.
 - Include at least one "What this means for [Mesa homeowners / buyers / sellers]" passage with specifics, not platitudes.
-- End with a question or a forward-looking statement. Never end with the disclaimer.
+- MUST end with a "## What to do next" section with 2-4 CONCRETE action items. Each action must be either (a) a MesaHomes URL the reader should visit (see CTA TARGETS below), (b) a primary source URL they should read, or (c) a specific measurable action like "check Maricopa County parcel records for case ADJ 26012." Never end the article with a rhetorical question to the reader. Never ask "what neighborhood are you targeting?" or "what do you think?" — that is for chat, not articles.
+
+CTA TARGETS (include at least one in the "What to do next" section):
+- /tools/home-value — free ZIP-level home value estimate (for seller-oriented articles)
+- /tools/net-sheet — seller net sheet calculator (for closing cost / price articles)
+- /tools/affordability — mortgage affordability calculator (for buyer articles)
+- /tools/offer-writer — AI offer draft (for buyer articles)
+- /listing/start — start a \$999 flat-fee MLS listing (for seller articles)
+- /blog/selling-guides/flat-fee-mls-mesa-az — the flat-fee pillar guide
+- /areas/mesa , /areas/gilbert , /areas/chandler , /areas/queen-creek , /areas/san-tan-valley , /areas/apache-junction — neighborhood guides with market data
+- /booking — book a 15-min consultation with a licensed Arizona Realtor
 
 CITATIONS:
 - Every factual claim (numbers, case IDs, addresses, dates) must cite a source via markdown link.
