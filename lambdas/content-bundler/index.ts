@@ -217,6 +217,38 @@ async function readIngestItems(date: string): Promise<IngestRecord[]> {
 /**
  * Lambda handler.
  */
+/**
+ * Read the last 7 days of published posts and return the set of
+ * topics we should skip bundling today. Prevents the drafter from
+ * regenerating the same topic over and over when a hot topic keeps
+ * dominating ingested items (e.g. a week of zoning cases).
+ *
+ * Never fatal — if the lookup fails, we proceed without the filter.
+ */
+async function readCooldownTopics(): Promise<Set<string>> {
+  try {
+    const res = await queryGSI1('BLOG#PUBLISHED', {
+      scanForward: false,
+      limit: 50,
+    });
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const topics = new Set<string>();
+    for (const item of res.items ?? []) {
+      const d = (item as unknown as { data?: Record<string, unknown> }).data ?? {};
+      const publishedAt = String(d['publishedAt'] ?? '');
+      const topic = String(d['topic'] ?? '');
+      if (!publishedAt || !topic) continue;
+      if (new Date(publishedAt).getTime() >= cutoff) {
+        topics.add(topic);
+      }
+    }
+    return topics;
+  } catch (err) {
+    console.warn('[content-bundler] readCooldownTopics failed (continuing without cooldown):', err);
+    return new Set();
+  }
+}
+
 export async function handler(event: BundlerEvent): Promise<{
   statusCode: number;
   date: string;
@@ -231,8 +263,20 @@ export async function handler(event: BundlerEvent): Promise<{
   const items = await readIngestItems(date);
   console.log(`[content-bundler] read ${items.length} items for ${date}`);
 
-  const bundles = clusterItems(items);
-  console.log(`[content-bundler] clustered into ${bundles.length} bundles`);
+  const cooldownTopics = await readCooldownTopics();
+  if (cooldownTopics.size > 0) {
+    console.log(
+      `[content-bundler] topic cooldown active for: ${Array.from(cooldownTopics).join(', ')}`,
+    );
+  }
+
+  const allBundles = clusterItems(items);
+  const bundles = allBundles.filter((b) => !cooldownTopics.has(b.topic));
+  const skipped = allBundles.length - bundles.length;
+  if (skipped > 0) {
+    console.log(`[content-bundler] skipped ${skipped} bundles due to topic cooldown`);
+  }
+  console.log(`[content-bundler] clustered into ${bundles.length} bundles (from ${allBundles.length} raw)`);
 
   // Write bundles to DDB
   const now = new Date().toISOString();
