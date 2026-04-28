@@ -217,30 +217,101 @@ async function downloadToS3(
 /**
  * Find photos: Wikimedia first, then Unsplash to fill remaining slots.
  */
+/**
+ * True if a photo's description/alt text references Arizona, Mesa, Phoenix,
+ * or any East Valley city we care about. Used to filter out irrelevant
+ * geography. A "Brooklyn apartment building" result is worse than no photo.
+ */
+function isLocalToArizona(photo: PhotoResult): boolean {
+  const haystack = `${photo.alt} ${photo.attribution}`.toLowerCase();
+  const local = [
+    'arizona',
+    'mesa',
+    'phoenix',
+    'gilbert',
+    'chandler',
+    'queen creek',
+    'san tan',
+    'apache junction',
+    'east valley',
+    'sonoran',
+    'maricopa',
+    'pinal',
+  ];
+  return local.some((kw) => haystack.includes(kw));
+}
+
+/**
+ * Curated fallback photos. When Wikimedia + Unsplash return nothing
+ * locally relevant, we use one of these so articles never ship with
+ * a completely irrelevant image. These are served from the mesahomes.com
+ * S3 bucket and are owner-licensed.
+ *
+ * NOTE: verify these paths exist before enabling fallback. Missing =
+ * skip fallback and return fewer photos.
+ */
+const CURATED_FALLBACKS: PhotoResult[] = [
+  {
+    url: 'https://mesahomes.com/brand/mesahomes-logo-emblem.png',
+    attribution: 'MesaHomes',
+    license: 'Owner-licensed',
+    sourceUrl: 'https://mesahomes.com',
+    alt: 'MesaHomes — Mesa AZ real estate',
+  },
+];
+
 export async function findPhotos(
   keywords: string[],
   draftId: string,
   count: number = 1,
 ): Promise<PhotoResult[]> {
-  const query = keywords.slice(0, 4).join(' ');
+  // Build a query that always biases toward Arizona. Otherwise "mesa"
+  // alone matches Spanish-language pages, mesas-the-landform, Mesa VA,
+  // Mesa Verde, etc. We want Mesa the Arizona city.
+  const baseKeywords = keywords
+    .slice(0, 4)
+    .filter((k) => k.length > 2)
+    .join(' ');
+  const query = `${baseKeywords} Mesa Arizona`;
   console.log(`[photo-finder] searching query="${query}" count=${count} draft=${draftId}`);
 
-  const wikimedia = await searchWikimedia(query, count);
-  let photos = wikimedia.slice(0, count);
+  // Wikimedia first — free and CC-licensed
+  const wikimediaRaw = await searchWikimedia(query, count * 3);
+  const wikimediaLocal = wikimediaRaw.filter(isLocalToArizona);
+  console.log(
+    `[photo-finder] wikimedia: ${wikimediaRaw.length} raw, ${wikimediaLocal.length} locally relevant`,
+  );
 
+  let photos: PhotoResult[] = wikimediaLocal.slice(0, count);
+
+  // Unsplash fallback if Wikimedia didn't return enough local matches.
+  // Unsplash is less strict about location tags so we still filter.
   if (photos.length < count) {
     const needed = count - photos.length;
-    const unsplash = await searchUnsplash(query, needed);
-    photos = [...photos, ...unsplash];
+    const unsplashRaw = await searchUnsplash(query, needed * 3);
+    const unsplashLocal = unsplashRaw.filter(isLocalToArizona);
+    console.log(
+      `[photo-finder] unsplash: ${unsplashRaw.length} raw, ${unsplashLocal.length} locally relevant`,
+    );
+    photos = [...photos, ...unsplashLocal.slice(0, needed)];
   }
 
-  if (photos.length === 0) {
-    console.warn(`[photo-finder] no photos found for "${query}"`);
-    return [];
+  // Final fallback: use our curated Mesa hero photos. Better a relevant
+  // generic Mesa photo than an irrelevant specific one.
+  if (photos.length < count) {
+    const needed = count - photos.length;
+    console.log(`[photo-finder] using ${needed} curated fallback(s) for "${query}"`);
+    photos = [...photos, ...CURATED_FALLBACKS.slice(0, needed)];
   }
 
-  // Download all to S3 in parallel
-  const downloaded = await Promise.all(photos.map((p, idx) => downloadToS3(p, draftId, idx)));
+  // Download non-curated photos to S3. Curated ones are already on our
+  // CDN so we skip re-downloading.
+  const downloaded = await Promise.all(
+    photos.map((p, idx) => {
+      if (p.license === 'Owner-licensed') return Promise.resolve(p);
+      return downloadToS3(p, draftId, idx);
+    }),
+  );
   return downloaded;
 }
 
