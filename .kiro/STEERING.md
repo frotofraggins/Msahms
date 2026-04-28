@@ -3,12 +3,12 @@
 Living doc. Both Kiro agents and the human owner read this before making
 architectural, naming, or process decisions. Updated when decisions change.
 
-Last updated: 2026-04-27 by Kiro A.
+Last updated: 2026-04-27 (late) by Kiro A.
 
 **Current status**: Live in production at https://mesahomes.com.
 Deployed 2026-04-26. **879 tests passing, 0 TS errors. Fully
 autonomous AI content pipeline shipping daily (8am MST).**
-**CI/CD via GitHub Actions on push to main.**
+**CI/CD via GitHub Actions on push to main.** 18 Lambdas live.
 
 **Naming convention** (as of 2026-04-26):
 - Product tier in UI: **"Mesa Listing Service"** (was: "Flat-Fee MLS")
@@ -109,7 +109,7 @@ Deployed and live on https://mesahomes.com:
 |---|---|
 | DNS + SSL | Route 53 + CloudFront E3TBTUT3LJLAAT, ACM cert, HTTPS |
 | Frontend | 50+ static pages via Next.js export, S3 mesahomes.com bucket. `/blog/` + `/news/` content hub with 9 category index pages. |
-| Backend | 17 Lambdas deployed via CDK MesaHomesStack |
+| Backend | 18 Lambdas deployed via CDK MesaHomesStack |
 | Data | DynamoDB mesahomes-main with 16 live content-ingest sources producing 475 items/day, market data, city pages, leads, blog records |
 | Content pipeline | **Fully autonomous**: content-ingest → content-bundler → content-drafter (Bedrock Nova Micro) → photo-finder (Wikimedia + Unsplash) → dashboard review UI → approve → GitHub Actions → live on /blog/ or /news/. See `.kiro/specs/CONTENT-PIPELINE-STATUS.md`. |
 | Property lookup | Working end-to-end: Maricopa + Pinal GIS + 70-comp comps + Street View photos |
@@ -119,7 +119,8 @@ Deployed and live on https://mesahomes.com:
 | FSBO intake | Working: POST /listing/fsbo/intake returns listingId+leadId, status=awaiting-vhz-launch |
 | CI/CD | GitHub Actions on push to main via OIDC. IAM role `mesahomes-github-actions-deploy`. Workflow `.github/workflows/deploy.yml` runs tsc + vitest + cdk deploy + frontend build + s3 sync + CF invalidate. |
 | AI SEO | llms.txt at /llms.txt, 20 AI crawler user-agents allowed in robots.txt, Article + NewsArticle + OfferCatalog + LocalBusiness JSON-LD, per-category changefreq in sitemap. |
-| Dashboard | /dashboard/leads (lead CRM), /dashboard/content/drafts (AI-draft review queue), Cognito auth. |
+| Dashboard | /dashboard/leads (lead CRM), /dashboard/content/drafts (AI-draft review queue), /dashboard/performance (team + source conversion metrics), /dashboard/team, /dashboard/listings, /dashboard/settings. Cognito auth. |
+| Lead nurture | Every lead form triggers a path-specific welcome email with tailored next steps + CTA, branched by `toolSource` (15 paths covered). See `lib/email-templates/welcome-steps.ts`. |
 
 ## Scope: MVP (Phase 1A) — DONE
 
@@ -249,6 +250,71 @@ Post-launch enrichment. Content pipeline + CI/CD shipped this sprint:
 5. **Property tests validate real properties, not examples**. If it's just
    "with these inputs, expect this output," it's a unit test. Property tests
    use `fc.assert(fc.property(...))`.
+
+## Change tracking + deployment process (2026-04-27)
+
+**Every change MUST be visible in three places or it's not done:**
+
+1. **Git commit with conventional-commit message** — subject line under 50
+   chars, body explains what + why (not how). Commits are the ground truth.
+2. **Spec file updated** — if the change is described in a spec, update
+   the `[ ]`/`[x]` marks. If no spec exists for the change, add a note in
+   the closest spec OR create a new one (see "When to write a spec" below).
+3. **STEERING.md updated if it changes any of**:
+   - Production state (new service, new Lambda, new table)
+   - Current priorities (something finishes, something starts)
+   - Architecture rules (new pattern, new convention)
+   - CI/CD or deploy process
+
+### When to write a spec before building
+
+Write a spec first (under `.kiro/specs/`) when:
+- The change touches 3+ files across different layers
+- It introduces a new service, integration, or product feature
+- It changes how a user flow works
+- It requires infrastructure changes (CDK, IAM, new AWS resource)
+
+Skip the spec when:
+- Single-file bugfix or typo
+- Rendering adjustment (copy change, button color, icon swap)
+- Adding a missing test for existing behavior
+
+### Deployment process
+
+**Production deploys happen automatically on push to `main`** via GitHub
+Actions (`.github/workflows/deploy.yml`). The workflow:
+1. Checks out code
+2. Installs deps (root + frontend)
+3. Runs `npx tsc --noEmit` and `npx vitest run`
+4. Assumes AWS IAM role via OIDC (no long-lived creds in GitHub)
+5. Packages Lambdas via `bash infrastructure/cdk/package-lambdas.sh`
+6. Runs `npx cdk deploy --require-approval never`
+7. Builds frontend (`npm run build --prefix frontend`)
+8. Syncs `frontend/out/` to S3
+9. Invalidates CloudFront
+
+**Emergency override**: push with `workflow_dispatch` input `skip_cdk: true`
+to skip infra + redeploy only the frontend.
+
+**Approve-triggered deploys**: when the owner approves an AI-drafted blog
+post in `/dashboard/content/drafts`, the `dashboard-content` Lambda fires
+`workflow_dispatch` with `skip_cdk: true` via GitHub REST API. The GHA
+run rebuilds the frontend with the new post baked in. ~3-4 min end-to-end.
+
+### Required Secrets Manager entries
+
+| Name | Purpose |
+|---|---|
+| `mesahomes/live/github-pat` | Dashboard approve handler uses this to trigger GHA workflow_dispatch. Needs `repo` + `workflow` scopes. |
+| `mesahomes/live/unsplash-access-key` | Photo-finder fallback when Wikimedia returns nothing |
+| `mesahomes/live/google-maps-api-key` | Places autocomplete + Street View |
+| `mesahomes/live/stripe-*` | Live + sandbox Stripe keys |
+| `mesahomes/live/ses-smtp-credentials` | SMTP fallback (SES API is primary) |
+| `mesahomes/live/rentcast-api-key` | Property comps (backup to GIS) |
+| `mesahomes/live/vhz-*` | Virtual Home Zone handoff + webhook secrets |
+
+Missing one of these silently breaks the related feature. Keep this list
+current whenever a new secret is added to CDK `SECRET_NAMES`.
 
 ## Current priorities — ordered (2026-04-27)
 
