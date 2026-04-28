@@ -512,17 +512,10 @@ export class MesaHomesStack extends Stack {
             { subscriptionType: 'EMAIL', address: 'sales@mesahomes.com' },
           ],
         },
-        {
-          notification: {
-            notificationType: 'FORECASTED',
-            comparisonOperator: 'GREATER_THAN',
-            threshold: 100, // forecasted to exceed $5 today
-            thresholdType: 'PERCENTAGE',
-          },
-          subscribers: [
-            { subscriptionType: 'EMAIL', address: 'sales@mesahomes.com' },
-          ],
-        },
+        // Note: AWS Budgets does NOT support FORECASTED notifications on
+        // DAILY budgets (only MONTHLY + QUARTERLY + ANNUALLY). We get
+        // alerted at 80% of actual daily spend, which is enough for the
+        // cost-runaway scenario we care about.
       ],
     });
 
