@@ -143,7 +143,167 @@ function ArticleBody() {
 function ArticleSections() {
   return (
     <>
-      <p className="my-3">Body continues in next commit.</p>
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        1. The real commission math for Mesa FSBO
+      </h2>
+      <p className="my-3">
+        Pure FSBO means selling without any agent on either side. The
+        savings sound great until you break them down. On a $448,000
+        Mesa home (current median):
+      </p>
+      <ul className="my-3 list-disc space-y-2 pl-6">
+        <li>
+          <strong>Pure FSBO</strong>: $0 listing commission. Buyer is
+          unrepresented or uses a transaction-only agent. You save
+          roughly $22,000 in total commission but get no MLS exposure.
+          Most buyers will never find your listing.
+        </li>
+        <li>
+          <strong>FSBO with buyer agent commission</strong>: You don&apos;t
+          pay a listing agent but still offer 2-3% to the buyer&apos;s
+          agent to attract buyer traffic. Save about $11,000-13,500.
+          You still lack MLS exposure, which is where most agent-driven
+          buyers search.
+        </li>
+        <li>
+          <strong>Flat-fee MLS</strong> (our $999 Mesa Listing Service):
+          Fully on ARMLS with Zillow/Realtor.com/Redfin syndication.
+          You offer buyer agent 2-3% as usual. Total listing cost about
+          $1,400. Saves $10,000+ vs traditional listing while keeping
+          every ounce of marketing reach.
+        </li>
+      </ul>
+      <p className="my-3">
+        Here&apos;s the part most FSBO sellers don&apos;t hear: pure FSBO
+        homes in Arizona sell for 5-10% less than MLS-listed comparables,
+        on average. On a $448K home that&apos;s $22,000-45,000 less. The
+        commission you save often doesn&apos;t close that gap.
+      </p>
+      <p className="my-3">
+        Flat-fee MLS closes the gap because your listing lives in the
+        same places buyers look. It&apos;s essentially pure FSBO plus
+        the one piece that actually matters for getting full market
+        price: being on MLS. See our{' '}
+        <Link href="/blog/selling-guides/flat-fee-mls-mesa-az" className="text-primary underline">
+          full flat-fee MLS breakdown
+        </Link>{' '}
+        for the trade-off details.
+      </p>
+
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        2. Where pure FSBO actually works in Mesa
+      </h2>
+      <p className="my-3">
+        Pure FSBO (no agents, no MLS) has specific situations where it
+        wins. Be honest about whether you match:
+      </p>
+      <ul className="my-3 list-disc space-y-2 pl-6">
+        <li>
+          <strong>You already have a buyer</strong>. Family member,
+          neighbor, current tenant, coworker. The buyer is already
+          committed to your specific house. Agent marketing adds nothing.
+          You need contract paperwork and title company coordination,
+          not exposure.
+        </li>
+        <li>
+          <strong>You have a cash buyer you trust</strong>. Investor,
+          iBuyer, or known cash buyer. They don&apos;t need MLS to
+          find you because you found them. About 30-33% of Arizona
+          home sales are cash ({' '}
+          <a
+            href="https://ibuyer.com/blog/how-to-sell-a-house-by-owner-in-arizona/"
+            target="_blank"
+            rel="noopener"
+            className="text-primary underline"
+          >
+            per iBuyer.com
+          </a>
+          ), one of the highest rates in the country.
+        </li>
+        <li>
+          <strong>You&apos;re willing to take a 5-10% discount</strong> to
+          avoid all commission and skip MLS. Some sellers prioritize
+          privacy, speed, or hassle-avoidance over getting top dollar.
+          That&apos;s valid. Just be clear-eyed about the trade-off.
+        </li>
+        <li>
+          <strong>Your home is straightforward</strong>. Standard
+          subdivision, no HOA complications, no solar lease, newer
+          AC/roof, no septic/well, no unusual condition issues. Mesa
+          single-family homes built after 2000 in Las Sendas, Leisure
+          World, Cadence, or Eastmark often fit this profile when
+          well-maintained.
+        </li>
+      </ul>
+      <p className="my-3">
+        If two or more of those apply to you, pure FSBO is a reasonable
+        path. If none apply, you&apos;re usually better off with flat-fee
+        MLS or full-service.
+      </p>
+
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        3. Where FSBO bites Mesa sellers
+      </h2>
+      <p className="my-3">
+        The same iBuyer.com Arizona data that shows FSBO working in
+        metro areas also flags where it falls apart. Arizona-specific
+        risks that kill FSBO deals:
+      </p>
+      <ul className="my-3 list-disc space-y-2 pl-6">
+        <li>
+          <strong>AC near end of life</strong>. Arizona AC systems
+          run hard. Arizona buyers specifically ask about compressor
+          age, refrigerant type, service history. An AC over 12
+          years old is a negotiation anchor. FSBO sellers without
+          service records lose the argument by default.
+        </li>
+        <li>
+          <strong>Monsoon-era roof wear</strong>. Any shingle roof
+          over 15 years old gets scrutinized. Post-monsoon patches
+          raise questions. Buyers request credits or new roofs.
+          FSBO sellers tend to push back emotionally; agents handle
+          it transactionally.
+        </li>
+        <li>
+          <strong>Stucco cracks</strong>. Expansion and contraction
+          in desert heat creates cosmetic stucco cracks almost
+          universally. Buyers can&apos;t distinguish cosmetic from
+          structural. FSBO seller says &quot;it&apos;s nothing&quot;;
+          buyer hires an inspector; deal drags.
+        </li>
+        <li>
+          <strong>Solar lease transfer</strong>. If your home has
+          leased solar (SunRun, SunPower, Tesla Solar), the lease
+          has to transfer to the buyer. Paperwork takes 2-4 weeks
+          and buyers routinely back out when they read the monthly
+          payment. FSBO sellers almost never price this in.
+        </li>
+        <li>
+          <strong>Septic or shared-well properties</strong>. Outside
+          Mesa proper (Queen Creek outskirts, East Mesa rural lots),
+          septic inspections and well testing add 30 days to the
+          timeline. ADEQ Form 430 required within 6 months of
+          closing. First-time FSBO sellers rarely know this.
+        </li>
+        <li>
+          <strong>Appraisal gaps in fast-moving suburbs</strong>.
+          Queen Creek, Gilbert, Chandler, and Peoria still see
+          appraisal-below-contract-price scenarios in 2026. An
+          agent negotiates these; FSBO sellers often walk away from
+          the gap, killing the deal.
+        </li>
+      </ul>
+      <p className="my-3">
+        Two or more of those apply to your home? Hire someone. Either
+        flat-fee MLS for the paperwork support, or full-service agent
+        for the full negotiation handling.
+      </p>
+
+      {/* Continued in next commit: sections 4-6 + CTA + disclaimer */}
+      <p className="my-3 text-sm italic">
+        Continued below: the FSBO checklist, Arizona disclosures, and
+        what to do next.
+      </p>
     </>
   );
 }
