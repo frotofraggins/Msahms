@@ -250,6 +250,21 @@ Post-launch enrichment. Content pipeline + CI/CD shipped this sprint:
 5. **Property tests validate real properties, not examples**. If it's just
    "with these inputs, expect this output," it's a unit test. Property tests
    use `fc.assert(fc.property(...))`.
+6. **Research before writing any content article**. Any hand-written
+   article for the seller hub, `/blog/`, `/news/`, or future editorial
+   content must be grounded in actual research, not AI memory. Before
+   drafting:
+   a. Run `web_search` for the target query + "Arizona Mesa 2026"
+      to verify current facts, statistics, and seasonality
+   b. Fetch at least one primary-source page (gov, law firm, real
+      estate stat aggregator) to cite
+   c. Include a "Sources consulted" list in the commit message
+      so anyone auditing the article can check the research
+   Skip research only for explicitly speculative / opinion pieces,
+   and label them as such in the article itself. This rule exists
+   because the 2026-04-28 SEO audit showed our articles were
+   readable but thin on primary-source citations — the fix is at
+   the research stage, not at edit time.
 
 ## Change tracking + deployment process (2026-04-27)
 
