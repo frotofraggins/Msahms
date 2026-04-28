@@ -83,6 +83,7 @@ const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: 
       NOTIFICATION_FROM_ADDRESS: 'notifications@mesahomes.com',
       OWNER_NOTIFICATION_ADDRESS: 'sales@mesahomes.com',
       UNSPLASH_KEY_SECRET: 'mesahomes/live/unsplash-access-key',
+      PEXELS_KEY_SECRET: 'mesahomes/live/pexels-api-key',
       PHOTOS_BUCKET: 'mesahomes-property-photos',
     },
   },
@@ -100,6 +101,7 @@ const SECRET_NAMES = [
   'mesahomes/live/vhz-webhook-secret',
   'mesahomes/live/unsplash-access-key',
   'mesahomes/live/unsplash-secret-key',
+  'mesahomes/live/pexels-api-key',
   'mesahomes/live/github-pat',
 ];
 

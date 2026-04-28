@@ -19,6 +19,7 @@ const s3 = new S3Client({ region: process.env.AWS_REGION ?? 'us-west-2' });
 const sm = new SecretsManagerClient({ region: process.env.AWS_REGION ?? 'us-west-2' });
 const PHOTOS_BUCKET = process.env.PHOTOS_BUCKET ?? 'mesahomes-property-photos';
 const UNSPLASH_SECRET = process.env.UNSPLASH_KEY_SECRET ?? 'mesahomes/live/unsplash-access-key';
+const PEXELS_SECRET = process.env.PEXELS_KEY_SECRET ?? 'mesahomes/live/pexels-api-key';
 const CDN_BASE =
   process.env.PHOTOS_CDN_BASE ?? 'https://mesahomes-property-photos.s3.us-west-2.amazonaws.com';
 
@@ -42,6 +43,7 @@ interface PhotoFinderEvent {
 }
 
 let cachedUnsplashKey: string | null = null;
+let cachedPexelsKey: string | null = null;
 async function getUnsplashKey(): Promise<string | null> {
   if (cachedUnsplashKey) return cachedUnsplashKey;
   try {
@@ -51,6 +53,66 @@ async function getUnsplashKey(): Promise<string | null> {
   } catch (err) {
     console.warn('[photo-finder] Unsplash key not available:', err);
     return null;
+  }
+}
+
+async function getPexelsKey(): Promise<string | null> {
+  if (cachedPexelsKey) return cachedPexelsKey;
+  try {
+    const resp = await sm.send(new GetSecretValueCommand({ SecretId: PEXELS_SECRET }));
+    cachedPexelsKey = resp.SecretString ?? null;
+    return cachedPexelsKey;
+  } catch (err) {
+    console.warn('[photo-finder] Pexels key not available:', err);
+    return null;
+  }
+}
+
+/**
+ * Pexels search. Free API (200 req/hr), commercial use allowed, no
+ * hotlinking restriction. Typically has better hit rate than Unsplash
+ * for generic topical queries ("desert neighborhood," "suburban home,"
+ * "palm trees"). Lower hit rate for specific-place queries.
+ */
+async function searchPexels(query: string, count: number): Promise<PhotoResult[]> {
+  const key = await getPexelsKey();
+  if (!key) return [];
+
+  const url =
+    `https://api.pexels.com/v1/search?` +
+    new URLSearchParams({
+      query,
+      per_page: String(count),
+      orientation: 'landscape',
+    });
+
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: key, 'User-Agent': 'MesaHomesBot/1.0' },
+    });
+    if (!res.ok) return [];
+
+    const data = (await res.json()) as {
+      photos?: Array<{
+        id: number;
+        url: string;
+        src: { large: string; large2x?: string };
+        alt?: string;
+        photographer?: string;
+        photographer_url?: string;
+      }>;
+    };
+
+    return (data.photos ?? []).map((p) => ({
+      url: p.src.large2x ?? p.src.large,
+      attribution: `${p.photographer ?? 'Pexels contributor'} (Pexels)`,
+      license: 'Pexels',
+      sourceUrl: p.url,
+      alt: (p.alt ?? query).slice(0, 150),
+    }));
+  } catch (err) {
+    console.warn('[photo-finder] Pexels fetch failed:', err);
+    return [];
   }
 }
 
@@ -284,8 +346,20 @@ export async function findPhotos(
 
   let photos: PhotoResult[] = wikimediaLocal.slice(0, count);
 
-  // Unsplash fallback if Wikimedia didn't return enough local matches.
-  // Unsplash is less strict about location tags so we still filter.
+  // Pexels fallback. Free tier, generous hit rate for generic topical
+  // queries. Still apply the Arizona filter to reject irrelevant hits.
+  if (photos.length < count) {
+    const needed = count - photos.length;
+    const pexelsRaw = await searchPexels(query, needed * 3);
+    const pexelsLocal = pexelsRaw.filter(isLocalToArizona);
+    console.log(
+      `[photo-finder] pexels: ${pexelsRaw.length} raw, ${pexelsLocal.length} locally relevant`,
+    );
+    photos = [...photos, ...pexelsLocal.slice(0, needed)];
+  }
+
+  // Unsplash fallback if Wikimedia + Pexels didn't return enough local
+  // matches. Unsplash is less strict about location tags so we still filter.
   if (photos.length < count) {
     const needed = count - photos.length;
     const unsplashRaw = await searchUnsplash(query, needed * 3);
