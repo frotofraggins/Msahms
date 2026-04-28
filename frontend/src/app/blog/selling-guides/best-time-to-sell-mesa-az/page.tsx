@@ -406,9 +406,68 @@ function ArticleSections() {
         market to recover.&quot;
       </p>
 
-      {/* Final commit: CTA + disclaimer */}
-      <p className="my-3 text-sm italic">
-        What to do next, below.
+      <h2 className="mt-8 mb-3 font-heading text-xl font-bold text-charcoal">
+        What to do next
+      </h2>
+      <p className="my-3">
+        The right month to list matters less than the right number
+        and the right service tier. Three concrete steps:
+      </p>
+      <ol className="my-3 list-decimal space-y-2 pl-6">
+        <li>
+          <Link href="/tools/home-value" className="text-primary underline">
+            Run a free Mesa home value estimate
+          </Link>
+          . Get a realistic number based on 60-90 day comps for
+          your specific ZIP.
+        </li>
+        <li>
+          <Link href="/tools/sell-now-or-wait" className="text-primary underline">
+            Run the sell-now-or-wait calculator
+          </Link>
+          . Compares your holding costs against projected market
+          changes so you can see whether waiting actually saves
+          money.
+        </li>
+        <li>
+          When you&apos;re ready, pick the right tier:{' '}
+          <Link href="/listing/start" className="text-primary underline">
+            $999 Mesa Listing Service (flat-fee MLS)
+          </Link>{' '}
+          or{' '}
+          <Link href="/booking" className="text-primary underline">
+            book a full-service consult
+          </Link>{' '}
+          if your sale is complex.
+        </li>
+      </ol>
+
+      <div className="my-8 rounded-xl border border-primary bg-warm-beige/40 p-6 text-center">
+        <h3 className="mb-2 font-heading text-lg font-semibold text-charcoal">
+          Figure out your actual timing in 3 minutes
+        </h3>
+        <p className="mb-4 text-sm">
+          Our sell-now-or-wait tool runs your specific numbers —
+          holding costs, equity, projected rate scenarios —
+          against current Mesa market data.
+        </p>
+        <Link
+          href="/tools/sell-now-or-wait"
+          className="inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark"
+        >
+          Try Sell Now or Wait →
+        </Link>
+      </div>
+
+      <hr className="my-8 border-warm-border" />
+
+      <p className="text-xs text-text-light italic">
+        Educational content, not legal or financial advice. Market
+        statistics cited throughout sourced from ARMLS (via James
+        Sanson REAL Broker April 2026 report), Realtor.com (March
+        2026 Phoenix market), and Houzeo (2026 Phoenix timing
+        analysis). For questions specific to your property, consult
+        a licensed Arizona Realtor. MesaHomes is licensed in Arizona.
       </p>
     </>
   );
