@@ -183,6 +183,20 @@ async function handleApprove(
   }
 
   const now = new Date().toISOString();
+
+  // Slug uniqueness guard: refuse to overwrite an existing published post.
+  // A draft with a duplicate slug means the drafter didn't honor its
+  // DO-NOT-DUPLICATE list, or the slug collides with a legacy post.
+  // Either way, publishing silently would replace live content.
+  const existingBlog = await getItem(`CONTENT#BLOG#${d.slug}`, 'v1');
+  if (existingBlog) {
+    throw new AppError(
+      ErrorCode.VALIDATION_ERROR,
+      `Slug '${d.slug}' is already published. Edit the draft's slug and retry.`,
+      correlationId,
+    );
+  }
+
   const publishedData = {
     slug: d.slug,
     title: d.title,
