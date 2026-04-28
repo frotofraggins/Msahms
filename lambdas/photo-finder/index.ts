@@ -14,15 +14,19 @@
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 
 const s3 = new S3Client({ region: process.env.AWS_REGION ?? 'us-west-2' });
 const sm = new SecretsManagerClient({ region: process.env.AWS_REGION ?? 'us-west-2' });
+const br = new BedrockRuntimeClient({ region: process.env.AWS_REGION ?? 'us-west-2' });
 const PHOTOS_BUCKET = process.env.PHOTOS_BUCKET ?? 'mesahomes-property-photos';
 const UNSPLASH_SECRET = process.env.UNSPLASH_KEY_SECRET ?? 'mesahomes/live/unsplash-access-key';
 const PEXELS_SECRET = process.env.PEXELS_KEY_SECRET ?? 'mesahomes/live/pexels-api-key';
 const GOOGLE_SECRET = process.env.GOOGLE_MAPS_API_KEY_SECRET ?? 'mesahomes/live/google-maps-api-key';
 const CDN_BASE =
   process.env.PHOTOS_CDN_BASE ?? 'https://mesahomes-property-photos.s3.us-west-2.amazonaws.com';
+const TITAN_MODEL_ID = process.env.TITAN_IMAGE_MODEL_ID ?? 'amazon.titan-image-generator-v2:0';
+const TITAN_ENABLED = (process.env.TITAN_ENABLED ?? 'true') !== 'false';
 
 export interface PhotoResult {
   /** Public URL the article embeds */
@@ -318,6 +322,102 @@ async function searchUnsplash(query: string, count: number): Promise<PhotoResult
  * Download a photo to S3 so we serve from our CDN (Unsplash ToS
  * requires no hotlinking for commercial deployments).
  */
+/**
+ * Bedrock Titan Image Generator v2.
+ *
+ * Used as last-resort fallback when none of Wikimedia/Pexels/Unsplash
+ * return Arizona-local photos. Produces a topic-relevant AI image that
+ * at least matches the article's subject (Mesa sunset, desert
+ * neighborhood, etc) instead of shipping a generic MesaHomes logo.
+ *
+ * Cost: approximately \$0.008 per 1024x1024 image at current Bedrock
+ * pricing. Capped by our \$5/day Bedrock budget alarm.
+ *
+ * Caveat: AI-generated images are clearly labeled in alt text +
+ * attribution so humans know they're synthetic. License is marked
+ * 'AI-generated' with disclosure.
+ */
+async function generateTitanImage(
+  keywords: string[],
+  draftId: string,
+  idx: number,
+): Promise<PhotoResult | null> {
+  if (!TITAN_ENABLED) return null;
+
+  // Build a prompt that strongly biases toward a realistic,
+  // location-appropriate Mesa scene. Avoid text in images.
+  const subject = keywords.slice(0, 3).join(', ') || 'residential neighborhood';
+  const prompt =
+    `Realistic photograph of ${subject} in Mesa, Arizona. ` +
+    `Sonoran desert environment, saguaro cacti, palm trees, mountain backdrop, ` +
+    `golden-hour lighting, shot on a DSLR, photojournalism style.`;
+  const negativePrompt =
+    'text, typography, watermark, logo, blurry, distorted, cartoon, illustration, ' +
+    'people faces, snow, beach, ocean';
+
+  try {
+    const body = JSON.stringify({
+      taskType: 'TEXT_IMAGE',
+      textToImageParams: { text: prompt, negativeText: negativePrompt },
+      imageGenerationConfig: {
+        numberOfImages: 1,
+        height: 1024,
+        width: 1024,
+        cfgScale: 7.5,
+        quality: 'standard',
+      },
+    });
+
+    const resp = await br.send(
+      new InvokeModelCommand({
+        modelId: TITAN_MODEL_ID,
+        body,
+        contentType: 'application/json',
+        accept: 'application/json',
+      }),
+    );
+
+    const parsed = JSON.parse(new TextDecoder().decode(resp.body)) as {
+      images?: string[];
+      error?: string;
+    };
+
+    if (!parsed.images || parsed.images.length === 0) {
+      console.warn('[photo-finder] Titan returned no images:', parsed.error);
+      return null;
+    }
+
+    // Titan returns base64-encoded PNG
+    const b64 = parsed.images[0];
+    const buffer = Buffer.from(b64, 'base64');
+    const key = `articles/${draftId}/${idx}-ai.png`;
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: PHOTOS_BUCKET,
+        Key: key,
+        Body: buffer,
+        ContentType: 'image/png',
+        Metadata: {
+          attribution: 'AI-generated (Bedrock Titan)',
+          license: 'AI-generated',
+          prompt: prompt.slice(0, 500),
+        },
+      }),
+    );
+
+    return {
+      url: `${CDN_BASE}/${key}`,
+      attribution: 'AI-generated illustration (Bedrock Titan)',
+      license: 'AI-generated',
+      sourceUrl: 'https://aws.amazon.com/bedrock/titan/',
+      alt: `AI-generated image depicting ${subject} in Mesa, Arizona`,
+    };
+  } catch (err) {
+    console.warn('[photo-finder] Titan generation failed:', err);
+    return null;
+  }
+}
+
 async function downloadToS3(
   photo: PhotoResult,
   draftId: string,
@@ -470,8 +570,22 @@ export async function findPhotos(
     photos = [...photos, ...unsplashLocal.slice(0, needed)];
   }
 
-  // Final fallback: use our curated Mesa hero photos. Better a relevant
-  // generic Mesa photo than an irrelevant specific one.
+  // AI-generated fallback via Bedrock Titan. Used when nothing else
+  // returned locally-relevant photos. At least the AI image is topic-
+  // and location-appropriate, not a generic logo.
+  if (photos.length < count) {
+    const needed = count - photos.length;
+    for (let i = 0; i < needed; i++) {
+      console.log(`[photo-finder] falling back to Titan for slot ${i + photos.length}`);
+      const titan = await generateTitanImage(keywords, draftId, photos.length + i);
+      if (titan) photos.push(titan);
+      else break; // don't keep trying if one fails
+    }
+  }
+
+  // Final fallback: MesaHomes logo emblem. Only reached if Titan is
+  // disabled or failed. Guarantees an article never ships without any
+  // photo.
   if (photos.length < count) {
     const needed = count - photos.length;
     console.log(`[photo-finder] using ${needed} curated fallback(s) for "${query}"`);
@@ -479,10 +593,11 @@ export async function findPhotos(
   }
 
   // Download non-curated photos to S3. Curated ones are already on our
-  // CDN so we skip re-downloading.
+  // CDN so we skip re-downloading. Titan images are already uploaded
+  // to S3 in generateTitanImage.
   const downloaded = await Promise.all(
     photos.map((p, idx) => {
-      if (p.license === 'Owner-licensed') return Promise.resolve(p);
+      if (p.license === 'Owner-licensed' || p.license === 'AI-generated') return Promise.resolve(p);
       return downloadToS3(p, draftId, idx);
     }),
   );
