@@ -399,21 +399,63 @@ async function readRecentPublished(): Promise<PublishedRef[]> {
   }
 }
 
+/**
+ * Maximum age (in days) for a bundle to still be considered fresh enough
+ * to draft. The bundler produces bundles daily with priority-prefixed
+ * SKs (high priority sorts first regardless of date). Without a date
+ * window, stale high-priority bundles from a week ago would forever
+ * crowd out today's fresher items.
+ *
+ * 7 days gives the pipeline a grace window for backfill scenarios while
+ * preventing a truly stale news topic from getting drafted weeks late.
+ */
+const BUNDLE_MAX_AGE_DAYS = parseInt(process.env.BUNDLE_MAX_AGE_DAYS ?? '7', 10);
+
+function isWithinDateWindow(bundleDate: string, referenceDate: string, maxAgeDays: number): boolean {
+  // Both dates are 'YYYY-MM-DD' strings — lexicographic comparison works.
+  // bundleDate must be no older than maxAgeDays before referenceDate,
+  // and no newer than referenceDate (no time travel).
+  if (bundleDate > referenceDate) return false;
+  const ref = new Date(referenceDate + 'T00:00:00Z').getTime();
+  const bun = new Date(bundleDate + 'T00:00:00Z').getTime();
+  const ageMs = ref - bun;
+  const maxMs = maxAgeDays * 24 * 60 * 60 * 1000;
+  return ageMs <= maxMs;
+}
+
+// Exported for tests.
+export const __testables = { isWithinDateWindow };
+
 async function readTopBundles(date: string, limit: number): Promise<Bundle[]> {
-  // GSI1: BUNDLE#PENDING sorted desc by priority
+  // GSI1: BUNDLE#PENDING sorted desc by priority prefix (e.g., "05#...").
+  // Priority-first ordering means stale high-priority bundles can crowd out
+  // today's lower-priority items if we strictly filter by same-day. Use a
+  // sliding window instead: accept anything from the last BUNDLE_MAX_AGE_DAYS.
+  //
+  // Pad the page size heavily (limit * 10) because the mix of priorities +
+  // dates means we may have to scan a lot to find fresh candidates.
   const res = await queryGSI1('BUNDLE#PENDING', {
     scanForward: false,
-    limit: limit * 3, // pad since some may be already drafted or low-priority
+    limit: Math.max(limit * 10, 50),
   });
 
   const bundles: Bundle[] = [];
+  let scanned = 0;
+  let outOfWindow = 0;
   for (const item of res.items ?? []) {
+    scanned++;
     const d = (item as unknown as { data?: { kind?: string } & Bundle }).data;
-    if (d?.kind === 'bundle' && d.date === date) {
-      bundles.push(d);
-      if (bundles.length >= limit) break;
+    if (d?.kind !== 'bundle') continue;
+    if (!isWithinDateWindow(d.date, date, BUNDLE_MAX_AGE_DAYS)) {
+      outOfWindow++;
+      continue;
     }
+    bundles.push(d);
+    if (bundles.length >= limit) break;
   }
+  console.log(
+    `[drafter] readTopBundles scanned=${scanned} selected=${bundles.length} outOfWindow=${outOfWindow} window=${BUNDLE_MAX_AGE_DAYS}d`,
+  );
   return bundles;
 }
 
