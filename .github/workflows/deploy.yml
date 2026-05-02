@@ -61,6 +61,8 @@ jobs:
         run: npx cdk deploy --require-approval never
 
       - name: Build frontend (reads published blogs from DDB)
+        env:
+          NEXT_PUBLIC_GOOGLE_MAPS_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_KEY }}
         run: npm run build --prefix frontend
 
       - name: Sync frontend to S3
