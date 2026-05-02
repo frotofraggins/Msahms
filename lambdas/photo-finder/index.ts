@@ -25,8 +25,8 @@ const PEXELS_SECRET = process.env.PEXELS_KEY_SECRET ?? 'mesahomes/live/pexels-ap
 const GOOGLE_SECRET = process.env.GOOGLE_MAPS_API_KEY_SECRET ?? 'mesahomes/live/google-maps-api-key';
 const CDN_BASE =
   process.env.PHOTOS_CDN_BASE ?? 'https://mesahomes-property-photos.s3.us-west-2.amazonaws.com';
-const TITAN_MODEL_ID = process.env.TITAN_IMAGE_MODEL_ID ?? 'amazon.titan-image-generator-v2:0';
-const TITAN_ENABLED = (process.env.TITAN_ENABLED ?? 'true') !== 'false';
+const AI_IMAGE_MODEL_ID = process.env.AI_IMAGE_MODEL_ID ?? 'amazon.nova-canvas-v1:0';
+const AI_IMAGE_ENABLED = (process.env.AI_IMAGE_ENABLED ?? 'true') !== 'false';
 
 export interface PhotoResult {
   /** Public URL the article embeds */
@@ -323,54 +323,76 @@ async function searchUnsplash(query: string, count: number): Promise<PhotoResult
  * requires no hotlinking for commercial deployments).
  */
 /**
- * Bedrock Titan Image Generator v2.
+ * Bedrock AI image generation.
+ *
+ * Default model: Amazon Nova Canvas (amazon.nova-canvas-v1:0).
+ * Previously used Titan Image Generator v2 but Amazon marks it as
+ * Legacy after 30 days of inactivity. Nova Canvas is the active
+ * successor with the same request schema for TEXT_IMAGE tasks.
  *
  * Used as last-resort fallback when none of Wikimedia/Pexels/Unsplash
  * return Arizona-local photos. Produces a topic-relevant AI image that
  * at least matches the article's subject (Mesa sunset, desert
  * neighborhood, etc) instead of shipping a generic MesaHomes logo.
  *
- * Cost: approximately \$0.008 per 1024x1024 image at current Bedrock
- * pricing. Capped by our \$5/day Bedrock budget alarm.
+ * Cost: approximately $0.04 per 1024x1024 standard-quality image at
+ * current Nova Canvas pricing. Capped by our $5/day Bedrock budget
+ * alarm.
  *
  * Caveat: AI-generated images are clearly labeled in alt text +
  * attribution so humans know they're synthetic. License is marked
  * 'AI-generated' with disclosure.
+ *
+ * Nova Canvas constraints (vs Titan):
+ *   - Prompt text cannot contain negation words ('no', 'not', 'without')
+ *   - negativeText nested inside textToImageParams (was top-level on Titan)
+ *   - cfgScale not supported
+ *   - seed is optional but recommended for reproducibility
  */
-async function generateTitanImage(
+async function generateAiImage(
   keywords: string[],
   draftId: string,
   idx: number,
 ): Promise<PhotoResult | null> {
-  if (!TITAN_ENABLED) return null;
+  if (!AI_IMAGE_ENABLED) return null;
 
-  // Build a prompt that strongly biases toward a realistic,
-  // location-appropriate Mesa scene. Avoid text in images.
+  // Build a prompt that biases toward a realistic,
+  // location-appropriate Mesa scene. No negation words allowed —
+  // constraints like "no text" or "without people" break Nova Canvas.
   const subject = keywords.slice(0, 3).join(', ') || 'residential neighborhood';
   const prompt =
     `Realistic photograph of ${subject} in Mesa, Arizona. ` +
     `Sonoran desert environment, saguaro cacti, palm trees, mountain backdrop, ` +
     `golden-hour lighting, shot on a DSLR, photojournalism style.`;
-  const negativePrompt =
+  // What to exclude. Nova Canvas guidance: list objects/styles to avoid
+  // without using negation words ("no", "not", "without").
+  const negativeText =
     'text, typography, watermark, logo, blurry, distorted, cartoon, illustration, ' +
     'people faces, snow, beach, ocean';
+
+  // Deterministic-ish seed from draftId so re-running the pipeline on
+  // the same draft produces the same image (debuggable).
+  const seed = Math.abs(hashString(`${draftId}-${idx}`)) % 858_993_460;
 
   try {
     const body = JSON.stringify({
       taskType: 'TEXT_IMAGE',
-      textToImageParams: { text: prompt, negativeText: negativePrompt },
+      textToImageParams: {
+        text: prompt,
+        negativeText,
+      },
       imageGenerationConfig: {
         numberOfImages: 1,
         height: 1024,
         width: 1024,
-        cfgScale: 7.5,
         quality: 'standard',
+        seed,
       },
     });
 
     const resp = await br.send(
       new InvokeModelCommand({
-        modelId: TITAN_MODEL_ID,
+        modelId: AI_IMAGE_MODEL_ID,
         body,
         contentType: 'application/json',
         accept: 'application/json',
@@ -383,11 +405,11 @@ async function generateTitanImage(
     };
 
     if (!parsed.images || parsed.images.length === 0) {
-      console.warn('[photo-finder] Titan returned no images:', parsed.error);
+      console.warn('[photo-finder] AI image returned no images:', parsed.error);
       return null;
     }
 
-    // Titan returns base64-encoded PNG
+    // Nova Canvas (and Titan) return base64-encoded PNG
     const b64 = parsed.images[0];
     const buffer = Buffer.from(b64, 'base64');
     const key = `articles/${draftId}/${idx}-ai.png`;
@@ -398,7 +420,7 @@ async function generateTitanImage(
         Body: buffer,
         ContentType: 'image/png',
         Metadata: {
-          attribution: 'AI-generated (Bedrock Titan)',
+          attribution: `AI-generated (${AI_IMAGE_MODEL_ID})`,
           license: 'AI-generated',
           prompt: prompt.slice(0, 500),
         },
@@ -407,15 +429,28 @@ async function generateTitanImage(
 
     return {
       url: `${CDN_BASE}/${key}`,
-      attribution: 'AI-generated illustration (Bedrock Titan)',
+      attribution: `AI-generated illustration (Bedrock ${AI_IMAGE_MODEL_ID.split('.')[1] ?? 'Nova Canvas'})`,
       license: 'AI-generated',
-      sourceUrl: 'https://aws.amazon.com/bedrock/titan/',
+      sourceUrl: 'https://aws.amazon.com/bedrock/',
       alt: `AI-generated image depicting ${subject} in Mesa, Arizona`,
     };
   } catch (err) {
-    console.warn('[photo-finder] Titan generation failed:', err);
+    console.warn('[photo-finder] AI image generation failed:', err);
     return null;
   }
+}
+
+/**
+ * Stable hash of a string to a 32-bit integer, for deterministic
+ * seeding without requiring crypto.
+ */
+function hashString(s: string): number {
+  let hash = 0;
+  for (let i = 0; i < s.length; i++) {
+    hash = (hash << 5) - hash + s.charCodeAt(i);
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
 }
 
 async function downloadToS3(
@@ -570,22 +605,22 @@ export async function findPhotos(
     photos = [...photos, ...unsplashLocal.slice(0, needed)];
   }
 
-  // AI-generated fallback via Bedrock Titan. Used when nothing else
-  // returned locally-relevant photos. At least the AI image is topic-
-  // and location-appropriate, not a generic logo.
+  // AI-generated fallback via Bedrock Nova Canvas (was Titan). Used
+  // when nothing else returned locally-relevant photos. At least the
+  // AI image is topic- and location-appropriate, not a generic logo.
   if (photos.length < count) {
     const needed = count - photos.length;
     for (let i = 0; i < needed; i++) {
-      console.log(`[photo-finder] falling back to Titan for slot ${i + photos.length}`);
-      const titan = await generateTitanImage(keywords, draftId, photos.length + i);
-      if (titan) photos.push(titan);
+      console.log(`[photo-finder] falling back to AI image for slot ${i + photos.length}`);
+      const aiImage = await generateAiImage(keywords, draftId, photos.length + i);
+      if (aiImage) photos.push(aiImage);
       else break; // don't keep trying if one fails
     }
   }
 
-  // Final fallback: MesaHomes logo emblem. Only reached if Titan is
-  // disabled or failed. Guarantees an article never ships without any
-  // photo.
+  // Final fallback: MesaHomes logo emblem. Only reached if AI image
+  // gen is disabled or failed. Guarantees an article never ships
+  // without any photo.
   if (photos.length < count) {
     const needed = count - photos.length;
     console.log(`[photo-finder] using ${needed} curated fallback(s) for "${query}"`);
@@ -593,8 +628,8 @@ export async function findPhotos(
   }
 
   // Download non-curated photos to S3. Curated ones are already on our
-  // CDN so we skip re-downloading. Titan images are already uploaded
-  // to S3 in generateTitanImage.
+  // CDN so we skip re-downloading. AI images are already uploaded to
+  // S3 in generateAiImage.
   const downloaded = await Promise.all(
     photos.map((p, idx) => {
       if (p.license === 'Owner-licensed' || p.license === 'AI-generated') return Promise.resolve(p);

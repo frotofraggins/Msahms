@@ -360,8 +360,9 @@ export class MesaHomesStack extends Stack {
         // Claude Haiku 4.5 available as fallback/override
         `arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0`,
         `arn:aws:bedrock:*:*:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0`,
-        // Titan Image Generator v2 for photo-finder AI fallback
-        `arn:aws:bedrock:*::foundation-model/amazon.titan-image-generator-v2:0`,
+        // Amazon Nova Canvas for photo-finder AI image fallback
+        // (replaced Titan Image Generator v2 after Amazon marked it Legacy)
+        `arn:aws:bedrock:*::foundation-model/amazon.nova-canvas-v1:0`,
       ],
     }));
     fns['content-drafter']!.addToRolePolicy(new iam.PolicyStatement({
