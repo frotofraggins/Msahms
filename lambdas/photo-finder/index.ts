@@ -25,7 +25,7 @@ const PEXELS_SECRET = process.env.PEXELS_KEY_SECRET ?? 'mesahomes/live/pexels-ap
 const GOOGLE_SECRET = process.env.GOOGLE_MAPS_API_KEY_SECRET ?? 'mesahomes/live/google-maps-api-key';
 const CDN_BASE =
   process.env.PHOTOS_CDN_BASE ?? 'https://mesahomes-property-photos.s3.us-west-2.amazonaws.com';
-const AI_IMAGE_MODEL_ID = process.env.AI_IMAGE_MODEL_ID ?? 'amazon.nova-canvas-v1:0';
+const AI_IMAGE_MODEL_ID = process.env.AI_IMAGE_MODEL_ID ?? 'stability.stable-image-core-v1:1';
 const AI_IMAGE_ENABLED = (process.env.AI_IMAGE_ENABLED ?? 'true') !== 'false';
 
 export interface PhotoResult {
@@ -325,29 +325,30 @@ async function searchUnsplash(query: string, count: number): Promise<PhotoResult
 /**
  * Bedrock AI image generation.
  *
- * Default model: Amazon Nova Canvas (amazon.nova-canvas-v1:0).
- * Previously used Titan Image Generator v2 but Amazon marks it as
- * Legacy after 30 days of inactivity. Nova Canvas is the active
- * successor with the same request schema for TEXT_IMAGE tasks.
+ * Default model: Stability AI Stable Image Core v1.1
+ * (stability.stable-image-core-v1:1). Chosen because:
+ *   - Active model in us-west-2 (Amazon-branded Titan + Nova Canvas
+ *     both got marked Legacy in our account due to 30-day inactivity)
+ *   - Cheapest active Stability tier (~$0.04/image, better quality
+ *     than Ultra for our illustrative fallback use case)
+ *   - Simpler request schema than Titan (just prompt + optional
+ *     negative_prompt)
  *
  * Used as last-resort fallback when none of Wikimedia/Pexels/Unsplash
  * return Arizona-local photos. Produces a topic-relevant AI image that
  * at least matches the article's subject (Mesa sunset, desert
  * neighborhood, etc) instead of shipping a generic MesaHomes logo.
  *
- * Cost: approximately $0.04 per 1024x1024 standard-quality image at
- * current Nova Canvas pricing. Capped by our $5/day Bedrock budget
- * alarm.
+ * Cost: ~$0.04 per image at current Bedrock pricing. Capped by our
+ * $5/day Bedrock budget alarm.
  *
  * Caveat: AI-generated images are clearly labeled in alt text +
- * attribution so humans know they're synthetic. License is marked
+ * attribution so humans know they're synthetic. License marked
  * 'AI-generated' with disclosure.
  *
- * Nova Canvas constraints (vs Titan):
- *   - Prompt text cannot contain negation words ('no', 'not', 'without')
- *   - negativeText nested inside textToImageParams (was top-level on Titan)
- *   - cfgScale not supported
- *   - seed is optional but recommended for reproducibility
+ * Stability API schema (differs from Titan/Nova):
+ *   Request:  { prompt, negative_prompt?, aspect_ratio?, seed?, output_format? }
+ *   Response: { images: [base64], seeds: [n], finish_reasons: [null|reason] }
  */
 async function generateAiImage(
   keywords: string[],
@@ -357,37 +358,28 @@ async function generateAiImage(
   if (!AI_IMAGE_ENABLED) return null;
 
   // Build a prompt that biases toward a realistic,
-  // location-appropriate Mesa scene. No negation words allowed —
-  // constraints like "no text" or "without people" break Nova Canvas.
+  // location-appropriate Mesa scene.
   const subject = keywords.slice(0, 3).join(', ') || 'residential neighborhood';
   const prompt =
     `Realistic photograph of ${subject} in Mesa, Arizona. ` +
     `Sonoran desert environment, saguaro cacti, palm trees, mountain backdrop, ` +
     `golden-hour lighting, shot on a DSLR, photojournalism style.`;
-  // What to exclude. Nova Canvas guidance: list objects/styles to avoid
-  // without using negation words ("no", "not", "without").
-  const negativeText =
+  const negative_prompt =
     'text, typography, watermark, logo, blurry, distorted, cartoon, illustration, ' +
     'people faces, snow, beach, ocean';
 
-  // Deterministic-ish seed from draftId so re-running the pipeline on
-  // the same draft produces the same image (debuggable).
-  const seed = Math.abs(hashString(`${draftId}-${idx}`)) % 858_993_460;
+  // Deterministic seed from draftId so re-running the pipeline on the
+  // same draft produces the same image (debuggable). Stability range:
+  // 0 to 4_294_967_295.
+  const seed = Math.abs(hashString(`${draftId}-${idx}`)) % 4_294_967_295;
 
   try {
     const body = JSON.stringify({
-      taskType: 'TEXT_IMAGE',
-      textToImageParams: {
-        text: prompt,
-        negativeText,
-      },
-      imageGenerationConfig: {
-        numberOfImages: 1,
-        height: 1024,
-        width: 1024,
-        quality: 'standard',
-        seed,
-      },
+      prompt,
+      negative_prompt,
+      aspect_ratio: '16:9', // landscape for blog hero images
+      seed,
+      output_format: 'png',
     });
 
     const resp = await br.send(
@@ -401,15 +393,24 @@ async function generateAiImage(
 
     const parsed = JSON.parse(new TextDecoder().decode(resp.body)) as {
       images?: string[];
-      error?: string;
+      finish_reasons?: (string | null)[];
+      seeds?: number[];
     };
 
     if (!parsed.images || parsed.images.length === 0) {
-      console.warn('[photo-finder] AI image returned no images:', parsed.error);
+      console.warn(
+        '[photo-finder] AI image returned no images. finish_reasons=',
+        parsed.finish_reasons,
+      );
       return null;
     }
 
-    // Nova Canvas (and Titan) return base64-encoded PNG
+    const reason = parsed.finish_reasons?.[0];
+    if (reason !== null && reason !== undefined) {
+      console.warn(`[photo-finder] AI image filtered: ${reason}`);
+      return null;
+    }
+
     const b64 = parsed.images[0];
     const buffer = Buffer.from(b64, 'base64');
     const key = `articles/${draftId}/${idx}-ai.png`;
@@ -429,9 +430,9 @@ async function generateAiImage(
 
     return {
       url: `${CDN_BASE}/${key}`,
-      attribution: `AI-generated illustration (Bedrock ${AI_IMAGE_MODEL_ID.split('.')[1] ?? 'Nova Canvas'})`,
+      attribution: `AI-generated illustration (Bedrock Stable Image Core)`,
       license: 'AI-generated',
-      sourceUrl: 'https://aws.amazon.com/bedrock/',
+      sourceUrl: 'https://aws.amazon.com/bedrock/stable-diffusion/',
       alt: `AI-generated image depicting ${subject} in Mesa, Arizona`,
     };
   } catch (err) {
