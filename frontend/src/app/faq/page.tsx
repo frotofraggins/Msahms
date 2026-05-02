@@ -23,7 +23,7 @@ const generalFAQs = [
   {
     question: 'What is MesaHomes?',
     answer:
-      'MesaHomes is a flat-fee real estate brokerage serving Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, and Apache Junction. We offer free seller and buyer tools, flat-fee MLS listing for $999, FSBO photography packages, and full-service agent support.',
+      'MesaHomes is a hyper-local Mesa real estate platform serving Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, and Apache Junction. We offer free seller and buyer tools, Mesa Listing Service (our $999 flat-fee MLS option), FSBO photography packages, and full-service agent support.',
   },
   {
     question: 'What areas do you serve?',
@@ -97,7 +97,7 @@ const flatFeeFAQs = [
   {
     question: 'How much can I save with flat-fee listing?',
     answer:
-      'On a $450,000 home, a traditional 5% commission would cost $22,500. With MesaHomes flat-fee listing ($999 + $400 broker fee), your total listing cost is $1,399 — saving you over $21,000.',
+      'On a $450,000 home, a traditional 5% commission would cost $22,500. With Mesa Listing Service ($999 + $400 broker fee), your total listing cost is $1,399 — saving you over $21,000.',
   },
   {
     question: 'Will my home appear on Zillow and Redfin?',

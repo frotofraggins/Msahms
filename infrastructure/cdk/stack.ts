@@ -22,6 +22,8 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as eventsources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as logs from 'aws-cdk-lib/aws-logs';
+import * as budgets from 'aws-cdk-lib/aws-budgets';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MesaHomesSesConstruct } from './ses.js';
@@ -33,7 +35,7 @@ const REPO_ROOT = path.join(__dirname, '..', '..');
 const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: number; env?: Record<string, string> }> = {
   'leads-capture': { source: 'leads-capture', memory: 256, timeout: 10 },
   'tools-calculator': { source: 'tools-calculator', memory: 256, timeout: 10 },
-  'property-lookup': { source: 'property-lookup', memory: 512, timeout: 30, env: { GOOGLE_MAPS_SECRET: 'mesahomes/google-maps-api-key' } },
+  'property-lookup': { source: 'property-lookup', memory: 512, timeout: 30, env: { GOOGLE_MAPS_API_KEY_SECRET: 'mesahomes/live/google-maps-api-key' } },
   'market-data': { source: 'market-data', memory: 256, timeout: 5 },
   'content-api': { source: 'content-api', memory: 256, timeout: 5 },
   'ai-proxy': { source: 'ai-proxy', memory: 512, timeout: 30 },
@@ -43,18 +45,64 @@ const LAMBDA_CONFIGS: Record<string, { source: string; memory: number; timeout: 
   'dashboard-team': { source: 'dashboard-team', memory: 256, timeout: 10 },
   'dashboard-notifications': { source: 'dashboard-notifications', memory: 256, timeout: 10 },
   'dashboard-listings': { source: 'dashboard-listings', memory: 256, timeout: 10 },
+  'dashboard-performance': { source: 'dashboard-performance', memory: 256, timeout: 10 },
+  'dashboard-content': { source: 'dashboard-content', memory: 256, timeout: 15 },
   'data-pipeline': { source: 'data-pipeline', memory: 1024, timeout: 300 },
-  'notification-worker': { source: 'notification-worker', memory: 256, timeout: 10 },
+  'notification-worker': {
+    source: 'notification-worker',
+    memory: 256,
+    timeout: 10,
+    env: {
+      NOTIFICATION_FROM_ADDRESS: 'notifications@mesahomes.com',
+      NOTIFICATION_REPLY_TO: 'sales@mesahomes.com',
+      OWNER_NOTIFICATION_ADDRESS: 'sales@mesahomes.com',
+    },
+  },
+  'content-ingest': {
+    source: 'content-ingest',
+    memory: 512,
+    timeout: 300,
+    env: {
+      CONTENT_INGEST_BUCKET: 'mesahomes-content-ingest',
+      NOTIFICATION_FROM_ADDRESS: 'notifications@mesahomes.com',
+      OWNER_NOTIFICATION_ADDRESS: 'sales@mesahomes.com',
+    },
+  },
+  'content-bundler': {
+    source: 'content-bundler',
+    memory: 512,
+    timeout: 120,
+  },
+  'content-drafter': {
+    source: 'content-drafter',
+    memory: 512,
+    timeout: 600,
+    env: {
+      DRAFTER_MODEL_ID: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+      MAX_BUNDLES_PER_RUN: '5',
+      NOTIFICATION_FROM_ADDRESS: 'notifications@mesahomes.com',
+      OWNER_NOTIFICATION_ADDRESS: 'sales@mesahomes.com',
+      UNSPLASH_KEY_SECRET: 'mesahomes/live/unsplash-access-key',
+      PEXELS_KEY_SECRET: 'mesahomes/live/pexels-api-key',
+      PHOTOS_BUCKET: 'mesahomes-property-photos',
+    },
+  },
 };
 
 const SECRET_NAMES = [
-  'mesahomes/google-maps-api-key',
-  'mesahomes/stripe-secret-key',
-  'mesahomes/stripe-webhook-secret',
-  'mesahomes/rentcast-api-key',
-  'mesahomes/ses-smtp-credentials',
-  'mesahomes/vhz-handoff-secret',
-  'mesahomes/vhz-webhook-secret',
+  'mesahomes/live/google-maps-api-key',
+  'mesahomes/live/stripe-secret-key',
+  'mesahomes/live/stripe-publishable-key',
+  'mesahomes/live/stripe-webhook-secret',
+  'mesahomes/live/vhz-stripe-secret-key',
+  'mesahomes/live/rentcast-api-key',
+  'mesahomes/live/ses-smtp-credentials',
+  'mesahomes/live/vhz-handoff-secret',
+  'mesahomes/live/vhz-webhook-secret',
+  'mesahomes/live/unsplash-access-key',
+  'mesahomes/live/unsplash-secret-key',
+  'mesahomes/live/pexels-api-key',
+  'mesahomes/live/github-pat',
 ];
 
 // Route definitions — mirrors infrastructure/api-gateway.ts
@@ -85,6 +133,7 @@ const ROUTES: Array<{ method: string; path: string; lambda: string; auth: boolea
   { method: 'GET', path: '/api/v1/dashboard/leads', lambda: 'dashboard-leads', auth: true },
   { method: 'GET', path: '/api/v1/dashboard/leads/{id}', lambda: 'dashboard-leads', auth: true },
   { method: 'PATCH', path: '/api/v1/dashboard/leads/{id}', lambda: 'dashboard-leads', auth: true },
+  { method: 'DELETE', path: '/api/v1/dashboard/leads/{id}', lambda: 'dashboard-leads', auth: true },
   { method: 'GET', path: '/api/v1/dashboard/team', lambda: 'dashboard-team', auth: true },
   { method: 'POST', path: '/api/v1/dashboard/team/invite', lambda: 'dashboard-team', auth: true },
   { method: 'PATCH', path: '/api/v1/dashboard/team/{agentId}', lambda: 'dashboard-team', auth: true },
@@ -92,6 +141,12 @@ const ROUTES: Array<{ method: string; path: string; lambda: string; auth: boolea
   { method: 'PATCH', path: '/api/v1/dashboard/listings/{id}', lambda: 'dashboard-listings', auth: true },
   { method: 'GET', path: '/api/v1/dashboard/notifications/settings', lambda: 'dashboard-notifications', auth: true },
   { method: 'PUT', path: '/api/v1/dashboard/notifications/settings', lambda: 'dashboard-notifications', auth: true },
+  { method: 'GET', path: '/api/v1/dashboard/performance', lambda: 'dashboard-performance', auth: true },
+  { method: 'GET', path: '/api/v1/dashboard/content/drafts', lambda: 'dashboard-content', auth: true },
+  { method: 'GET', path: '/api/v1/dashboard/content/drafts/{id}', lambda: 'dashboard-content', auth: true },
+  { method: 'PATCH', path: '/api/v1/dashboard/content/drafts/{id}', lambda: 'dashboard-content', auth: true },
+  { method: 'POST', path: '/api/v1/dashboard/content/drafts/{id}/approve', lambda: 'dashboard-content', auth: true },
+  { method: 'POST', path: '/api/v1/dashboard/content/drafts/{id}/reject', lambda: 'dashboard-content', auth: true },
 ];
 
 export class MesaHomesStack extends Stack {
@@ -137,6 +192,25 @@ export class MesaHomesStack extends Stack {
       cors: [{ allowedOrigins: ['https://mesahomes.com', 'https://www.mesahomes.com'], allowedMethods: [s3.HttpMethods.GET], allowedHeaders: ['*'] }],
     });
 
+    // Content ingest bucket — stores raw fetched items from each source
+    // as audit trail. 90-day Glacier transition keeps costs near zero
+    // while preserving historical data for re-processing.
+    const contentIngestBucket = new s3.Bucket(this, 'ContentIngestBucket', {
+      bucketName: 'mesahomes-content-ingest',
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: RemovalPolicy.RETAIN,
+      lifecycleRules: [
+        {
+          id: 'transition-to-glacier-90-days',
+          enabled: true,
+          transitions: [
+            { storageClass: s3.StorageClass.GLACIER_INSTANT_RETRIEVAL, transitionAfter: Duration.days(90) },
+          ],
+        },
+      ],
+    });
+
     // Cognito
     const userPool = new cognito.UserPool(this, 'UserPool', {
       userPoolName: 'mesahomes-userpool',
@@ -160,15 +234,13 @@ export class MesaHomesStack extends Stack {
       preventUserExistenceErrors: true,
     });
 
-    // Secrets (empty placeholders)
-    const secrets: Record<string, sm.Secret> = {};
+    // Secrets — all pre-existing. Import by name rather than create.
+    // Owner populated these manually before first cdk deploy to avoid
+    // ordering issues with the VHZ handoff HMACs and Stripe keys.
+    const secrets: Record<string, sm.ISecret> = {};
     for (const name of SECRET_NAMES) {
       const id = name.replace(/[^a-zA-Z0-9]/g, '');
-      secrets[name] = new sm.Secret(this, `Secret-${id}`, {
-        secretName: name,
-        description: `MesaHomes secret: ${name}. Populate via put-secret-value after deploy.`,
-        removalPolicy: RemovalPolicy.RETAIN,
-      });
+      secrets[name] = sm.Secret.fromSecretNameV2(this, `Secret-${id}`, name);
     }
 
     // Lambda functions
@@ -177,7 +249,7 @@ export class MesaHomesStack extends Stack {
       const fn = new lambda.Function(this, `Fn-${name}`, {
         functionName: `mesahomes-${name}`,
         runtime: lambda.Runtime.NODEJS_20_X,
-        handler: 'index.handler',
+        handler: `lambdas/${cfg.source}/index.handler`,
         // Zip the lambda source + shared lib/ folder. You'll package this before `cdk deploy`.
         // See deploy/README.md for the packaging script.
         code: lambda.Code.fromAsset(path.join(REPO_ROOT, '.build', `${cfg.source}.zip`)),
@@ -199,12 +271,30 @@ export class MesaHomesStack extends Stack {
       for (const secret of Object.values(secrets)) {
         secret.grantRead(fn);
       }
+      // 30-day log retention — keeps storage costs bounded without
+      // losing recent error context. Override per-Lambda if needed.
+      new logs.LogRetention(this, `LogRetention-${name}`, {
+        logGroupName: `/aws/lambda/mesahomes-${name}`,
+        retention: logs.RetentionDays.ONE_MONTH,
+      });
       fns[name] = fn;
     }
     // Additional grants
     dataBucket.grantReadWrite(fns['data-pipeline']!);
     photosBucket.grantReadWrite(fns['property-lookup']!);
     photosBucket.grantReadWrite(fns['listing-service']!);
+    contentIngestBucket.grantReadWrite(fns['content-ingest']!);
+    photosBucket.grantReadWrite(fns['content-drafter']!);
+    // CloudWatch metrics + SES send for daily summary emails
+    fns['content-ingest']!.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['cloudwatch:PutMetricData'],
+      resources: ['*'],
+      conditions: { StringEquals: { 'cloudwatch:namespace': 'MesaHomes/ContentIngest' } },
+    }));
+    fns['content-ingest']!.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['ses:SendEmail', 'sesv2:SendEmail'],
+      resources: ['*'],
+    }));
     fns['auth-api']!.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonCognitoPowerUser'));
     fns['dashboard-team']!.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonCognitoPowerUser'));
 
@@ -220,6 +310,64 @@ export class MesaHomesStack extends Stack {
       schedule: events.Schedule.cron({ minute: '0', hour: '6', day: '*', month: '*', year: '*' }),
       targets: [new targets.LambdaFunction(fns['data-pipeline']!)],
     });
+
+    // EventBridge cron -> content-ingest (daily 14:00 UTC = 7am MST)
+    // Runs 'daily' cadence sources; weekly/monthly handled by separate rules.
+    new events.Rule(this, 'ContentIngestDailyCron', {
+      schedule: events.Schedule.cron({ minute: '0', hour: '14', day: '*', month: '*', year: '*' }),
+      targets: [
+        new targets.LambdaFunction(fns['content-ingest']!, {
+          event: events.RuleTargetInput.fromObject({ cadence: 'daily' }),
+        }),
+      ],
+    });
+    new events.Rule(this, 'ContentIngestWeeklyCron', {
+      schedule: events.Schedule.cron({ minute: '0', hour: '14', weekDay: 'MON', month: '*', year: '*' }),
+      targets: [
+        new targets.LambdaFunction(fns['content-ingest']!, {
+          event: events.RuleTargetInput.fromObject({ cadence: 'weekly' }),
+        }),
+      ],
+    });
+    // Monthly HOA subdivision directory refresh — 17th of month 7am MST
+    new events.Rule(this, 'ContentIngestMonthlyCron', {
+      schedule: events.Schedule.cron({ minute: '0', hour: '14', day: '17', month: '*', year: '*' }),
+      targets: [
+        new targets.LambdaFunction(fns['content-ingest']!, {
+          event: events.RuleTargetInput.fromObject({ cadence: 'monthly' }),
+        }),
+      ],
+    });
+
+    // Bundler runs daily at 14:30 UTC (7:30am MST), 30 min after daily ingest
+    new events.Rule(this, 'ContentBundlerCron', {
+      schedule: events.Schedule.cron({ minute: '30', hour: '14', day: '*', month: '*', year: '*' }),
+      targets: [new targets.LambdaFunction(fns['content-bundler']!)],
+    });
+
+    // Drafter runs daily at 15:00 UTC (8am MST), 30 min after bundler.
+    // Bedrock + SES grants scoped to this Lambda
+    new events.Rule(this, 'ContentDrafterCron', {
+      schedule: events.Schedule.cron({ minute: '0', hour: '15', day: '*', month: '*', year: '*' }),
+      targets: [new targets.LambdaFunction(fns['content-drafter']!)],
+    });
+    fns['content-drafter']!.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['bedrock:InvokeModel'],
+      resources: [
+        // Nova Micro via cross-region inference profile
+        `arn:aws:bedrock:*::foundation-model/amazon.nova-micro-v1:0`,
+        `arn:aws:bedrock:*:*:inference-profile/us.amazon.nova-micro-v1:0`,
+        // Claude Haiku 4.5 available as fallback/override
+        `arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0`,
+        `arn:aws:bedrock:*:*:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0`,
+        // Titan Image Generator v2 for photo-finder AI fallback
+        `arn:aws:bedrock:*::foundation-model/amazon.titan-image-generator-v2:0`,
+      ],
+    }));
+    fns['content-drafter']!.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['ses:SendEmail', 'sesv2:SendEmail'],
+      resources: ['*'],
+    }));
 
     // API Gateway
     const api = new apigw.RestApi(this, 'Api', {
@@ -252,19 +400,151 @@ export class MesaHomesStack extends Stack {
       });
     }
 
-    // SES — transactional email for notifications and lead alerts
-    // Imports the existing mesahomes.com hosted zone (DNS already delegated)
-    const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-      hostedZoneId: 'Z10182223SPYFYDHCGZH7',
-      zoneName: 'mesahomes.com',
+    // SES — domain identity + DNS records set up manually before deploy
+    // (Google Workspace MX + DKIM + owner's SPF/DMARC records already
+    // exist in mesahomes.com hosted zone). CDK would conflict trying
+    // to create duplicates. Instead, just grant Lambdas ses:SendEmail
+    // permission. The domain identity + config set will be created
+    // manually or via a follow-up CDK stack once manual DNS is settled.
+    const sesSenders = [
+      fns['notification-worker']!,
+      fns['listing-service']!,
+      fns['leads-capture']!,
+      fns['auth-api']!,
+    ];
+    for (const fn of sesSenders) {
+      fn.role!.addToPrincipalPolicy(new iam.PolicyStatement({
+        actions: ['ses:SendEmail', 'ses:SendRawEmail', 'ses:SendTemplatedEmail'],
+        resources: ['*'], // scope down to verified identity after domain is registered
+      }));
+    }
+
+    // Frontend rebuild CodeBuild project — triggered when owner approves an
+    // AI-drafted blog post in the dashboard. Checks out the repo, runs
+    // scripts/fetch-blog-from-ddb.ts (via npm prebuild hook), next build,
+    // syncs to S3, and invalidates CloudFront.
+    //
+    // The S3 hosting bucket + CloudFront distribution predate this CDK
+    // stack, so we reference them by name/ID rather than declaring them.
+    // Approve-triggered deploy: dashboard-content Lambda needs to fire a
+    // GitHub Actions workflow_dispatch event. The Lambda reads a GitHub
+    // PAT from Secrets Manager (secret name below) and calls the GitHub
+    // REST API to trigger .github/workflows/deploy.yml.
+    //
+    // Rationale: we migrated off CodeBuild -> GitHub Actions for CI/CD
+    // because GHA gives us push-to-main deploys with test gates at zero
+    // marginal cost (within free tier), while keeping the same approval
+    // UX: owner clicks Approve -> frontend rebuilds in ~3 min.
+    const GITHUB_OWNER = 'frotofraggins';
+    const GITHUB_REPO = 'Msahms';
+
+    fns['dashboard-content']!.addEnvironment('GITHUB_OWNER', GITHUB_OWNER);
+    fns['dashboard-content']!.addEnvironment('GITHUB_REPO', GITHUB_REPO);
+    fns['dashboard-content']!.addEnvironment('GITHUB_WORKFLOW_FILE', 'deploy.yml');
+    fns['dashboard-content']!.addEnvironment(
+      'GITHUB_PAT_SECRET',
+      'mesahomes/live/github-pat',
+    );
+
+    // GitHub Actions OIDC provider + deploy role — lets GHA workflows
+    // assume an AWS role without storing long-lived credentials in GitHub.
+    // Ref: https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services
+
+    const githubProvider = new iam.OpenIdConnectProvider(this, 'GitHubOidcProvider', {
+      url: 'https://token.actions.githubusercontent.com',
+      clientIds: ['sts.amazonaws.com'],
     });
-    new MesaHomesSesConstruct(this, 'Ses', {
-      hostedZone,
-      senderLambdas: [
-        fns['notification-worker']!,
-        fns['listing-service']!,
-        fns['leads-capture']!,
-        fns['auth-api']!,
+
+    const githubDeployRole = new iam.Role(this, 'GitHubDeployRole', {
+      roleName: 'mesahomes-github-actions-deploy',
+      assumedBy: new iam.FederatedPrincipal(
+        githubProvider.openIdConnectProviderArn,
+        {
+          StringEquals: {
+            'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
+          },
+          StringLike: {
+            'token.actions.githubusercontent.com:sub': `repo:${GITHUB_OWNER}/${GITHUB_REPO}:*`,
+          },
+        },
+        'sts:AssumeRoleWithWebIdentity',
+      ),
+      description: 'Role assumed by GitHub Actions to deploy MesaHomes',
+      maxSessionDuration: Duration.hours(1),
+    });
+
+    // GHA needs: cdk deploy (broad) + S3 sync + CF invalidate + DDB read
+    // (for frontend prebuild hook) + Lambda StartBuild for manual tests.
+    // Use AdministratorAccess-level perms scoped to this account since CDK
+    // deploy is inherently broad. Alternative: scope to CDK bootstrap role.
+    githubDeployRole.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'),
+    );
+
+    new CfnOutput(this, 'GitHubDeployRoleArn', {
+      value: githubDeployRole.roleArn,
+      description: 'ARN for GitHub Actions to assume via OIDC',
+    });
+
+    // Bedrock cost safety net — $5/day budget on Bedrock spend alone.
+    // If the autonomous content pipeline or ai-proxy Lambda ever goes
+    // haywire, the owner gets an email before the bill runs up.
+    //
+    // AWS Budgets is the right tool here because it handles the daily
+    // reset + multi-dimensional cost aggregation (model, region, etc).
+    // CloudWatch alarms on InvocationCount would require us to estimate
+    // cost from token counts, which is brittle.
+    new budgets.CfnBudget(this, 'BedrockDailyBudget', {
+      budget: {
+        budgetName: 'mesahomes-bedrock-daily',
+        budgetType: 'COST',
+        timeUnit: 'DAILY',
+        budgetLimit: { amount: 5, unit: 'USD' },
+        costFilters: {
+          Service: ['Amazon Bedrock'],
+        },
+      },
+      notificationsWithSubscribers: [
+        {
+          notification: {
+            notificationType: 'ACTUAL',
+            comparisonOperator: 'GREATER_THAN',
+            threshold: 80, // 80% of $5 = $4 actually spent
+            thresholdType: 'PERCENTAGE',
+          },
+          subscribers: [
+            { subscriptionType: 'EMAIL', address: 'sales@mesahomes.com' },
+          ],
+        },
+        // Note: AWS Budgets does NOT support FORECASTED notifications on
+        // DAILY budgets (only MONTHLY + QUARTERLY + ANNUALLY). We get
+        // alerted at 80% of actual daily spend, which is enough for the
+        // cost-runaway scenario we care about.
+      ],
+    });
+
+    // Also a monthly total-spend guardrail for the whole AWS account.
+    // MVP traffic + the content pipeline run under \$20/mo in practice;
+    // \$50/mo catches any runaway fast without being noisy.
+    new budgets.CfnBudget(this, 'AccountMonthlyBudget', {
+      budget: {
+        budgetName: 'mesahomes-account-monthly',
+        budgetType: 'COST',
+        timeUnit: 'MONTHLY',
+        budgetLimit: { amount: 50, unit: 'USD' },
+      },
+      notificationsWithSubscribers: [
+        {
+          notification: {
+            notificationType: 'ACTUAL',
+            comparisonOperator: 'GREATER_THAN',
+            threshold: 80,
+            thresholdType: 'PERCENTAGE',
+          },
+          subscribers: [
+            { subscriptionType: 'EMAIL', address: 'sales@mesahomes.com' },
+          ],
+        },
       ],
     });
 
@@ -274,6 +554,7 @@ export class MesaHomesStack extends Stack {
     new CfnOutput(this, 'UserPoolClientId', { value: userPoolClient.userPoolClientId });
     new CfnOutput(this, 'TableName', { value: table.tableName });
     new CfnOutput(this, 'DataBucketName', { value: dataBucket.bucketName });
+    new CfnOutput(this, 'ContentIngestBucketName', { value: contentIngestBucket.bucketName });
     new CfnOutput(this, 'PhotosBucketName', { value: photosBucket.bucketName });
   }
 }

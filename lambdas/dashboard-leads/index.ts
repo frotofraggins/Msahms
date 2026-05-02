@@ -32,6 +32,7 @@ import {
   getItem,
   queryGSI1,
   updateItem,
+  deleteItem,
 } from '../../lib/dynamodb.js';
 
 // ---------------------------------------------------------------------------
@@ -101,7 +102,7 @@ async function handleListLeads(
       }
 
       // Also get unassigned leads
-      const unassigned = await queryGSI1('AGENT#unassigned', {
+      const unassigned = await queryGSI1('AGENT#UNASSIGNED', {
         skCondition: { operator: 'begins_with', value: 'LEAD#' },
         limit: 100,
         scanForward,
@@ -262,6 +263,42 @@ async function handleUpdateLead(
 }
 
 // ---------------------------------------------------------------------------
+// Delete lead handler
+// ---------------------------------------------------------------------------
+
+/**
+ * DELETE /api/v1/dashboard/leads/{id} — Delete a lead permanently.
+ *
+ * Team_Admin only. Permanently removes the lead record from DynamoDB.
+ * Uses the lead's stored PK/SK (from the single-table schema). No soft
+ * delete — leads are considered transient data and the owner explicitly
+ * wants them gone.
+ */
+async function handleDeleteLead(
+  leadId: string,
+  claims: AuthClaims,
+  correlationId: string,
+): Promise<LambdaProxyResponse> {
+  requirePermission(claims, 'update_any_lead', correlationId);
+
+  // Look up the lead to get its exact PK/SK (they're the lead key in
+  // the single-table design, but SK varies by schema version).
+  const pk = `LEAD#${leadId}`;
+  const existing = await getItem(pk, pk);
+  if (!existing) {
+    throw new AppError(ErrorCode.NOT_FOUND, `Lead not found: ${leadId}`, correlationId);
+  }
+
+  await deleteItem(pk, pk);
+
+  return {
+    statusCode: 200,
+    headers: CORS_HEADERS,
+    body: JSON.stringify({ leadId, deleted: true }),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Performance metrics handler
 // ---------------------------------------------------------------------------
 
@@ -406,6 +443,12 @@ export async function handler(event: AuthorizedEvent): Promise<LambdaProxyRespon
       if (!event.body) throw new AppError(ErrorCode.MISSING_FIELD, 'Request body required', correlationId);
       const body = JSON.parse(event.body) as Record<string, unknown>;
       return await handleUpdateLead(leadId, body, claims, correlationId);
+    }
+
+    if (path.match(/\/dashboard\/leads\/[^/]+$/) && method === 'DELETE') {
+      const leadId = extractPathParam(path, '/leads/');
+      if (!leadId) throw new AppError(ErrorCode.VALIDATION_ERROR, 'Lead ID required', correlationId);
+      return await handleDeleteLead(leadId, claims, correlationId);
     }
 
     // --- Performance ---

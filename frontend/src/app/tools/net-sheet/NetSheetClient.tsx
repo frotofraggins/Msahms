@@ -9,6 +9,7 @@ import { NearbyComps, type CompRecord } from '@/components/NearbyComps';
 import { ProgressIndicator, type PathStep } from '@/components/ProgressIndicator';
 import { WhatsNextCard } from '@/components/WhatsNextCard';
 import { FAQSection, type FAQItem } from '@/components/FAQSection';
+import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 import { trackEvent } from '@/lib/tracking';
 
 const FLAT_FEE = 999;
@@ -130,14 +131,11 @@ export function NetSheetClient() {
               Property Address
             </label>
             <div className="relative">
-              <Home className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
-              <input
+              <AddressAutocomplete
                 id="address"
-                type="text"
-                placeholder="123 E Main St, Mesa, AZ 85201"
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                onChange={setAddress}
+                placeholder="Start typing your address…"
               />
             </div>
           </div>
@@ -301,8 +299,12 @@ export function NetSheetClient() {
         </div>
       )}
 
-      {/* Property Data Card (placeholder when address entered) */}
-      {hasAddress && (
+      {/* Property Data Card — hidden until we have real data from a lookup.
+          Net Sheet is a seller-calculation tool, the comps/property card
+          placeholder was causing user confusion (users thought it was
+          reporting data about THEIR address when it was static sample data).
+          Showing nothing is better than showing fake data. */}
+      {false && hasAddress && (
         <div className="mb-6 space-y-4">
           <PropertyDataCard property={placeholderProperty} />
           <NearbyComps comps={placeholderComps} subdivision="Sunland Village" />

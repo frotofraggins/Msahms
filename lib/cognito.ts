@@ -11,12 +11,12 @@
 
 import {
   CognitoIdentityProviderClient,
-  AdminInitiateAuthCommand,
+  InitiateAuthCommand,
   AdminCreateUserCommand,
   AdminSetUserPasswordCommand,
   AdminGetUserCommand,
   AdminUpdateUserAttributesCommand,
-  type AdminInitiateAuthCommandInput,
+  type InitiateAuthCommandInput,
   type AdminCreateUserCommandInput,
   type AdminSetUserPasswordCommandInput,
   type AdminGetUserCommandInput,
@@ -50,7 +50,8 @@ const cognitoClient = new CognitoIdentityProviderClient({
 /**
  * Authenticate a user with email and password.
  *
- * Uses AdminInitiateAuth with USER_PASSWORD_AUTH flow.
+ * Uses InitiateAuth with USER_PASSWORD_AUTH flow (non-admin). The user
+ * pool client must have ALLOW_USER_PASSWORD_AUTH enabled.
  * Returns access, ID, and refresh tokens on success.
  *
  * @throws Error if credentials are invalid or the user does not exist.
@@ -59,8 +60,7 @@ export async function authenticateUser(
   email: string,
   password: string,
 ): Promise<AuthTokens> {
-  const params: AdminInitiateAuthCommandInput = {
-    UserPoolId: USER_POOL_ID,
+  const params: InitiateAuthCommandInput = {
     ClientId: CLIENT_ID,
     AuthFlow: 'USER_PASSWORD_AUTH',
     AuthParameters: {
@@ -69,7 +69,7 @@ export async function authenticateUser(
     },
   };
 
-  const result = await cognitoClient.send(new AdminInitiateAuthCommand(params));
+  const result = await cognitoClient.send(new InitiateAuthCommand(params));
 
   const authResult = result.AuthenticationResult;
   if (!authResult?.AccessToken || !authResult.IdToken || !authResult.RefreshToken) {
@@ -87,7 +87,9 @@ export async function authenticateUser(
 /**
  * Refresh access and ID tokens using a refresh token.
  *
- * Uses AdminInitiateAuth with REFRESH_TOKEN_AUTH flow.
+ * Uses InitiateAuth with REFRESH_TOKEN_AUTH flow. This is the non-admin
+ * API call; the client must have ALLOW_REFRESH_TOKEN_AUTH enabled on the
+ * user pool client.
  * Note: Cognito does not return a new refresh token on refresh.
  *
  * @throws Error if the refresh token is invalid or expired.
@@ -95,8 +97,7 @@ export async function authenticateUser(
 export async function refreshTokens(
   refreshToken: string,
 ): Promise<Omit<AuthTokens, 'refreshToken'>> {
-  const params: AdminInitiateAuthCommandInput = {
-    UserPoolId: USER_POOL_ID,
+  const params: InitiateAuthCommandInput = {
     ClientId: CLIENT_ID,
     AuthFlow: 'REFRESH_TOKEN_AUTH',
     AuthParameters: {
@@ -104,7 +105,7 @@ export async function refreshTokens(
     },
   };
 
-  const result = await cognitoClient.send(new AdminInitiateAuthCommand(params));
+  const result = await cognitoClient.send(new InitiateAuthCommand(params));
 
   const authResult = result.AuthenticationResult;
   if (!authResult?.AccessToken || !authResult.IdToken) {

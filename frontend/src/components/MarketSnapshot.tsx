@@ -1,64 +1,98 @@
 'use client';
 
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
 
-const cities = ['Mesa', 'Gilbert', 'Chandler', 'Queen Creek', 'San Tan Valley'];
+/** Shape of a single metric returned by /api/v1/market/metro. */
+interface MetroMetric {
+  metric: string;
+  value: number;
+  month: string;
+  metroArea?: string;
+}
 
-/** Placeholder market data — replaced by API calls in production. */
-const placeholderData: Record<string, { median: string; dom: string; stl: string; inventory: string }> = {
-  Mesa: { median: '$448K', dom: '60', stl: '97.7%', inventory: '25,524' },
-  Gilbert: { median: '$520K', dom: '52', stl: '98.1%', inventory: '8,432' },
-  Chandler: { median: '$495K', dom: '55', stl: '97.9%', inventory: '6,218' },
-  'Queen Creek': { median: '$545K', dom: '48', stl: '98.3%', inventory: '4,105' },
-  'San Tan Valley': { median: '$432K', dom: '65', stl: '97.2%', inventory: '3,890' },
-};
+interface MetroResponse {
+  metrics?: MetroMetric[];
+}
 
 /**
- * Local market snapshot with city tab selector.
+ * Phoenix-MSA market snapshot.
  *
- * Displays: Median Home Value, Days on Market, Sale-to-List ratio, Active Inventory.
- * In production, fetches from GET /api/v1/market/zip/{zip} and /api/v1/market/metro.
+ * Uses real Zillow Research data (Freddie Mac Primary Mortgage Market
+ * Survey methodology) for the Phoenix MSA, which covers all our service-
+ * area cities. Zillow publishes metro-level aggregates monthly; per-city
+ * breakdowns aren't available at the same granularity, so we show the
+ * metro number and link out to city pages for ZIP-level detail.
  */
 export function MarketSnapshot() {
-  const [activeCity, setActiveCity] = useState('Mesa');
-  const data = placeholderData[activeCity] ?? placeholderData.Mesa;
+  const [metrics, setMetrics] = useState<Record<string, MetroMetric>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .marketMetro()
+      .then((res) => {
+        const list = (res as MetroResponse).metrics ?? [];
+        const byMetric: Record<string, MetroMetric> = {};
+        for (const m of list) {
+          if (m.metric) byMetric[m.metric] = m;
+        }
+        setMetrics(byMetric);
+      })
+      .catch(() => {
+        // On error, keep metrics empty. Component renders a graceful
+        // fallback rather than a broken state.
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Format helpers
+  const zhvi = metrics['zhvi']?.value;
+  const inventory = metrics['inventory']?.value;
+  const daysPending = metrics['daysPending']?.value;
+  const saleToList = metrics['saleToList']?.value;
+  const dataMonth = metrics['zhvi']?.month;
+
+  const medianValue = zhvi
+    ? `$${Math.round(zhvi / 1000)}K`
+    : loading
+      ? '—'
+      : 'Unavailable';
+  const inventoryFmt = inventory
+    ? Math.round(inventory).toLocaleString()
+    : loading
+      ? '—'
+      : 'Unavailable';
+  const domFmt = daysPending ? `${Math.round(daysPending)}` : loading ? '—' : '—';
+  const stlFmt = saleToList ? `${(saleToList * 100).toFixed(1)}%` : loading ? '—' : '—';
 
   return (
     <section className="bg-paper px-4 py-12">
       <div className="mx-auto max-w-4xl">
         <h2 className="mb-2 text-center text-2xl font-bold text-charcoal">
-          Local Market Snapshot
+          Phoenix Metro Market Snapshot
         </h2>
         <p className="mb-6 text-center text-sm text-text-light">
-          Real data from county assessors and Zillow Research — updated monthly.
+          Real Zillow Research data for the Phoenix-Mesa metro area
+          {dataMonth ? `, updated ${formatMonth(dataMonth)}` : ''}. Covers
+          all of Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, and
+          Apache Junction.
         </p>
 
-        {/* City tabs */}
-        <div className="mb-6 flex flex-wrap justify-center gap-2">
-          {cities.map((city) => (
-            <button
-              key={city}
-              onClick={() => setActiveCity(city)}
-              className={cn(
-                'rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-100 active:scale-[0.98]',
-                activeCity === city
-                  ? 'bg-primary text-white'
-                  : 'bg-warm-beige text-text-light hover:bg-warm-border',
-              )}
-            >
-              {city}
-            </button>
-          ))}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <StatCard label="Median Home Value (ZHVI)" value={medianValue} />
+          <StatCard label="Avg Days Pending" value={domFmt} />
+          <StatCard label="Sale-to-List Ratio" value={stlFmt} />
+          <StatCard label="Active Listings (Metro)" value={inventoryFmt} />
         </div>
 
-        {/* Stat cards */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <StatCard label="Median Value" value={data.median} />
-          <StatCard label="Days on Market" value={data.dom} />
-          <StatCard label="Sale-to-List" value={data.stl} />
-          <StatCard label="Active Listings" value={data.inventory} />
-        </div>
+        <p className="mt-4 text-center text-xs text-text-light">
+          For ZIP-level medians and neighborhood detail, see our{' '}
+          <a href="/areas/mesa" className="text-primary underline">
+            city pages
+          </a>
+          .
+        </p>
       </div>
     </section>
   );
@@ -71,4 +105,12 @@ function StatCard({ label, value }: { label: string; value: string }) {
       <div className="mt-1 text-xs text-text-light">{label}</div>
     </div>
   );
+}
+
+function formatMonth(ym: string): string {
+  // Input format: 'YYYY-MM'
+  const [y, m] = ym.split('-');
+  if (!y || !m) return ym;
+  const date = new Date(Number(y), Number(m) - 1, 1);
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }

@@ -300,6 +300,11 @@ function buildKeyCondition(
 
 /**
  * Build the ExpressionAttributeValues map for a query.
+ *
+ * @throws {Error} If an `skCondition` is provided with an empty `value`
+ *   or `value2` — DynamoDB rejects empty strings in key attributes and
+ *   the resulting error is opaque. Catching it here gives a clearer
+ *   stack trace pointing at the caller.
  */
 function buildExpressionValues(
   pkValue: string,
@@ -308,8 +313,20 @@ function buildExpressionValues(
   const values: Record<string, string> = { ':pk': pkValue };
 
   if (options?.skCondition) {
+    if (options.skCondition.value === '') {
+      throw new Error(
+        'queryByPK/queryGSI1: skCondition.value cannot be an empty string. ' +
+          'Omit skCondition entirely if you want all items under the PK.',
+      );
+    }
     values[':skVal'] = options.skCondition.value;
-    if (options.skCondition.operator === 'between' && options.skCondition.value2) {
+    if (options.skCondition.operator === 'between') {
+      if (options.skCondition.value2 === undefined || options.skCondition.value2 === '') {
+        throw new Error(
+          'queryByPK/queryGSI1: skCondition.value2 is required for "between" ' +
+            'operator and cannot be empty.',
+        );
+      }
       values[':skVal2'] = options.skCondition.value2;
     }
   }

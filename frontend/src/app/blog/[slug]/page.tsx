@@ -199,6 +199,12 @@ Arizona's landlord-tenant act requires:
 
 const validSlugs = Object.keys(posts);
 
+// Note: AI-drafted posts live at /blog/[category]/[slug]/ (and /news/...).
+// This page only serves the hardcoded seed posts.
+function getPost(slug: string): BlogPost | undefined {
+  return posts[slug];
+}
+
 export function generateStaticParams() {
   return validSlugs.map((slug) => ({ slug }));
 }
@@ -209,7 +215,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = posts[slug];
+  const post = getPost(slug);
   if (!post) return { title: 'Post Not Found' };
 
   return {
@@ -245,7 +251,7 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = posts[slug];
+  const post = getPost(slug);
   if (!post) notFound();
 
   const articleJsonLd = {
@@ -263,6 +269,10 @@ export default async function BlogPostPage({
       '@type': 'Organization',
       name: 'MesaHomes',
       url: 'https://mesahomes.com',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://mesahomes.com/brand/mesahomes-logo-primary.png',
+      },
     },
     mainEntityOfPage: `https://mesahomes.com/blog/${post.slug}`,
   };

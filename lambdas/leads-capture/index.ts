@@ -26,7 +26,12 @@ import {
 import { putItem, getItem } from '../../lib/dynamodb.js';
 import { EntityType } from '../../lib/types/dynamodb.js';
 import { withRetry, DYNAMODB_RETRY } from '../../lib/retry.js';
-import { SERVICE_AREA_ZIPS } from '../data-pipeline/zillow-csv.js';
+import { SERVICE_AREA_ZIPS } from '../../lib/county-router.js';
+import { sendUserEmail } from '../../lib/email-sender.js';
+import {
+  leadCaptureTemplate,
+  bookingTemplate,
+} from '../../lib/email-templates/index.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -86,6 +91,19 @@ async function handleCreateLead(
       }),
     DYNAMODB_RETRY,
   );
+
+  // Await with timeout. Lambda freezes after the handler returns, so we
+  // must await the email before responding — otherwise the SES call
+  // gets suspended and never completes. 3s budget is generous for SES.
+  await Promise.race([
+    sendUserEmail(lead.email, leadCaptureTemplate, {
+      name: lead.name,
+      toolSource: lead.toolSource,
+    }).catch((err) =>
+      console.error('[leads-capture] user email failed:', err),
+    ),
+    new Promise((resolve) => setTimeout(resolve, 3000)),
+  ]);
 
   return {
     statusCode: 201,
@@ -170,6 +188,11 @@ async function handleValuationRequest(
       }),
     DYNAMODB_RETRY,
   );
+
+  sendUserEmail(lead.email, leadCaptureTemplate, {
+    name: lead.name,
+    toolSource: 'valuation-request',
+  }).catch((err) => console.error('[leads-capture] valuation email failed:', err));
 
   // Fetch teaser range from ZIP market data
   let teaserRange: string | null = null;
@@ -263,6 +286,11 @@ async function handleBooking(
       }),
     DYNAMODB_RETRY,
   );
+
+  sendUserEmail(lead.email, bookingTemplate, {
+    name: lead.name,
+    intent: (body.intent as string | undefined) ?? 'general',
+  }).catch((err) => console.error('[leads-capture] booking email failed:', err));
 
   return {
     statusCode: 201,

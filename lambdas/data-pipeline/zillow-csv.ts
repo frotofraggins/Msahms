@@ -14,7 +14,10 @@ import type { MarketDataZip, MarketDataMetro, TrendDirection } from '../../lib/t
 import type { DynamoDBItem } from '../../lib/types/dynamodb.js';
 import { EntityType } from '../../lib/types/dynamodb.js';
 import { generateMarketZipKeys, generateMarketMetroKeys } from '../../lib/models/keys.js';
-import { PINAL_COUNTY_ZIPS } from '../../lib/county-router.js';
+import { SERVICE_AREA_ZIPS } from '../../lib/county-router.js';
+
+// Re-export for backward compat with existing tests.
+export { SERVICE_AREA_ZIPS };
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -44,27 +47,16 @@ export const ZILLOW_CSV_URLS: Record<string, string> = {
 };
 
 /**
- * Set of all Maricopa County ZIP codes in the MesaHomes service area.
- * Mesa + surrounding cities: 85201–85216, plus Gilbert, Chandler, etc.
+ * Metro area identifier in Zillow Research CSVs.
+ *
+ * Zillow uses MSA (Metropolitan Statistical Area) nomenclature for metro
+ * files. The Phoenix MSA spans Maricopa + Pinal counties — our entire
+ * service area — and is labeled simply "Phoenix, AZ" in the CSV
+ * `RegionName` column with `RegionType=msa`. Earlier versions of this
+ * code used "Phoenix-Mesa-Chandler, AZ" (the CSA name), which does not
+ * appear in Zillow metro files and caused zero metro rows to match.
  */
-const MARICOPA_SERVICE_ZIPS: ReadonlySet<string> = new Set([
-  '85201', '85202', '85203', '85204', '85205', '85206', '85207', '85208',
-  '85209', '85210', '85211', '85212', '85213', '85214', '85215', '85216',
-  '85233', '85234', '85224', '85225', '85226', '85249',
-  '85286', '85295', '85296', '85297', '85298',
-]);
-
-/**
- * Combined set of all ZIP codes in the MesaHomes service area
- * (Pinal County + Maricopa County).
- */
-export const SERVICE_AREA_ZIPS: ReadonlySet<string> = new Set([
-  ...PINAL_COUNTY_ZIPS,
-  ...MARICOPA_SERVICE_ZIPS,
-]);
-
-/** Metro area name used to filter metro-level CSV rows. */
-export const METRO_NAME = 'Phoenix-Mesa-Chandler, AZ';
+export const METRO_NAME = 'Phoenix, AZ';
 
 // ---------------------------------------------------------------------------
 // CSV download

@@ -115,9 +115,13 @@ export function LeadCaptureModal({
       setSuccess(true);
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        setError(err.apiError?.message ?? 'Something went wrong. Please try again.');
+        const detail = err.apiError?.details?.[0];
+        const detailMsg = detail ? `${detail.field}: ${detail.message}` : null;
+        setError(detailMsg ?? err.apiError?.message ?? `Request failed (${err.status}). Please try again.`);
       } else {
-        setError('Network error. Please check your connection and try again.');
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('[LeadCaptureModal] submission failed:', err);
+        setError(`Could not reach the server. ${msg}. If this keeps happening, email sales@mesahomes.com.`);
       }
     } finally {
       setSubmitting(false);

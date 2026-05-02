@@ -29,7 +29,7 @@ export function SavingsCalculator() {
     <section className="bg-warm-beige px-4 py-12">
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="mb-2 text-2xl font-bold text-charcoal">
-          See how much you&apos;d save with flat-fee listing
+          See how much you&apos;d save with Mesa Listing Service
         </h2>
         <p className="mb-6 text-text-light">
           Enter your estimated sale price to compare costs instantly.
@@ -63,7 +63,7 @@ export function SavingsCalculator() {
             <div className="text-xs text-text-light">5% commission</div>
           </div>
           <div className="rounded-lg bg-paper p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-            <div className="text-xs font-medium uppercase text-text-light">MesaHomes Flat Fee</div>
+            <div className="text-xs font-medium uppercase text-text-light">Mesa Listing Service</div>
             <div className="mt-1 text-xl font-bold tabular-nums text-primary">{fmt(flatFeeCost)}</div>
             <div className="text-xs text-text-light">${FLAT_FEE} + ${BROKER_FEE} broker</div>
           </div>
@@ -80,7 +80,7 @@ export function SavingsCalculator() {
             href="/listing/start"
             className="rounded-lg bg-secondary px-6 py-3 text-sm font-semibold text-white transition-all duration-100 hover:bg-secondary-dark active:scale-[0.98]"
           >
-            Start Your Flat-Fee Listing
+            Start Your Mesa Listing
           </Link>
           <Link
             href="/compare/flat-fee-vs-traditional-agent"

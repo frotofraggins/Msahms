@@ -1,5 +1,13 @@
 # Flat-Fee MLS Legal Model — What's Legal, What Competitors Do
 
+> **Public-facing naming note (added 2026-04-26)**: The tier described in
+> this legal memo is marketed to consumers as **"Mesa Listing Service."**
+> The phrase "flat-fee MLS" is the technical/regulatory descriptor used
+> in this document and in broker-of-record agreements. See
+> `.kiro/specs/middle-tier-rebrand-research.md` for the rebrand rationale.
+> All legal obligations in this memo still apply — only the consumer-
+> facing product name changed.
+
 Author: Kiro A, 2026-04-25. Status: spec — binds Task 15 implementation
 and listing onboarding UI copy. Review with Arizona real estate counsel
 before any payment flow goes live.

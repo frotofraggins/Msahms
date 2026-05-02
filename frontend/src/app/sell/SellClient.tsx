@@ -33,7 +33,7 @@ export function SellHeroLeadCapture() {
         leadType="Seller"
         toolSource="sell-landing"
         tag="seller-landing"
-        headline="Start Your Flat-Fee Listing"
+        headline="Start Your Mesa Listing"
         subtext="Tell us about your home and a local agent will reach out within 24 hours."
       />
     </>
@@ -83,7 +83,7 @@ export function SellSavingsCalculator() {
             <div className="text-xs text-text-light">5% commission</div>
           </div>
           <div className="rounded-lg bg-white p-4 shadow-sm">
-            <div className="text-xs font-medium uppercase text-text-light">MesaHomes Flat Fee</div>
+            <div className="text-xs font-medium uppercase text-text-light">Mesa Listing Service</div>
             <div className="mt-1 text-xl font-bold tabular-nums text-primary">{fmt(flatFeeCost)}</div>
             <div className="text-xs text-text-light">${FLAT_FEE} + ${BROKER_FEE} broker</div>
           </div>
@@ -108,7 +108,7 @@ export function SellSavingsCalculator() {
             href="/listing/start"
             className="rounded-lg bg-secondary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-secondary-dark"
           >
-            Start Your Flat-Fee Listing
+            Start Your Mesa Listing
           </Link>
           <Link
             href="/compare/flat-fee-vs-traditional-agent"

@@ -3,25 +3,68 @@
 Living doc. Both Kiro agents and the human owner read this before making
 architectural, naming, or process decisions. Updated when decisions change.
 
-Last updated: 2026-04-24 by Kiro A.
+Last updated: 2026-04-27 (late) by Kiro A.
+
+**Current status**: Live in production at https://mesahomes.com.
+Deployed 2026-04-26. **879 tests passing, 0 TS errors. Fully
+autonomous AI content pipeline shipping daily (8am MST).**
+**CI/CD via GitHub Actions on push to main.** 18 Lambdas live.
+
+**Naming convention** (as of 2026-04-26):
+- Product tier in UI: **"Mesa Listing Service"** (was: "Flat-Fee MLS")
+- Category term for SEO/legal/pricing-mechanism: **"flat-fee MLS"** — kept
+  in URL slugs, `<title>` tags, blog H2s, FAQ questions, event-tracking
+  tags, legal contracts, compliance docs
+- Full tier family: **MesaHomes FSBO / Mesa Listing Service / Mesa Full Service**
+- Research memo: `.kiro/specs/middle-tier-rebrand-research.md`
+
+## How to use this doc (read before every session)
+
+1. **Start here** — check "Current priorities" section for ordered
+   next-task list before picking work.
+2. **Check "Current production state"** before making changes — many
+   older specs describe pre-deployment thinking that no longer applies.
+3. **Link to specs** in your commit messages. Every significant change
+   should reference a spec file OR update STEERING to reflect the new
+   decision.
+4. **Update this doc** when:
+   - Production state changes (deploy, rollback, schema shift)
+   - Priorities shift (something blocks, something unblocks)
+   - A decision is made that future you or other agents need to know
+   - A spec moves from "spec'd" to "implemented"
+5. **Don't delete context** — prefer strikethrough or "deprecated" tags
+   over deletion. Decisions have history.
+
+## Conflict resolution
+
+When STEERING.md conflicts with an individual spec file, STEERING wins.
+Specs are proposals; STEERING records what was decided + deployed.
 
 ---
 
 ## Product north star
 
-MesaHomes is a **lead-generation platform for the Mesa, AZ metro**, not a
-listing portal. The win condition is:
+MesaHomes is **the hyper-local source for Mesa, AZ real estate, market data,
+HOA news, city meetings, and community info.** Flat-fee MLS listing is one
+service offered. The brand is a local information hub first, transactional
+real estate second.
 
-1. A seller or buyer visits the site with a question.
-2. They use a tool (net sheet, affordability calc, home value, offer writer).
-3. The tool gives them a real, data-backed answer before we ask for contact info.
-4. The contact info unlocks a full report + hands a qualified lead to an agent.
-5. The agent closes. Seller saves money via flat fee; MesaHomes takes a small
-   flat listing fee + the $400 broker fee.
+The win condition:
 
-Every feature decision passes one test: **does it make a seller or buyer more
-likely to convert at a higher quality than Zillow/Redfin/local flat-fee rivals
-would?** If not, defer.
+1. A Mesa-area resident, buyer, or seller visits the site to check a
+   specific thing — home value, HOA rule update, city council agenda,
+   neighborhood development news, market trends.
+2. They get a real, dated, sourced answer.
+3. They return because we're the fastest source for that info.
+4. When they're ready to transact, we've built trust and they use our tools
+   (net sheet, offer writer, home value estimator).
+5. Contact info unlocks full reports + hands a qualified lead to an agent.
+6. Seller saves money via flat fee; MesaHomes takes a flat listing fee
+   + the $400 broker fee at closing.
+
+Every feature decision passes one test: **does it make a Mesa-area resident
+more likely to visit, trust, or transact than Zillow / Redfin / local
+flat-fee rivals would?** If not, defer.
 
 ## What makes us different (the moat)
 
@@ -30,33 +73,91 @@ These are the things no direct competitor can copy cheaply:
 1. **County-verified data**. We query Pinal and Maricopa assessor ArcGIS REST
    endpoints directly. Zillow scrapes. Redfin uses MLS. We show the county
    parcel ID, last sale date, and assessor value with a "verified from
-   <County> County" badge. Lean on this in UI.
-2. **Local RTX 4090 inference via MCP** (through the Hydra repo). Unlimited
-   listing descriptions and offer drafts. Competitors pay per OpenAI token and
-   ration usage. We don't.
-3. **Guided decision engine with save/resume + path history**. The agent gets
+   <County> County" badge.
+2. **Free Zillow Research aggregation**. We pull all 13 Zillow Research CSVs
+   via a cron Lambda and serve live metro-level market data. Most
+   competitors pay vendors for this or don't display it.
+3. **Hyper-local content pipeline** (spec'd, not yet built). Ingests RSS
+   from East Valley Tribune, Queen Creek Tribune, Mesa Legistar, AZ Republic
+   real estate, and Maricopa County planning. AI-generated summaries with
+   owner approval. No competitor does this for the East Valley specifically.
+4. **Guided decision engine with save/resume + path history**. The agent gets
    the visitor's journey, not just a form submission. That's qualification.
-4. **Fair Housing compliance filter** on every AI output, not as a backstop.
+5. **Fair Housing compliance filter** on every AI output, not as a backstop.
    Marketing asset: "Fair-Housing-verified descriptions."
-5. **Progressive disclosure with honest teasers**. Show the number before asking
-   for email. Most of the industry does the opposite.
-6. **Flat-fee with an honest Full-Service Upgrade banner**. Not "flat-fee lite"
-   pretending to be full service. Explicit escape hatch on every page.
+6. **Progressive disclosure with honest teasers**. Show the number before
+   asking for email. Most of the industry does the opposite.
+7. **Mesa Listing Service tier with an honest Full-Service Upgrade banner**.
+   Not "flat-fee lite" pretending to be full service. Explicit escape hatch
+   on every page.
+8. **Local Hydra AI (post-launch)** for content generation. Owner's RTX 4090
+   via Cloudflare Tunnel. Zero per-token cost for hyper-local blog posts
+   once Phase 2 is wired. Bedrock Claude Haiku is current baseline.
 
 Things we will NOT build:
 - Zestimate competitor. We show county data, not an algorithm guess.
 - Listing aggregator / MLS search portal. Link out to MLS.
 - Mobile app. Web-first + sticky mobile contact bar.
+- Client-facing login / portal. Agent dashboard is owner-only; clients
+  interact via forms + email until volume justifies building a portal.
 
-## Scope: MVP (Phase 1A)
+## Current production state (as of 2026-04-27)
 
-Covered by `.kiro/specs/mesahomes-lead-generation/tasks.md`. In-scope
-requirements: 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 15, 16, 17, 18, 19, 20, 45,
-46, 48, 49.
+Deployed and live on https://mesahomes.com:
+
+| Layer | State |
+|---|---|
+| DNS + SSL | Route 53 + CloudFront E3TBTUT3LJLAAT, ACM cert, HTTPS |
+| Frontend | 50+ static pages via Next.js export, S3 mesahomes.com bucket. `/blog/` + `/news/` content hub with 9 category index pages. |
+| Backend | 18 Lambdas deployed via CDK MesaHomesStack |
+| Data | DynamoDB mesahomes-main with 16 live content-ingest sources producing 475 items/day, market data, city pages, leads, blog records |
+| Content pipeline | **Fully autonomous**: content-ingest → content-bundler → content-drafter (Bedrock Nova Micro) → photo-finder (Wikimedia + Unsplash) → dashboard review UI → approve → GitHub Actions → live on /blog/ or /news/. See `.kiro/specs/CONTENT-PIPELINE-STATUS.md`. |
+| Property lookup | Working end-to-end: Maricopa + Pinal GIS + 70-comp comps + Street View photos |
+| Market data | Zillow Research ingested, metro endpoint returns 12 metrics |
+| Email | Google Workspace (sales@mesahomes.com) with SPF/DKIM/DMARC. SES production access PENDING AWS approval since 2026-04-26 |
+| Stripe | Live + sandbox keys in Secrets Manager; FSBO flow in `lead-only` mode until VHZ `/checkout` is built |
+| FSBO intake | Working: POST /listing/fsbo/intake returns listingId+leadId, status=awaiting-vhz-launch |
+| CI/CD | GitHub Actions on push to main via OIDC. IAM role `mesahomes-github-actions-deploy`. Workflow `.github/workflows/deploy.yml` runs tsc + vitest + cdk deploy + frontend build + s3 sync + CF invalidate. |
+| AI SEO | llms.txt at /llms.txt, 20 AI crawler user-agents allowed in robots.txt, Article + NewsArticle + OfferCatalog + LocalBusiness JSON-LD, per-category changefreq in sitemap. |
+| Dashboard | /dashboard/leads (lead CRM), /dashboard/content/drafts (AI-draft review queue), /dashboard/performance (team + source conversion metrics), /dashboard/team, /dashboard/listings, /dashboard/settings. Cognito auth. |
+| Lead nurture | Every lead form triggers a path-specific welcome email with tailored next steps + CTA, branched by `toolSource` (15 paths covered). See `lib/email-templates/welcome-steps.ts`. |
+
+## Scope: MVP (Phase 1A) — DONE
+
+Covered by `.kiro/specs/mesahomes-lead-generation/tasks.md`. All 20 tasks
+complete, code shipped, deployed, live. In-scope requirements: 1, 2, 3, 4,
+5, 6, 7, 8, 9, 11, 12, 15, 16, 17, 18, 19, 20, 45, 46, 48, 49.
 
 Service area: Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, Apache
-Junction. ZIP-level routing between Pinal (23 ZIPs in `PINAL_COUNTY_ZIPS`) and
-Maricopa (everything else).
+Junction. ZIP-level routing between Pinal (23 ZIPs in `PINAL_COUNTY_ZIPS`)
+and Maricopa (everything else, in `MARICOPA_SERVICE_ZIPS`).
+
+## Scope: Phase 1B (in-flight → mostly DONE 2026-04-27)
+
+Post-launch enrichment. Content pipeline + CI/CD shipped this sprint:
+
+**DONE 2026-04-27**:
+- ✅ **Hyperlocal content pipeline** (`.kiro/specs/CONTENT-PIPELINE-STATUS.md`):
+  16 sources × 475 items/day → bundler → drafter → photo-finder → dashboard
+  review → approve → live on /blog/ or /news/ in ~3 min. Bedrock Nova Micro
+  default, Claude Haiku 4.5 fallback via env. Total cost <$1/mo.
+- ✅ **Content hub** — `/blog/` (evergreen) + `/news/` (daily) with 9
+  category indexes, related-posts blocks, breadcrumbs, Article + NewsArticle
+  JSON-LD, latest-posts on /areas/{city}/, 5-column footer with "News &
+  Guides" column, per-content-type changefreq in sitemap.
+- ✅ **AI SEO** — `llms.txt`, 20 AI crawlers allowed in robots.txt,
+  OfferCatalog + Service + @id + alternateName on LocalBusiness JSON-LD.
+- ✅ **CI/CD via GitHub Actions + OIDC** — push to main deploys
+  automatically. No secrets in GitHub. See Deployment section.
+
+**Still pending Phase 2**:
+- **Public data enrichment** (`.kiro/specs/public-data-enrichment.md`):
+  FRED mortgage rates, FEMA flood zones, Census ACS demographics, HUD FMR.
+  Tier 1 + 2 = 18-22 hrs.
+- **Hydra AI backend** (`.kiro/specs/hydra-ai-backend.md`): local Ollama
+  replaces Bedrock for generation when owner's PC is online.
+- **Per-city market aggregation**: currently metro-only.
+- **SES production access** + mesahomes.com sender identity verification.
 
 ## Tech stack
 
@@ -65,15 +166,17 @@ Maricopa (everything else).
 | Backend | AWS Lambda (Node.js 20, TypeScript strict) | Serverless, scale-to-zero, cheap at MVP traffic |
 | API | API Gateway REST + Cognito JWT authorizer | Well-understood, cheap enough |
 | Data | DynamoDB single-table (mesahomes-main) + GSI1/GSI2 | Lowest ops, predictable cost |
-| Storage | S3 (mesahomes-data, mesahomes-property-photos) | CSV archives + Street View cache |
-| Secrets | AWS Secrets Manager | No hardcoded keys, ever |
-| Auth | Cognito User Pool | Custom attrs: `custom:role`, `custom:teamId` |
-| Frontend | Next.js 15 / React 19 / Tailwind / shadcn-ui | SSR for SEO, modern React, typed |
-| AI | Local RTX 4090 via MCP server (Hydra repo) | No per-token cost, unlimited |
-| Payments | Stripe | Standard |
-| Email | SES | Standard |
-| Tests | Vitest + fast-check | Unit + property-based |
-| Infra-as-code | CDK (Task 19+, not yet implemented) | Typed, generates CFN |
+| Storage | S3 (mesahomes-data, mesahomes-property-photos, mesahomes.com) | CSV archives + Street View cache + static site |
+| CDN | CloudFront E3TBTUT3LJLAAT with ACM cert, us-west-1 S3 website origin | HTTPS, SPA-friendly |
+| Secrets | AWS Secrets Manager (mesahomes/live/* + mesahomes/sandbox/*) | No hardcoded keys, ever |
+| Auth | Cognito User Pool (mesahomes-userpool) | Custom attrs: `custom:role`, `custom:teamId` |
+| Frontend | Next.js 15 / React 19 / Tailwind v4 (CSS @theme) / shadcn-ui | Static export for S3 + CloudFront |
+| AI (current) | Bedrock Claude Haiku via ai-proxy Lambda | Cheap (~$0.001/post), reliable |
+| AI (Phase 2) | Local Ollama/llama3.2 via Cloudflare Tunnel | $0 per token when owner's desktop is on |
+| Payments | Stripe (via Virtual Home Zone account for FSBO) | Separate merchant for the photography LLC |
+| Email | Google Workspace inbound + AWS SES outbound | Professional inbox + transactional at scale |
+| Tests | Vitest + fast-check | Unit + property-based, 874 tests across 61 files |
+| Infra-as-code | CDK (infrastructure/cdk/*, MesaHomesStack) | Typed, imports existing secrets, 327 CFN resources |
 
 ## Naming + file conventions
 
@@ -119,14 +222,19 @@ Maricopa (everything else).
 1. `npx tsc --noEmit` returns 0 errors before every commit. No `// @ts-nocheck`.
    No `as any` in source code. In tests, prefer making mocks satisfy the real
    interface over casting.
-2. `npx vitest run` passes 100%. No skipped tests in main without a linked issue.
-3. No bare `except` / `catch(e)` without at least `console.error(e)` — hot
+3. `npx vitest run` passes 100%. No skipped tests in main without a linked issue.
+4. **Frontend changes**: `cd frontend && npm run build` exits 0. Static
+   export to `out/` must succeed — this catches Next.js static-export
+   incompatibilities that `tsc` and `vitest` miss (dynamic routes
+   without generateStaticParams, metadata routes without force-static,
+   etc.). Do NOT claim "ready to deploy" without running this.
+5. No bare `except` / `catch(e)` without at least `console.error(e)` — hot
    polling paths (system metrics, WebSocket send to dead client) excluded.
-4. Every Lambda has: a unit test, a property test (if logic is non-trivial),
+6. Every Lambda has: a unit test, a property test (if logic is non-trivial),
    and a co-located index test exercising the handler.
-5. Every shared lib has: unit tests. Property tests encouraged for anything
+7. Every shared lib has: unit tests. Property tests encouraged for anything
    with invariants (validators, serializers).
-6. UTF-8, LF line endings, no BOM. (We've been burned by UTF-16 `.gitignore`.)
+8. UTF-8, LF line endings, no BOM. (We've been burned by UTF-16 `.gitignore`.)
 
 ## Process rules
 
@@ -142,31 +250,169 @@ Maricopa (everything else).
 5. **Property tests validate real properties, not examples**. If it's just
    "with these inputs, expect this output," it's a unit test. Property tests
    use `fc.assert(fc.property(...))`.
+6. **Research before writing any content article**. Any hand-written
+   article for the seller hub, `/blog/`, `/news/`, or future editorial
+   content must be grounded in actual research, not AI memory. Before
+   drafting:
+   a. Run `web_search` for the target query + "Arizona Mesa 2026"
+      to verify current facts, statistics, and seasonality
+   b. Fetch at least one primary-source page (gov, law firm, real
+      estate stat aggregator) to cite
+   c. Include a "Sources consulted" list in the commit message
+      so anyone auditing the article can check the research
+   Skip research only for explicitly speculative / opinion pieces,
+   and label them as such in the article itself. This rule exists
+   because the 2026-04-28 SEO audit showed our articles were
+   readable but thin on primary-source citations — the fix is at
+   the research stage, not at edit time.
 
-## Structural debt to address before Task 10 (frontend)
+## Change tracking + deployment process (2026-04-27)
 
-These are intentional "do later" calls so far. Flag-planted here so we don't
-forget:
+**Every change MUST be visible in three places or it's not done:**
+
+1. **Git commit with conventional-commit message** — subject line under 50
+   chars, body explains what + why (not how). Commits are the ground truth.
+2. **Spec file updated** — if the change is described in a spec, update
+   the `[ ]`/`[x]` marks. If no spec exists for the change, add a note in
+   the closest spec OR create a new one (see "When to write a spec" below).
+3. **STEERING.md updated if it changes any of**:
+   - Production state (new service, new Lambda, new table)
+   - Current priorities (something finishes, something starts)
+   - Architecture rules (new pattern, new convention)
+   - CI/CD or deploy process
+
+### When to write a spec before building
+
+Write a spec first (under `.kiro/specs/`) when:
+- The change touches 3+ files across different layers
+- It introduces a new service, integration, or product feature
+- It changes how a user flow works
+- It requires infrastructure changes (CDK, IAM, new AWS resource)
+
+Skip the spec when:
+- Single-file bugfix or typo
+- Rendering adjustment (copy change, button color, icon swap)
+- Adding a missing test for existing behavior
+
+### Deployment process
+
+**Production deploys happen automatically on push to `main`** via GitHub
+Actions (`.github/workflows/deploy.yml`). The workflow:
+1. Checks out code
+2. Installs deps (root + frontend)
+3. Runs `npx tsc --noEmit` and `npx vitest run`
+4. Assumes AWS IAM role via OIDC (no long-lived creds in GitHub)
+5. Packages Lambdas via `bash infrastructure/cdk/package-lambdas.sh`
+6. Runs `npx cdk deploy --require-approval never`
+7. Builds frontend (`npm run build --prefix frontend`)
+8. Syncs `frontend/out/` to S3
+9. Invalidates CloudFront
+
+**Emergency override**: push with `workflow_dispatch` input `skip_cdk: true`
+to skip infra + redeploy only the frontend.
+
+**Approve-triggered deploys**: when the owner approves an AI-drafted blog
+post in `/dashboard/content/drafts`, the `dashboard-content` Lambda fires
+`workflow_dispatch` with `skip_cdk: true` via GitHub REST API. The GHA
+run rebuilds the frontend with the new post baked in. ~3-4 min end-to-end.
+
+### Required Secrets Manager entries
+
+| Name | Purpose |
+|---|---|
+| `mesahomes/live/github-pat` | Dashboard approve handler uses this to trigger GHA workflow_dispatch. Needs `repo` + `workflow` scopes. |
+| `mesahomes/live/unsplash-access-key` | Photo-finder fallback when Wikimedia returns nothing |
+| `mesahomes/live/google-maps-api-key` | Places autocomplete + Street View |
+| `mesahomes/live/stripe-*` | Live + sandbox Stripe keys |
+| `mesahomes/live/ses-smtp-credentials` | SMTP fallback (SES API is primary) |
+| `mesahomes/live/rentcast-api-key` | Property comps (backup to GIS) |
+| `mesahomes/live/vhz-*` | Virtual Home Zone handoff + webhook secrets |
+
+Missing one of these silently breaks the related feature. Keep this list
+current whenever a new secret is added to CDK `SECRET_NAMES`.
+
+## Current priorities — ordered (2026-04-27)
+
+What to work on next, in order. Update this every significant session.
+
+### 🟢 Immediate (this week)
+
+1. **Create `mesahomes/live/github-pat` Secrets Manager entry** (owner, 1 min).
+   Needed by dashboard-content Lambda's approve handler to trigger
+   GitHub Actions workflow_dispatch. Token needs `repo` + `workflow`
+   scopes. Command:
+   ```
+   aws secretsmanager create-secret \
+     --name mesahomes/live/github-pat \
+     --secret-string ghp_YOUR_TOKEN \
+     --profile Msahms --region us-west-2
+   ```
+2. **Verify GitHub Actions runs on push** — check
+   https://github.com/frotofraggins/Msahms/actions after any push.
+   First run must succeed end-to-end or CI/CD is broken.
+3. **Verify SES domain identity** (owner, 2 min in Console).
+4. **Roll leaked Stripe live test key** (owner, 30 sec).
+
+### 🟡 Short-term (next 1-2 weeks)
+
+5. **Mobile-responsive review UI** (`.kiro/specs/content-pipeline-phase-2.md`
+   task 2D.5). Owner reviews drafts from phone, current UI assumes desktop.
+6. **CloudWatch alarm on Bedrock spend >$5/day** (phase 2F.2). Cheap
+   safety net for model runaway.
+7. **Agent email actions on lead detail** (phase-1b-lead-gen-amplification
+   §1, 3 hr). Send follow-up templates from /dashboard/leads/[id]/.
+8. **More Zillow datasets rendered** (phase-1b-lead-gen-amplification §5):
+   affordability context on /tools/affordability, city trends on
+   /areas/{slug}/.
+
+### 🟡 Medium-term (next month)
+
+9. **`/moving-to-mesa` relocation hub** (phase-1b-lead-gen-amplification §6,
+   1-2 days). Cost-of-living calculator, state-comparison pages.
+10. **HOA directory auto-build from Maricopa GIS** (§7, 1 day). Hundreds
+    of long-tail subdivision pages at zero content cost.
+11. **Housing law tracker rendering** — ingested daily from HUD/CFPB/ADRE
+    but not yet surfaced on site.
+
+### 🔴 Owner-blocked (can't proceed without action)
+
+- **Broker-of-record partnership signed**. Unblocks Mesa Listing Service
+  and Full-Service tiers.
+- **ADRE salesperson license reactivation**. Required before brokerage
+  activity.
+- **SES production access** — AWS ticket pending since 2026-04-26.
+- **Legal memo for privacy/terms** — external research in flight.
+- **Google Business Profile completion** (description, hours, photos).
+- **VHZ /checkout page** for full FSBO payment automation.
+
+### 🔵 Deferred (Phase 2+)
+
+- **Hydra AI backend**: Bedrock → local Ollama.
+- **ARMLS IDX integration** (requires paid feed + MLS membership).
+- **Client portal** (deferred until 10+ paying customers ask).
+- **Social media auto-scheduler** (Facebook / LinkedIn on approve).
+- **Compliance filter extensions** (phase 2E).
+- **Staging environment** (useful when team grows).
+
+## Structural debt (tracked, intentionally deferred)
+
+Flag-planted here so we don't forget:
 
 1. **pnpm workspaces + `apps/` restructure**. Currently every Lambda shares
-   the root `package.json`, so `leads-capture` bundles S3 and Cognito SDKs it
-   doesn't use. Cost: ~2 MB per Lambda, ~100-300 ms extra cold start. Fix
-   before prod, and before `apps/frontend/` lands — frontend as a workspace
-   package from day one is far easier than retrofitting.
-   **Decision (2026-04-24): DEFERRED to pre-deployment (Task 19).** Cold starts
-   don't matter at MVP traffic (~0 users). Restructuring now would touch every
-   import path in 55 test files. Frontend will land at repo root as `frontend/`
-   for now, then move to `apps/frontend/` during the workspace migration.
-2. **Biome for lint/format**. Currently we rely on `tsc --noEmit`. Biome
-   replaces ESLint+Prettier, faster, single config.
-3. **Conventional commits via commitlint**. Currently informal. Enforce once
-   both agents are used to the prefix.
-4. **CDK stacks under `infra/stacks/`**. Current `infrastructure/*.ts` files
-   are config-shaped, not deployable CDK. Task 19 rewrites them.
-5. **Per-Lambda `package.json`**. Trims cold-start bundle, enables per-Lambda
-   runtime pinning. Ship with #1.
+   the root `package.json`. Cost: ~2 MB per Lambda, ~100-300 ms extra cold
+   start. At current traffic (~0 users), not worth the disruption. Revisit
+   when cold-start complaints appear.
+2. **Biome for lint/format**. Currently relies on `tsc --noEmit`. Biome
+   would be faster + unified config. Low value until the codebase grows.
+3. **Conventional commits via commitlint**. Currently informal. Enforce
+   once there are more than 2 committers.
+4. **Per-Lambda `package.json`**. Trims cold-start bundle. Ships with #1.
+5. **MesaHomes.com domain transfer GoDaddy → Route 53**. Currently still
+   on GoDaddy registrar (DNS delegated to Route 53, so no functional
+   difference). Transfer after site is stable in production.
 
-Owned by: Kiro B when they wrap current task stream. Kiro A reviews.
+Owned by: Kiro B or Cline when they pick up next task batch. Kiro A
+reviews structural changes.
 
 ## Environments
 
@@ -245,14 +491,54 @@ Listed so we don't regress:
 
 ## Linked docs
 
+### Primary specs (original MVP)
 - Spec: `.kiro/specs/mesahomes-lead-generation/requirements.md` (77 KB)
 - Design: `.kiro/specs/mesahomes-lead-generation/design.md` (49 KB)
 - Data sources: `.kiro/specs/mesahomes-lead-generation/data-sources.md`
 - Frontend design: `.kiro/specs/mesahomes-lead-generation/frontend-design.md`
 - Content sources: `.kiro/specs/mesahomes-lead-generation/content-sources.md`
-- Tasks: `.kiro/specs/mesahomes-lead-generation/tasks.md`
+- Tasks: `.kiro/specs/mesahomes-lead-generation/tasks.md` (20/20 complete)
+
+### Product + legal specs
+- Three-tier product model: `.kiro/specs/three-tier-product.md`
+- Flat-fee legal model: `.kiro/specs/flat-fee-legal-model.md`
+- Legal reference library: `.kiro/specs/legal-reference-library.md` +
+  indexed 2026 ADRE Law Book at `.kiro/reference/` (gitignored)
+- MLS syndication messaging: `.kiro/specs/mls-syndication-messaging.md`
+- ARMLS IDX (Phase 2): `.kiro/specs/armls-idx-integration.md`
+- Mortgage cost transparency: `.kiro/specs/mortgage-cost-transparency.md`
+
+### Design + UI specs
+- Design system: `.kiro/specs/design-system.md`
+- Frontend visual upgrade 2026: `.kiro/specs/frontend-visual-upgrade-2026.md`
+- Frontend content gaps: `.kiro/specs/frontend-content-gaps.md`
+
+### Backend specs
+- AI prompts library: `.kiro/specs/ai-prompts-library.md`
+- Hydra AI backend (Phase 2): `.kiro/specs/hydra-ai-backend.md`
+- SEO architecture: `.kiro/specs/seo-architecture.md`
+- Notification-worker SES: `.kiro/specs/notification-worker-ses-wireup.md`
+- Build blocker static export: `.kiro/specs/build-blocker-static-export.md`
+  (resolved)
+- FSBO launch-mode gate: `.kiro/specs/fsbo-launch-mode-gate.md`
+
+### Operations + launch
+- Owner launch checklist (root): `OWNER-LAUNCH-CHECKLIST.md`
+- VHZ standup runbook (root): `VHZ-STANDUP-RUNBOOK.md`
+- Pre-launch punchlist: `.kiro/specs/pre-launch-punchlist.md` (all 3 closed)
+- Deploy recovery runbook: `.kiro/DEPLOY_RECOVERY.md`
+- CDK infrastructure README: `infrastructure/cdk/README.md`
+
+### Post-launch enrichment (spec'd, not yet built)
+- Hyperlocal content pipeline: `.kiro/specs/hyperlocal-content-pipeline.md`
+- Public data enrichment (FRED, FEMA, Census, etc):
+  `.kiro/specs/public-data-enrichment.md`
+- Phase 1B content automation (broader): `.kiro/specs/phase-1b-content-automation.md`
+
+### Coordination
 - Agent coordination: `.kiro/AGENTS.md`
 - Agent onboarding: `.kiro/SYNC_PROMPT.md`
+- Kiro B visual upgrade handoff: `.kiro/B-VISUAL-UPGRADE-HANDOFF.md`
 
 ## How to update this doc
 
@@ -310,7 +596,7 @@ Content is generated/summarized by the local RTX 4090 AI via MCP, then stored in
 | Broker transaction fee | $400 | At listing start |
 | Full-service upgrade | Standard commission | When seller opts for full agent |
 
-The flat-fee model is the primary differentiator. Every page has a Full Service Upgrade banner — we're honest about the option, not hiding it.
+The Mesa Listing Service tier (and the flat-fee pricing mechanism behind it) is the primary seller differentiator. Every page has a Full Service Upgrade banner — we're honest about the option, not hiding it.
 
 ## AWS account details
 

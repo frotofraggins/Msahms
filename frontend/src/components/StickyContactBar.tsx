@@ -18,7 +18,7 @@ export function StickyContactBar() {
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white md:hidden">
         <div className="grid grid-cols-4">
           <a
-            href="tel:+14805551234"
+            href="tel:+14802690502"
             onClick={() => trackEvent('call_click', 'sticky-bar')}
             className="flex flex-col items-center gap-1 py-2 text-xs text-text-light hover:text-primary"
           >

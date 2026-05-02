@@ -14,12 +14,14 @@ import {
   Menu,
   X,
   Loader2,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { clearTokens } from '@/lib/api';
 
 const navItems = [
   { href: '/dashboard/leads', label: 'Leads', icon: LayoutDashboard },
+  { href: '/dashboard/content/drafts', label: 'Content Drafts', icon: FileText },
   { href: '/dashboard/team', label: 'Team', icon: Users, adminOnly: true },
   { href: '/dashboard/performance', label: 'Performance', icon: BarChart3 },
   { href: '/dashboard/listings', label: 'Listings', icon: Home },

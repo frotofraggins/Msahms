@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { tryGetBrokerOfRecord, portalsSentence } from '@mesahomes/lib/brokerage';
+import { BLOG_CATEGORIES, NEWS_CATEGORIES } from '@/lib/content-taxonomy';
 
 const areaLinks = [
   { href: '/areas/mesa', label: 'Mesa' },
@@ -24,7 +25,7 @@ export function Footer() {
   return (
     <footer className="border-t border-warm-border bg-warm-beige">
       <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
           {/* About */}
           <div>
             <h3 className="font-heading mb-3 text-sm font-semibold text-primary">MesaHomes</h3>
@@ -62,6 +63,29 @@ export function Footer() {
             </ul>
           </div>
 
+          {/* News & Guides */}
+          <div>
+            <h3 className="font-heading mb-3 text-sm font-semibold text-charcoal">News &amp; Guides</h3>
+            <ul className="space-y-1">
+              <li><Link href="/news/" className="text-sm text-text-light hover:text-primary">All News</Link></li>
+              <li><Link href="/blog/" className="text-sm text-text-light hover:text-primary">All Blog Posts</Link></li>
+              {BLOG_CATEGORIES.slice(0, 3).map((c) => (
+                <li key={c.slug}>
+                  <Link href={`/blog/${c.slug}/`} className="text-sm text-text-light hover:text-primary">
+                    {c.title}
+                  </Link>
+                </li>
+              ))}
+              {NEWS_CATEGORIES.slice(0, 2).map((c) => (
+                <li key={c.slug}>
+                  <Link href={`/news/${c.slug}/`} className="text-sm text-text-light hover:text-primary">
+                    {c.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Legal */}
           <div>
             <h3 className="font-heading mb-3 text-sm font-semibold text-charcoal">Company</h3>
@@ -70,6 +94,7 @@ export function Footer() {
               <li><Link href="/contact" className="text-sm text-text-light hover:text-primary">Contact</Link></li>
               <li><Link href="/privacy" className="text-sm text-text-light hover:text-primary">Privacy Policy</Link></li>
               <li><Link href="/terms" className="text-sm text-text-light hover:text-primary">Terms of Service</Link></li>
+              <li><Link href="/auth/login" className="text-sm text-text-light hover:text-primary">Agent Login</Link></li>
             </ul>
           </div>
         </div>

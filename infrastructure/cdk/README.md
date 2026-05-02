@@ -30,6 +30,43 @@ If it returns a stack, you're bootstrapped. If not:
 npx cdk bootstrap aws://304052673868/us-west-2 --profile Msahms
 ```
 
+## Pre-deploy prerequisites (one-time, account-level)
+
+### 1. API Gateway CloudWatch Logs role
+
+API Gateway won't create new REST APIs with stage logging unless the
+account has a CloudWatch Logs role configured. Already done; see
+`OWNER-LAUNCH-CHECKLIST.md` section 1.3.5 for the commands if you need
+to recreate in another account.
+
+### 2. Secrets Manager secrets pre-populated
+
+The CDK stack imports existing secrets by name using
+`Secret.fromSecretNameV2()` rather than creating them. All 9 secrets
+in `SECRET_NAMES` must already exist in Secrets Manager before deploy.
+
+See `OWNER-LAUNCH-CHECKLIST.md` section 1.5 for the 9 secrets and
+population commands. The 3 Stripe secrets hold real keys; the 2 VHZ
+HMAC secrets are generated via `openssl rand -hex 32`; the rest
+(Google Maps, webhook secret, RentCast, SES SMTP) can be populated
+with placeholder values and updated later.
+
+### 3. Email DNS (SES intentionally NOT managed by CDK)
+
+Because Google Workspace is set up for both mesahomes.com and
+virtualhomezone.com, the SES domain-identity construct was removed from
+the CDK stack. It would conflict with Google's MX + DKIM records. Instead:
+
+- Google Workspace handles inbound + outbound email via Gmail
+- MesaHomes Lambdas send transactional email via `SES.SendEmail` API
+  directly; they just need `ses:SendEmail` permission (granted by the
+  stack to 4 Lambdas: notification-worker, listing-service, leads-capture,
+  auth-api)
+- mesahomes.com is NOT yet verified as a sender identity in SES. Verify
+  it post-deploy via the SES Console (2 min) if you want the Lambdas
+  to actually send outbound mail, otherwise the notification-worker
+  will log-and-skip.
+
 ## Deploy — 3 commands
 
 ```bash
@@ -45,18 +82,19 @@ npx cdk deploy --profile Msahms
 
 Takes ~10 minutes on first deploy. After that, only changed resources update.
 
-## Post-deploy: populate secrets
+## Post-deploy: populate missing secret values
 
-The stack creates 7 empty secrets. Populate them before invoking any Lambda:
+The stack imports 9 existing Secrets Manager secrets. Most are already
+populated (Stripe keys + VHZ HMACs). The remaining placeholders:
 
 ```bash
-aws secretsmanager put-secret-value --secret-id mesahomes/google-maps-api-key --secret-string "YOUR_GOOGLE_MAPS_KEY" --profile Msahms
-aws secretsmanager put-secret-value --secret-id mesahomes/stripe-secret-key --secret-string "sk_test_YOUR_KEY" --profile Msahms
-aws secretsmanager put-secret-value --secret-id mesahomes/stripe-webhook-secret --secret-string "whsec_YOUR_SECRET" --profile Msahms
-aws secretsmanager put-secret-value --secret-id mesahomes/rentcast-api-key --secret-string "YOUR_RENTCAST_KEY" --profile Msahms
-aws secretsmanager put-secret-value --secret-id mesahomes/ses-smtp-credentials --secret-string '{"username":"...","password":"..."}' --profile Msahms
-aws secretsmanager put-secret-value --secret-id mesahomes/vhz-handoff-secret --secret-string "$(openssl rand -hex 32)" --profile Msahms
-aws secretsmanager put-secret-value --secret-id mesahomes/vhz-webhook-secret --secret-string "$(openssl rand -hex 32)" --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/google-maps-api-key --secret-string "YOUR_GOOGLE_MAPS_KEY" --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/stripe-secret-key --secret-string "sk_test_YOUR_KEY" --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/stripe-webhook-secret --secret-string "whsec_YOUR_SECRET" --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/rentcast-api-key --secret-string "YOUR_RENTCAST_KEY" --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/ses-smtp-credentials --secret-string '{"username":"...","password":"..."}' --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/vhz-handoff-secret --secret-string "$(openssl rand -hex 32)" --profile Msahms
+aws secretsmanager put-secret-value --secret-id mesahomes/live/vhz-webhook-secret --secret-string "$(openssl rand -hex 32)" --profile Msahms
 ```
 
 The last two (`vhz-*`) are for the VHZ Stripe handoff; use the SAME values on virtualhomezone.com.
@@ -157,3 +195,60 @@ construct which bundles with esbuild
 **Cognito user pool ID needs to reach frontend**: After deploy, read
 outputs and set `NEXT_PUBLIC_COGNITO_USER_POOL_ID` in `frontend/.env.production`
 then rebuild the frontend
+
+## CloudFront SPA Rewrite Function (one-time setup)
+
+The existing CloudFront distribution `E3TBTUT3LJLAAT` needs a viewer-request
+function attached so `/dashboard/leads/:id` paths all serve the same shell
+(client-side code reads the id from `window.location.pathname`).
+
+```bash
+# 1. Create the function
+aws cloudfront create-function \
+  --name mesahomes-spa-rewrite \
+  --function-config '{"Comment":"SPA rewrites for static export","Runtime":"cloudfront-js-2.0"}' \
+  --function-code fileb://infrastructure/cdk/cloudfront-spa-rewrite.js \
+  --profile Msahms --region us-east-1
+
+# Response includes ETag and FunctionARN — save both
+
+# 2. Publish the function (move from DEVELOPMENT to LIVE stage)
+aws cloudfront publish-function \
+  --name mesahomes-spa-rewrite \
+  --if-match <ETAG-FROM-STEP-1> \
+  --profile Msahms
+
+# 3. Get the current distribution config
+aws cloudfront get-distribution-config \
+  --id E3TBTUT3LJLAAT \
+  --profile Msahms > /tmp/cf-config.json
+
+# 4. Extract ETag (you'll need it for the update)
+CF_ETAG=$(jq -r .ETag /tmp/cf-config.json)
+
+# 5. Edit /tmp/cf-config.json — add FunctionAssociations to DefaultCacheBehavior:
+#    "FunctionAssociations": {
+#      "Quantity": 1,
+#      "Items": [{
+#        "FunctionARN": "arn:aws:cloudfront::304052673868:function/mesahomes-spa-rewrite",
+#        "EventType": "viewer-request"
+#      }]
+#    }
+#    (remove the wrapper "DistributionConfig" key; update-distribution
+#     expects just the inner object)
+
+# 6. Apply the update
+aws cloudfront update-distribution \
+  --id E3TBTUT3LJLAAT \
+  --distribution-config file:///tmp/cf-config.json \
+  --if-match "$CF_ETAG" \
+  --profile Msahms
+
+# 7. Wait ~5 minutes for CloudFront to roll out, then test:
+curl -sI https://mesahomes.com/dashboard/leads/test-id-12345
+# Should return 200 OK with content from /dashboard/leads/_/index.html
+```
+
+Once done this is set-and-forget. The function runs at every edge location
+at sub-millisecond cost (~$0.10 per million requests).
+

@@ -4,6 +4,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { StickyContactBar } from '@/components/StickyContactBar';
 import { FullServiceUpgradeBanner } from '@/components/FullServiceUpgradeBanner';
+import publishedBlogs from '@/data/published-blogs.json';
+import { classify, BLOG_CATEGORIES, type PublishedPost } from '@/lib/content-taxonomy';
 
 export const metadata: Metadata = {
   title: 'Blog — Mesa Real Estate News & Guides',
@@ -71,6 +73,25 @@ function formatDate(dateStr: string) {
   });
 }
 
+/** Classify AI posts -> only keep those assigned to /blog/ (evergreen). */
+const allAi = (publishedBlogs as PublishedPost[]).map(classify);
+const aiBlog = allAi.filter((p) => p.contentType === 'blog');
+
+const aiPosts = aiBlog.map((p) => ({
+  slug: p.slug,
+  title: p.title,
+  excerpt: p.metaDescription,
+  date: p.publishedAt.slice(0, 10),
+  topic: p.topic,
+  url: p.url,
+}));
+
+const hardcodedPosts = posts.map((p) => ({ ...p, url: `/blog/${p.slug}` }));
+
+const allPosts = [...aiPosts, ...hardcodedPosts].sort(
+  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+);
+
 export default function BlogListPage() {
   return (
     <>
@@ -81,14 +102,28 @@ export default function BlogListPage() {
         <section className="bg-white px-4 py-16">
           <div className="mx-auto max-w-4xl">
             <h1 className="mb-2 text-3xl font-bold text-text">Blog</h1>
-            <p className="mb-8 text-text-light">
-              Real estate tips, market updates, and guides for the Mesa, AZ metro area.
+            <p className="mb-6 text-text-light">
+              Evergreen real estate guides for the Mesa, AZ metro area. Looking for daily news?{' '}
+              <Link href="/news/" className="text-primary hover:underline">See the News section.</Link>
             </p>
 
+            {/* Category browse */}
+            <nav className="mb-8 flex flex-wrap gap-2" aria-label="Blog categories">
+              {BLOG_CATEGORIES.map((cat) => (
+                <Link
+                  key={cat.slug}
+                  href={`/blog/${cat.slug}/`}
+                  className="rounded-full border border-gray-200 bg-warm-beige px-3 py-1 text-xs font-medium text-primary hover:bg-primary hover:text-white"
+                >
+                  {cat.title}
+                </Link>
+              ))}
+            </nav>
+
             <div className="space-y-6">
-              {posts.map((post) => (
+              {allPosts.map((post) => (
                 <article key={post.slug} className="rounded-xl border border-gray-200 p-5 transition-shadow hover:shadow-md">
-                  <Link href={`/blog/${post.slug}`}>
+                  <Link href={post.url}>
                     <time className="text-xs text-text-light">{formatDate(post.date)}</time>
                     <h2 className="mt-1 text-lg font-semibold text-text hover:text-primary">
                       {post.title}
@@ -97,13 +132,6 @@ export default function BlogListPage() {
                   </Link>
                 </article>
               ))}
-            </div>
-
-            {/* Pagination placeholder */}
-            <div className="mt-8 flex justify-center gap-2">
-              <span className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white">1</span>
-              <span className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-text-light">2</span>
-              <span className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-text-light">3</span>
             </div>
           </div>
         </section>

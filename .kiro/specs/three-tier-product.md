@@ -1,7 +1,15 @@
-# Three-Tier Product Strategy — FSBO + Flat-Fee + Full-Service
+# Three-Tier Product Strategy — FSBO + Mesa Listing Service + Full-Service
 
 Author: Kiro A, 2026-04-25. Status: spec — restructures the whole MesaHomes
 product model to three offerings instead of one.
+
+> **Naming update 2026-04-26**: The middle tier renamed from "Flat-Fee MLS"
+> to **"Mesa Listing Service"** in all user-facing UI. The term "flat-fee MLS"
+> is still used in URL slugs, meta tags, and legal/pricing-mechanism
+> descriptions (see `.kiro/specs/middle-tier-rebrand-research.md`). In this
+> doc, all occurrences of "Flat-Fee" below refer to the product now
+> marketed as **Mesa Listing Service** unless clearly a pricing-mechanism
+> descriptor.
 
 ## The insight
 

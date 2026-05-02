@@ -1,20 +1,15 @@
 import type { MetadataRoute } from 'next';
+import publishedBlogs from '@/data/published-blogs.json';
+import { classify, BLOG_CATEGORIES, NEWS_CATEGORIES, type PublishedPost } from '@/lib/content-taxonomy';
 
 export const dynamic = 'force-static';
 
 const BASE_URL = 'https://mesahomes.com';
 
-const citySlugs = [
-  'mesa',
-  'gilbert',
-  'chandler',
-  'queen-creek',
-  'san-tan-valley',
-  'apache-junction',
-];
+const citySlugs = ['mesa', 'gilbert', 'chandler', 'queen-creek', 'san-tan-valley', 'apache-junction'];
 
-/** Placeholder published blog slugs — in production, fetch from CMS/API. */
-const publishedBlogSlugs = [
+/** Hardcoded legacy blog slugs (no category in URL, still shipping). */
+const legacyBlogSlugs = [
   'mesa-housing-market-2026',
   'flat-fee-vs-traditional-agent-guide',
   'first-time-buyer-arizona-2026',
@@ -34,19 +29,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/rent`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/invest`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/reviews`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE_URL}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/buy/first-time-buyer`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/buy/offer-guidance`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
   ];
 
-  // Tool pages
+  // Tools (slow-changing utilities)
   const toolPages: MetadataRoute.Sitemap = [
-    'net-sheet',
-    'affordability',
-    'home-value',
-    'listing-generator',
-    'sell-now-or-wait',
-    'offer-writer',
+    'net-sheet', 'affordability', 'home-value', 'listing-generator', 'sell-now-or-wait', 'offer-writer',
   ].map((tool) => ({
     url: `${BASE_URL}/tools/${tool}`,
     lastModified: now,
@@ -54,7 +43,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  // Compare pages
+  // Comparison pages
   const comparePages: MetadataRoute.Sitemap = [
     {
       url: `${BASE_URL}/compare/flat-fee-vs-traditional-agent`,
@@ -64,7 +53,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  // City pages
+  // Area pages (weekly because market data updates)
   const cityPages: MetadataRoute.Sitemap = citySlugs.map((slug) => ({
     url: `${BASE_URL}/areas/${slug}`,
     lastModified: now,
@@ -72,13 +61,69 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  // Blog posts (exclude drafts — only published slugs)
-  const blogPages: MetadataRoute.Sitemap = publishedBlogSlugs.map((slug) => ({
+  // --- Blog ---
+  const classified = (publishedBlogs as PublishedPost[]).map(classify);
+  const aiBlog = classified.filter((p) => p.contentType === 'blog');
+  const aiNews = classified.filter((p) => p.contentType === 'news');
+
+  // Blog index + category indexes
+  const blogIndexes: MetadataRoute.Sitemap = [
+    { url: `${BASE_URL}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    ...BLOG_CATEGORIES.map((c) => ({
+      url: `${BASE_URL}/blog/${c.slug}`,
+      lastModified: now,
+      changeFrequency: c.changeFrequency,
+      priority: 0.7,
+    })),
+  ];
+
+  // Legacy hardcoded blog posts
+  const legacyPosts: MetadataRoute.Sitemap = legacyBlogSlugs.map((slug) => ({
     url: `${BASE_URL}/blog/${slug}`,
     lastModified: now,
     changeFrequency: 'monthly' as const,
     priority: 0.6,
   }));
 
-  return [...staticPages, ...toolPages, ...comparePages, ...cityPages, ...blogPages];
+  // AI-drafted blog posts (evergreen — monthly)
+  const aiBlogPages: MetadataRoute.Sitemap = aiBlog.map((p) => ({
+    url: `${BASE_URL}${p.url}`,
+    lastModified: new Date(p.publishedAt),
+    changeFrequency: 'monthly' as const,
+    priority: 0.6,
+  }));
+
+  // --- News ---
+  const newsIndexes: MetadataRoute.Sitemap = [
+    { url: `${BASE_URL}/news`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
+    ...NEWS_CATEGORIES.map((c) => ({
+      url: `${BASE_URL}/news/${c.slug}`,
+      lastModified: now,
+      changeFrequency: c.changeFrequency,
+      priority: 0.7,
+    })),
+  ];
+
+  // AI-drafted news posts (time-sensitive — daily changefreq, decays to weekly after 7 days)
+  const aiNewsPages: MetadataRoute.Sitemap = aiNews.map((p) => {
+    const ageDays = (Date.now() - new Date(p.publishedAt).getTime()) / (1000 * 60 * 60 * 24);
+    return {
+      url: `${BASE_URL}${p.url}`,
+      lastModified: new Date(p.publishedAt),
+      changeFrequency: (ageDays < 7 ? 'daily' : 'weekly') as 'daily' | 'weekly',
+      priority: 0.7,
+    };
+  });
+
+  return [
+    ...staticPages,
+    ...toolPages,
+    ...comparePages,
+    ...cityPages,
+    ...blogIndexes,
+    ...legacyPosts,
+    ...aiBlogPages,
+    ...newsIndexes,
+    ...aiNewsPages,
+  ];
 }

@@ -10,7 +10,8 @@ const navLinks = [
   { href: '/rent', label: 'Rent' },
   { href: '/invest', label: 'Invest' },
   { href: '/areas/mesa', label: 'Areas' },
-  { href: '/reviews', label: 'Reviews' },
+  { href: '/news', label: 'News' },
+  { href: '/blog', label: 'Blog' },
 ];
 
 export function Header() {
@@ -18,14 +19,20 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-warm-border bg-paper">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+      <div className="relative mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         {/* Logo */}
-        <Link href="/" className="font-heading text-xl font-bold text-primary">
-          MesaHomes
+        <Link href="/" className="flex items-center" aria-label="MesaHomes — Mesa AZ real estate">
+          <img
+            src="/brand/mesahomes-logo-minimalist.webp"
+            alt="MesaHomes — Mesa AZ real estate brand"
+            width={180}
+            height={48}
+            className="h-8 w-auto md:h-10"
+          />
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-6 md:flex">
+        {/* Desktop nav — absolutely centered on the container, independent of logo/CTA widths */}
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -39,12 +46,18 @@ export function Header() {
 
         {/* Desktop CTA */}
         <div className="hidden items-center gap-4 md:flex">
+          <Link
+            href="/auth/login"
+            className="text-sm font-medium text-text-light transition-colors hover:text-primary"
+          >
+            Agent Login
+          </Link>
           <a
-            href="tel:+14805551234"
+            href="tel:+14802690502"
             className="flex items-center gap-1 text-sm font-medium text-primary"
           >
             <Phone className="h-4 w-4" />
-            (480) 555-1234
+            (480) 269-0502
           </a>
           <Link
             href="/booking"
@@ -83,6 +96,13 @@ export function Header() {
             onClick={() => setMobileOpen(false)}
           >
             Talk to Agent
+          </Link>
+          <Link
+            href="/auth/login"
+            className="mt-2 block border-t border-warm-border pt-2 text-center text-sm font-medium text-text-light"
+            onClick={() => setMobileOpen(false)}
+          >
+            Agent Login
           </Link>
         </nav>
       )}

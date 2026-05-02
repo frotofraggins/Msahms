@@ -1,26 +1,29 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
-import { MapPin, CheckCircle } from 'lucide-react';
+import { useState, useEffect, type FormEvent } from 'react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PropertyDataCard, type PropertyData } from '@/components/PropertyDataCard';
+import { MarketContextStrip } from '@/components/MarketContextStrip';
+import { CompsTable } from '@/components/CompsTable';
+import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 import { api, ApiRequestError } from '@/lib/api';
 import { trackEvent } from '@/lib/tracking';
 
-const placeholderProperty: PropertyData = {
-  address: '1234 E Main St, Mesa, AZ 85201',
-  sqft: 1850,
-  floors: 1,
-  yearBuilt: 2005,
-  lotSize: 0.15,
-  lotSizeUnit: 'acres',
-  assessedValue: 385000,
-  salePrice: 365000,
-  saleDate: 'Jun 2022',
-  subdivision: 'Sunland Village',
-  zipTypicalValue: 448000,
-  photoUrl: null,
-};
+const USD = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+});
+
+/**
+ * Extract a 5-digit ZIP from a free-form address.
+ * Returns null if none found — we need the ZIP to query market/zip.
+ */
+function extractZip(address: string): string | null {
+  const m = address.match(/\b(85\d{3})\b/);
+  return m ? m[1] : null;
+}
 
 export function HomeValueClient() {
   const [address, setAddress] = useState('');
@@ -31,7 +34,104 @@ export function HomeValueClient() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Live data — populated after user types an address with a recognizable ZIP
+  const [property, setProperty] = useState<PropertyData | null>(null);
+  const [zipRange, setZipRange] = useState<{ low: number; high: number; median: number } | null>(null);
+  const [lookingUp, setLookingUp] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+  const [dataRichness, setDataRichness] = useState<
+    { hasPhoto: boolean; compsCount: number; hasSubdivision: boolean } | null
+  >(null);
+  const [comps, setComps] = useState<{
+    subdivision: Array<{ address?: string | null; salePrice?: number | null; saleDate?: string | null; sqft?: number | null }>;
+    zip: Array<{ address?: string | null; salePrice?: number | null; saleDate?: string | null; sqft?: number | null }>;
+  }>({ subdivision: [], zip: [] });
+
   const hasAddress = address.trim().length > 0;
+  const zip = extractZip(address);
+
+  // Debounced lookup — fires when user pauses typing AND we detect a ZIP
+  useEffect(() => {
+    if (!zip) {
+      setProperty(null);
+      setZipRange(null);
+      setLookupError(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setLookingUp(true);
+      setLookupError(null);
+      try {
+        // Fire both in parallel — ZIP range is fast, property lookup may be slower
+        const [zipData, propertyData] = await Promise.allSettled([
+          api.marketZip(zip),
+          api.propertyLookup({ address: address.trim(), zip }),
+        ]);
+
+        if (zipData.status === 'fulfilled') {
+          const d = zipData.value as { zhvi?: number };
+          if (d.zhvi) {
+            const median = Math.round(d.zhvi);
+            setZipRange({
+              low: Math.round(median * 0.93),
+              high: Math.round(median * 1.07),
+              median,
+            });
+          }
+        }
+
+        if (propertyData.status === 'fulfilled') {
+          // The lookup Lambda returns a rich envelope:
+          //   { property, photo: {url, source}, comps: {subdivision[], zip[]}, market: {zip, metro} }
+          // We pull the property + photo into the PropertyData shape the card expects,
+          // and stash the extras for the comps display below.
+          const resp = propertyData.value as {
+            property?: Record<string, unknown>;
+            photo?: { url: string; source: string };
+            comps?: { subdivision?: unknown[]; zip?: unknown[] };
+          };
+          if (resp.property) {
+            const merged = {
+              ...(resp.property as unknown as PropertyData),
+              photoUrl: resp.photo?.url ?? null,
+            };
+            setProperty(merged);
+            setComps({
+              subdivision: (resp.comps?.subdivision ?? []) as typeof comps.subdivision,
+              zip: (resp.comps?.zip ?? []) as typeof comps.zip,
+            });
+            const compsCount =
+              (resp.comps?.subdivision?.length ?? 0) +
+              (resp.comps?.zip?.length ?? 0);
+            setDataRichness({
+              hasPhoto: resp.photo?.source === 'streetview',
+              compsCount,
+              hasSubdivision: !!merged.subdivision,
+            });
+          } else {
+            setProperty(null);
+            setComps({ subdivision: [], zip: [] });
+          }
+        } else {
+          // 404 is expected for many addresses we don't have county data for.
+          // Keep the ZIP range shown; just say we couldn't find the specific property.
+          setProperty(null);
+          setComps({ subdivision: [], zip: [] });
+          setDataRichness(null);
+          const rejectReason = propertyData.reason;
+          if (rejectReason instanceof ApiRequestError && rejectReason.status !== 404) {
+            setLookupError('Could not look up property details. You can still request an estimate below.');
+          }
+        }
+      } catch {
+        // Fail-open — user can still submit the lead form
+        setLookupError('Could not look up live data. Submit below for a personal estimate.');
+      } finally {
+        setLookingUp(false);
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [address, zip]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -81,33 +181,76 @@ export function HomeValueClient() {
           Property Address
         </label>
         <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
-          <input
+          <AddressAutocomplete
             id="address"
-            type="text"
-            placeholder="123 E Main St, Mesa, AZ 85201"
             value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            onChange={setAddress}
+            placeholder="Start typing your address…"
           />
         </div>
       </div>
 
-      {/* Teaser */}
-      {hasAddress && (
+      {/* Teaser — live ZIP-based range, real data from Zillow metro feed */}
+      {hasAddress && !zip && (
+        <div className="mb-6 rounded-xl bg-warm-beige p-5 text-center text-sm text-text-light">
+          Add your 5-digit ZIP to see what homes in your area typically sell for.
+        </div>
+      )}
+      {zip && lookingUp && !zipRange && (
+        <div className="mb-6 flex items-center justify-center gap-2 rounded-xl bg-warm-beige p-5 text-sm text-text-light">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Looking up live data for ZIP {zip}…
+        </div>
+      )}
+      {zipRange && (
         <div className="mb-6 rounded-xl bg-primary/5 p-5 text-center">
-          <p className="text-sm text-text-light">Homes in your ZIP typically sell for</p>
-          <p className="text-2xl font-bold tabular-nums text-primary">$420,000 – $475,000</p>
+          <p className="text-sm text-text-light">Homes in {zip} typically sell for</p>
+          <p className="text-2xl font-bold tabular-nums text-primary">
+            {USD.format(zipRange.low)} – {USD.format(zipRange.high)}
+          </p>
           <p className="mt-1 text-xs text-text-light">
-            Based on recent sales in your area. Request a personalized estimate below.
+            Median {USD.format(zipRange.median)} based on current Zillow data. Request a personalized estimate below.
           </p>
         </div>
       )}
 
-      {/* Property Data Card */}
-      {hasAddress && (
-        <div className="mb-6">
-          <PropertyDataCard property={placeholderProperty} />
+      {/* Property Data Card — only renders when we actually found real county data */}
+      {property && (
+        <div className="mb-6 space-y-2">
+          <PropertyDataCard property={property} />
+          {dataRichness && (
+            <p className="text-center text-xs text-text-light">
+              Data sourced from {dataRichness.hasPhoto ? 'Google Street View, ' : ''}
+              county GIS records
+              {dataRichness.compsCount > 0
+                ? `, and ${dataRichness.compsCount} recent nearby comps`
+                : ''}
+              . Property detail varies by what each county indexes — rural and
+              newly-built parcels often have less public data.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Recent Comps — county GIS sale data, rendered from the Lambda
+          response we were already fetching but not displaying. */}
+      {(comps.subdivision.length > 0 || comps.zip.length > 0) && zip && (
+        <CompsTable
+          subdivisionComps={comps.subdivision}
+          zipComps={comps.zip}
+          subdivision={property?.subdivision ?? null}
+          zip={zip}
+        />
+      )}
+
+      {/* Phoenix-Mesa metro context — surfaces 6 of the 12 Zillow datasets we
+          already ingest monthly. Gives the user a feel for market velocity and
+          price pressure they can't get from ZIP median alone. */}
+      {zip && <MarketContextStrip />}
+
+      {lookupError && (
+        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 text-center text-xs text-text-light">
+          {lookupError}
         </div>
       )}
 

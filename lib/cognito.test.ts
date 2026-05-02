@@ -5,7 +5,7 @@ const mockSend = vi.fn();
 
 vi.mock('@aws-sdk/client-cognito-identity-provider', () => ({
   CognitoIdentityProviderClient: vi.fn().mockImplementation(() => ({ send: mockSend })),
-  AdminInitiateAuthCommand: vi.fn().mockImplementation((input: unknown) => ({ input })),
+  InitiateAuthCommand: vi.fn().mockImplementation((input: unknown) => ({ input })),
   AdminCreateUserCommand: vi.fn().mockImplementation((input: unknown) => ({ input })),
   AdminSetUserPasswordCommand: vi.fn().mockImplementation((input: unknown) => ({ input })),
   AdminGetUserCommand: vi.fn().mockImplementation((input: unknown) => ({ input })),

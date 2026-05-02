@@ -10,16 +10,16 @@ import { FadeInOnScroll } from '@/components/FadeInOnScroll';
 import { Home, Key, FileText, DollarSign, TrendingUp, Calculator, BarChart3, Sparkles } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Flat-Fee Real Estate for Mesa, AZ',
+  title: 'Mesa, AZ Real Estate, Market Data & Neighborhood Insights',
   description:
-    'Save thousands selling your home in Mesa, Gilbert, Chandler, Queen Creek, and San Tan Valley. Free tools, county-verified data, and flat-fee MLS listing for $999.',
+    'Your local source for Mesa, Arizona real estate. Live market data, home values, neighborhood news, HOA updates, city meetings, and flat-fee MLS listings. Covering Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, and Apache Junction.',
   alternates: {
     canonical: 'https://mesahomes.com',
   },
   openGraph: {
-    title: 'Flat-Fee Real Estate for Mesa, AZ',
+    title: 'MesaHomes — Mesa, AZ Real Estate & Community Hub',
     description:
-      'Save thousands selling your home. Free seller net sheet, buyer affordability calculator, AI listing generator, and more.',
+      'Hyper-local home values, market trends, HOA news, and flat-fee listings for the East Valley. Know your neighborhood before you buy or sell.',
     url: 'https://mesahomes.com',
     siteName: 'MesaHomes',
     locale: 'en_US',
@@ -27,9 +27,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Flat-Fee Real Estate for Mesa, AZ',
+    title: 'MesaHomes — Mesa, AZ Real Estate & Community Hub',
     description:
-      'Save thousands selling your home in Mesa, AZ with flat-fee MLS listing.',
+      'Hyper-local real estate data, neighborhood news, and flat-fee listings for Mesa and the East Valley.',
   },
 };
 
@@ -99,11 +99,16 @@ const socialProof = [
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': ['RealEstateAgent', 'LocalBusiness'],
+  '@id': 'https://mesahomes.com/#organization',
   name: 'MesaHomes',
+  alternateName: 'Mesa Listing Service',
   description:
-    'Flat-fee real estate services for Mesa, Gilbert, Chandler, Queen Creek, and San Tan Valley, AZ. Save thousands with $999 MLS listing.',
+    'Hyper-local Mesa, AZ real estate platform. Free seller and buyer tools, market data, neighborhood insights, and flat-fee MLS listings serving Mesa, Gilbert, Chandler, Queen Creek, San Tan Valley, and Apache Junction.',
   url: 'https://mesahomes.com',
-  telephone: '+14805551234',
+  logo: 'https://mesahomes.com/brand/mesahomes-logo-primary.png',
+  image: 'https://mesahomes.com/brand/mesahomes-logo-primary.png',
+  telephone: '+14802690502',
+  email: 'sales@mesahomes.com',
   address: {
     '@type': 'PostalAddress',
     addressLocality: 'Mesa',
@@ -117,14 +122,56 @@ const jsonLd = {
     { '@type': 'City', name: 'Chandler', containedInPlace: { '@type': 'State', name: 'Arizona' } },
     { '@type': 'City', name: 'Queen Creek', containedInPlace: { '@type': 'State', name: 'Arizona' } },
     { '@type': 'City', name: 'San Tan Valley', containedInPlace: { '@type': 'State', name: 'Arizona' } },
+    { '@type': 'City', name: 'Apache Junction', containedInPlace: { '@type': 'State', name: 'Arizona' } },
   ],
-  priceRange: '$999 flat-fee MLS listing',
+  priceRange: '$999 – $1,399 (flat-fee MLS)',
   openingHoursSpecification: {
     '@type': 'OpeningHoursSpecification',
     dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
     opens: '08:00',
     closes: '18:00',
   },
+  hasOfferCatalog: {
+    '@type': 'OfferCatalog',
+    name: 'MesaHomes Services',
+    itemListElement: [
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'FSBO (For Sale By Owner) Package',
+          description:
+            'Self-service listing package for homeowners selling on their own. Photography, yard sign, virtual tour, flyer templates.',
+        },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Mesa Listing Service (Flat-Fee MLS)',
+          description:
+            'List your home on ARMLS for $999. Syndicates to Zillow, Realtor.com, Redfin, Trulia, Homes.com. $400 broker fee at closing.',
+        },
+        price: '999',
+        priceCurrency: 'USD',
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Full-Service Agent Representation',
+          description:
+            'Licensed Arizona real estate agent handles pricing, photography, showings, negotiations, and closing. Commission-based.',
+        },
+      },
+    ],
+  },
+  sameAs: [
+    // Social profiles go here once they're set up — claim them with the same
+    // identity string so LLMs can merge the entity across platforms
+    'https://www.facebook.com/MesaHomesAZ',
+    'https://www.instagram.com/MesaHomesAZ',
+  ],
 };
 
 export default function HomePage() {
@@ -144,7 +191,10 @@ export default function HomePage() {
         <section
           className="relative overflow-hidden px-4 py-20 md:py-32"
           style={{
-            background: 'linear-gradient(135deg, #FDFCF9 0%, #F5F2EC 30%, #E8E2D6 60%, #D9D3C6 100%)',
+            backgroundImage:
+              'linear-gradient(135deg, rgba(253,252,249,0.88) 0%, rgba(245,242,236,0.82) 40%, rgba(217,211,198,0.74) 100%), url(/photos/mesa-desert-golden-hour.webp)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
           }}
         >
           {/* Decorative mesh circles — purely visual */}

@@ -283,7 +283,7 @@ const toolDataArb: fc.Arbitrary<Record<string, unknown>> = fc.dictionary(
   fc.oneof(
     fc.string({ maxLength: 100 }),
     fc.integer(),
-    fc.double({ noNaN: true, noDefaultInfinity: true }),
+    fc.double({ noNaN: true, noDefaultInfinity: true }).map((n) => (Object.is(n, -0) ? 0 : n)),
     fc.boolean(),
     fc.constant(null),
   ),

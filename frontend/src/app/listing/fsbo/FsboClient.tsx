@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { trackEvent } from '@/lib/tracking';
+import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 
 // ---------------------------------------------------------------------------
 // Package data
@@ -268,14 +269,13 @@ export function FsboClient() {
             <label htmlFor="fsbo-address" className="mb-1 block text-sm font-medium text-text">
               Property Address *
             </label>
-            <input
+            <AddressAutocomplete
               id="fsbo-address"
-              type="text"
-              placeholder="1234 E Main St, Mesa, AZ 85201"
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={setAddress}
+              placeholder="Start typing your address…"
               required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 

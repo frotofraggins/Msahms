@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import { api, ApiRequestError } from '@/lib/api';
 
 interface LeadDetail {
-  id: string;
+  leadId: string;
   name: string;
   email: string;
   phone: string;
@@ -30,7 +30,7 @@ interface LeadDetail {
   toolSource: string;
   timeframe: string;
   priceRange?: string;
-  status: string;
+  leadStatus: string;
   notes: string[];
   toolData?: Record<string, unknown>;
   pathHistory?: string[];
@@ -45,10 +45,56 @@ const statusOptions = [
   { value: 'closed', label: 'Closed' },
 ];
 
+/**
+ * Build a Google Calendar "create event" URL pre-filled with the lead's
+ * contact info. Opens a 30-minute slot starting at the next top-of-hour
+ * tomorrow. Owner can then adjust the time and invite the lead directly
+ * from Google Calendar — which handles the actual scheduling, reminders,
+ * and ICS-to-client delivery we'd otherwise have to build.
+ *
+ * Trade-off: we're not owning the scheduling UX (no in-product "pick a
+ * time" widget). That's a deliberate Phase 1 shortcut. Building a real
+ * scheduler is in scope for Phase 1B's "client portal" spec.
+ */
+function buildCalendarLink(lead: LeadDetail): string {
+  // Tomorrow at 10:00 local — cheap default that the user can adjust.
+  const start = new Date();
+  start.setDate(start.getDate() + 1);
+  start.setHours(10, 0, 0, 0);
+  const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+  const fmt = (d: Date): string =>
+    d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+  const title = `MesaHomes follow-up — ${lead.name}`;
+  const details = [
+    `Lead: ${lead.name}`,
+    lead.phone ? `Phone: ${lead.phone}` : null,
+    lead.email ? `Email: ${lead.email}` : null,
+    `Tool: ${lead.toolSource}`,
+    `Lead type: ${lead.leadType}`,
+    `Timeframe: ${lead.timeframe}`,
+    lead.priceRange ? `Price range: ${lead.priceRange}` : null,
+    `Lead ID: ${lead.leadId}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title,
+    dates: `${fmt(start)}/${fmt(end)}`,
+    details,
+    add: lead.email,
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 export default function LeadDetailClient() {
   const pathname = usePathname();
   // Extract lead ID from pathname: /dashboard/leads/{id}
-  const id = pathname.split('/').pop() ?? '';
+  const id = pathname.split('/').filter(Boolean).pop() ?? '';
 
   const [lead, setLead] = useState<LeadDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +103,7 @@ export default function LeadDetailClient() {
   const [statusSaving, setStatusSaving] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [noteSaving, setNoteSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchLead();
@@ -67,9 +114,13 @@ export default function LeadDetailClient() {
     setLoading(true);
     setError(null);
     try {
-      const data = (await api.dashboard.lead(id)) as LeadDetail;
+      const raw = (await api.dashboard.lead(id)) as { lead?: LeadDetail } | LeadDetail;
+      // API wraps in { lead: {...} }; unwrap defensively in case that ever changes.
+      const data = 'lead' in (raw as object) && (raw as { lead?: LeadDetail }).lead
+        ? (raw as { lead: LeadDetail }).lead
+        : (raw as LeadDetail);
       setLead(data);
-      setStatus(data.status);
+      setStatus(data.leadStatus ?? '');
     } catch (err) {
       if (err instanceof ApiRequestError) {
         setError(err.apiError?.message ?? 'Failed to load lead.');
@@ -88,7 +139,7 @@ export default function LeadDetailClient() {
       await api.dashboard.updateLead(id, { status: newStatus });
     } catch {
       // Revert on failure
-      if (lead) setStatus(lead.status);
+      if (lead) setStatus(lead.leadStatus);
     } finally {
       setStatusSaving(false);
     }
@@ -107,6 +158,25 @@ export default function LeadDetailClient() {
       // Silently fail — note stays in input
     } finally {
       setNoteSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!lead) return;
+    const label = lead.name || lead.email || lead.leadId;
+    if (!confirm(`Delete lead "${label}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await api.dashboard.deleteLead(id);
+      // Redirect back to list
+      window.location.href = '/dashboard/leads';
+    } catch (err) {
+      alert(
+        err instanceof ApiRequestError
+          ? err.apiError?.message ?? 'Failed to delete lead.'
+          : 'Network error. Please try again.',
+      );
+      setDeleting(false);
     }
   }
 
@@ -168,6 +238,14 @@ export default function LeadDetailClient() {
             ))}
           </select>
           {statusSaving && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 active:scale-[0.98] transition-all disabled:opacity-50"
+            aria-label="Delete lead"
+          >
+            {deleting ? 'Deleting…' : 'Delete'}
+          </button>
         </div>
       </div>
 
@@ -222,10 +300,15 @@ export default function LeadDetailClient() {
               <Mail className="h-4 w-4" />
               Email
             </a>
-            <button className="flex items-center gap-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-text hover:bg-gray-50">
+            <a
+              href={buildCalendarLink(lead)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-text hover:bg-gray-50"
+            >
               <Calendar className="h-4 w-4" />
               Schedule
-            </button>
+            </a>
           </div>
         </div>
 

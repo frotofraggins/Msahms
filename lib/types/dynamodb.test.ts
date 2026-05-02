@@ -3,7 +3,7 @@ import { EntityType } from './dynamodb.js';
 import type { DynamoDBItem, QueryOptions } from './dynamodb.js';
 
 describe('EntityType enum', () => {
-  it('should contain all 10 required entity types', () => {
+  it('should contain all 11 required entity types', () => {
     const expected = [
       'LEAD',
       'AGENT',
@@ -15,6 +15,7 @@ describe('EntityType enum', () => {
       'NOTIFICATION',
       'VISITOR_PROFILE',
       'SAVED_SCENARIO',
+      'CONTENT_INGEST',
     ];
 
     for (const name of expected) {

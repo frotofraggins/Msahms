@@ -77,7 +77,7 @@ describe('queryPropertyByAddress', () => {
     const body = new URLSearchParams(options.body);
     expect(body.get('where')).toBe("SITEADDRESS LIKE '%39669%LUKE%'");
     expect(body.get('f')).toBe('json');
-    expect(body.get('outFields')).toBe('*');
+    expect(body.get('outFields')).toMatch(/SITEADDRESS.*SALEPRICE/);
     expect(body.get('returnGeometry')).toBe('false');
   });
 
@@ -158,7 +158,7 @@ describe('queryCompsBySubdivision', () => {
 
     const [, options] = mockFetch.mock.calls[0];
     const body = new URLSearchParams(options.body);
-    expect(body.get('where')).toBe("CNVYNAME='PECAN CREEK NORTH PARCEL 1' AND SALEPRICE>100000");
+    expect(body.get('where')).toBe("CNVYNAME='PECAN CREEK NORTH PARCEL 1'");
     expect(body.get('orderByFields')).toBe('SALEDATE DESC');
     expect(body.get('resultRecordCount')).toBe('20');
   });
@@ -174,7 +174,7 @@ describe('queryCompsBySubdivision', () => {
 
     const [, options] = mockFetch.mock.calls[0];
     const body = new URLSearchParams(options.body);
-    expect(body.get('where')).toBe("SUBNAME='HAWES CROSSING' AND SALE_PRICE>100000");
+    expect(body.get('where')).toBe("SUBNAME='HAWES CROSSING'");
     expect(body.get('orderByFields')).toBe('SALE_DATE DESC');
   });
 
@@ -209,7 +209,7 @@ describe('queryCompsByZip', () => {
 
     const [, options] = mockFetch.mock.calls[0];
     const body = new URLSearchParams(options.body);
-    expect(body.get('where')).toBe("PSTLZIP5='85140' AND SALEPRICE>200000");
+    expect(body.get('where')).toBe("PSTLZIP5='85140'");
     expect(body.get('orderByFields')).toBe('SALEDATE DESC');
     expect(body.get('resultRecordCount')).toBe('50');
   });
@@ -225,7 +225,7 @@ describe('queryCompsByZip', () => {
 
     const [, options] = mockFetch.mock.calls[0];
     const body = new URLSearchParams(options.body);
-    expect(body.get('where')).toBe("PHYSICAL_ZIP='85210' AND SALE_PRICE>200000");
+    expect(body.get('where')).toBe("PHYSICAL_ZIP='85210'");
     expect(body.get('orderByFields')).toBe('SALE_DATE DESC');
   });
 

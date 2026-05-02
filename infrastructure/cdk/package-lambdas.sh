@@ -5,13 +5,14 @@
 # NodejsFunction for bundling if you need npm deps — see README note).
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BUILD_DIR="$REPO_ROOT/.build"
 
 LAMBDAS=(
   leads-capture tools-calculator property-lookup market-data content-api
   ai-proxy listing-service auth-api dashboard-leads dashboard-team
-  dashboard-notifications dashboard-listings data-pipeline notification-worker
+  dashboard-notifications dashboard-listings dashboard-content dashboard-performance data-pipeline notification-worker
+  content-ingest content-bundler content-drafter photo-finder
 )
 
 echo "Compiling TypeScript..."
@@ -22,14 +23,25 @@ mkdir -p "$BUILD_DIR"
 
 for name in "${LAMBDAS[@]}"; do
   staging="$BUILD_DIR/stage-$name"
-  mkdir -p "$staging"
-  # Copy compiled lambda code (assumes tsc outputs to dist/)
-  cp -r "$REPO_ROOT/dist/lambdas/$name/"* "$staging/"
-  # Copy shared lib (compiled) — lambdas import @mesahomes/lib/* so place at lib/
+  mkdir -p "$staging/lambdas/$name"
+  # Copy compiled lambda code into lambdas/<name>/ preserving relative paths
+  cp -r "$REPO_ROOT/dist/lambdas/$name/"* "$staging/lambdas/$name/"
+  # Drafter shares photo-finder code — include it too so ../photo-finder
+  # imports resolve inside the Lambda runtime
+  if [ "$name" = "content-drafter" ]; then
+    mkdir -p "$staging/lambdas/photo-finder"
+    cp -r "$REPO_ROOT/dist/lambdas/photo-finder/"* "$staging/lambdas/photo-finder/"
+  fi
+  # Copy shared lib (compiled) — lambdas import ../../lib/*.js so this
+  # must sit at the repo root level inside the zip
   mkdir -p "$staging/lib"
   cp -r "$REPO_ROOT/dist/lib/"* "$staging/lib/"
   # Package.json for type:module resolution
   cp "$REPO_ROOT/package.json" "$staging/package.json"
+
+  # dashboard-content uses only built-in SDK clients (secrets-manager is in
+  # the Lambda Node 20 runtime, DynamoDB via shared lib, fetch is native).
+  # No extra bundling required.
 
   (cd "$staging" && zip -rq "$BUILD_DIR/$name.zip" .)
   rm -rf "$staging"

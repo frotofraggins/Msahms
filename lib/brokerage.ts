@@ -85,7 +85,7 @@ export function getBrokerOfRecord(): BrokerOfRecord {
 
 /** Pre-launch message when listings are not yet active. */
 export const PRE_LAUNCH_LISTING_MESSAGE =
-  'MesaHomes flat-fee listings are coming soon. Leave your info and we\'ll notify you when we\'re live on the MLS.';
+  'Mesa Listing Service is coming soon. Leave your info and we\'ll notify you when we\'re live on the MLS.';
 
 /**
  * Whether the Stripe payment flow is enabled.
