@@ -14,8 +14,10 @@ build/
 .env
 .env.local
 .env.*.local
-.env.production
-frontend/.env.production
+# .env.production and frontend/.env.production — NOT ignored:
+#   These files contain only NEXT_PUBLIC_* vars that ship to browsers
+#   anyway. The one actual secret (Google Maps API key) is injected at
+#   build time from GitHub Secrets, not committed.
 frontend/.env.local
 frontend/.env.*.local
 *.pem
